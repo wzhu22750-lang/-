@@ -1,15 +1,20 @@
-import { motion } from 'motion/react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Match, Player } from '../types';
-import { PlayCircle, Trophy, Trash2 } from 'lucide-react';
+import { PlayCircle, Trophy, Trash2, Share2 } from 'lucide-react';
+import { ShareMatchModal } from './ShareMatchModal';
 
 interface MatchListProps {
   matches: Match[];
   team1Ids: string[];
   players: Player[];
   onDeleteMatch: (id: string) => void;
+  clubName: string;
+  inviteCode: string;
 }
 
-export function MatchList({ matches, team1Ids, players, onDeleteMatch }: MatchListProps) {
+export function MatchList({ matches, team1Ids, players, onDeleteMatch, clubName, inviteCode }: MatchListProps) {
+  const [sharingMatch, setSharingMatch] = useState<Match | null>(null);
   const getPlayerName = (id: string) => players.find(p => p.id === id)?.name || '未知';
 
   return (
@@ -43,13 +48,23 @@ export function MatchList({ matches, team1Ids, players, onDeleteMatch }: MatchLi
                 </div>
                 <span className="text-sm font-bold text-neutral-800">{match.tournament || '练习赛'}</span>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-medium text-neutral-400">{dateStr}</span>
+              <div className="flex items-center gap-1">
+                <span className="text-xs font-medium text-neutral-400 mr-2">{dateStr}</span>
+                
+                {/* 分享按钮 */}
+                <button 
+                  onClick={() => setSharingMatch(match)}
+                  className="p-2 text-neutral-400 hover:text-red-600 transition-colors"
+                >
+                  <Share2 size={16} />
+                </button>
+
+                {/* 删除按钮 */}
                 <button 
                   onClick={() => onDeleteMatch(match.id)}
-                  className="p-1 text-neutral-300 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="p-2 text-neutral-300 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
                 >
-                  <Trash2 size={14} />
+                  <Trash2 size={16} />
                 </button>
               </div>
             </div>
@@ -93,6 +108,19 @@ export function MatchList({ matches, team1Ids, players, onDeleteMatch }: MatchLi
           </motion.div>
         );
       })}
+
+      {/* 渲染战报分享模态框 */}
+      <AnimatePresence>
+        {sharingMatch && (
+          <ShareMatchModal 
+            match={sharingMatch}
+            players={players}
+            clubName={clubName}
+            inviteCode={inviteCode}
+            onClose={() => setSharingMatch(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
