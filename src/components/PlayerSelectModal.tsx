@@ -1,7 +1,6 @@
-
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Search, CheckCircle2, UserPlus, Plus } from 'lucide-react';
+import { X, Search, CheckCircle2, UserPlus, Plus, Edit2, Trash2 } from 'lucide-react';
 import { Player } from '../types';
 import { AddPlayerModal } from './AddPlayerModal';
 
@@ -11,13 +10,17 @@ interface PlayerSelectModalProps {
   players: Player[];
   onSelect: (ids: string[]) => void;
   onAddPlayer: (p: Player) => void;
+  onUpdatePlayer: (p: Player) => void;
+  onDeletePlayer: (id: string) => void;
   currentSelected: string[];
 }
 
-export function PlayerSelectModal({ side, onClose, players, onSelect, onAddPlayer, currentSelected }: PlayerSelectModalProps) {
+export function PlayerSelectModal({ 
+  side, onClose, players, onSelect, onAddPlayer, onUpdatePlayer, onDeletePlayer, currentSelected 
+}: PlayerSelectModalProps) {
   const [selected, setSelected] = useState<string[]>(currentSelected);
   const [search, setSearch] = useState('');
-  const [isAddingPlayer, setIsAddingPlayer] = useState(false);
+  const [isAddingPlayer, setIsAddingPlayer] = useState<{ edit: boolean; player?: Player } | null>(null);
 
   const filtered = players.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
 
@@ -48,8 +51,8 @@ export function PlayerSelectModal({ side, onClose, players, onSelect, onAddPlaye
           <h2 className="text-xl font-bold">选择 {side === 'team1' ? 'A' : 'B'} 队球员</h2>
           <div className="flex items-center gap-2">
             <button 
-              onClick={() => setIsAddingPlayer(true)}
-              className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors flex items-center gap-1 text-sm font-bold"
+              onClick={() => setIsAddingPlayer({ edit: false })}
+              className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
             >
               <UserPlus size={20} />
             </button>
@@ -63,7 +66,7 @@ export function PlayerSelectModal({ side, onClose, players, onSelect, onAddPlaye
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} />
           <input
             type="text"
-            placeholder="搜索或添加球员..."
+            placeholder="搜索球员..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-3 bg-neutral-100 rounded-xl outline-none focus:ring-2 focus:ring-red-500 transition-all"
@@ -71,42 +74,46 @@ export function PlayerSelectModal({ side, onClose, players, onSelect, onAddPlaye
         </div>
 
         <div className="flex-1 overflow-y-auto space-y-2 mb-6 min-h-[300px]">
-          {filtered.length === 0 && search.trim().length > 0 && (
-            <button
-              onClick={() => {
-                const newPlayer: Player = {
-                  id: Math.random().toString(36).substr(2, 9),
-                  name: search,
-                  initials: search.slice(0, 2).toUpperCase()
-                };
-                onAddPlayer(newPlayer);
-                setSelected([...selected, newPlayer.id].slice(0, 2));
-              }}
-              className="w-full p-4 bg-red-50 text-red-600 rounded-xl font-bold flex items-center gap-3 border border-red-100 mb-2"
-            >
-              <Plus size={20} /> 添加新球员 "{search}"
-            </button>
-          )}
           {filtered.map(p => {
             const isSelected = selected.includes(p.id);
             return (
-              <button
+              <div
                 key={p.id}
-                onClick={() => toggle(p.id)}
-                className={`w-full flex items-center gap-4 p-4 rounded-xl transition-all ${isSelected ? 'bg-red-50 border border-red-100' : 'bg-neutral-50 border border-transparent'}`}
+                className={`group w-full flex items-center gap-4 p-4 rounded-xl transition-all ${isSelected ? 'bg-red-50 border border-red-100' : 'bg-neutral-50 border border-transparent'}`}
               >
-                <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center overflow-hidden shrink-0 border border-neutral-100">
-                  {p.avatar ? (
-                    <img src={p.avatar} alt={p.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-lg font-bold text-neutral-400">{p.initials}</span>
-                  )}
+                <div 
+                  className="flex-1 flex items-center gap-4 cursor-pointer"
+                  onClick={() => toggle(p.id)}
+                >
+                  <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center overflow-hidden shrink-0 border border-neutral-100">
+                    {p.avatar ? (
+                      <img src={p.avatar} alt={p.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-lg font-bold text-neutral-400">{p.initials}</span>
+                    )}
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="font-bold">{p.name}</p>
+                  </div>
+                  {isSelected && <CheckCircle2 className="text-red-500" size={24} />}
                 </div>
-                <div className="flex-1 text-left">
-                  <p className="font-bold">{p.name}</p>
+
+                {/* 操作按钮 */}
+                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setIsAddingPlayer({ edit: true, player: p }); }}
+                    className="p-2 text-neutral-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+                  >
+                    <Edit2 size={16} />
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); onDeletePlayer(p.id); }}
+                    className="p-2 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
-                {isSelected && <CheckCircle2 className="text-red-500" size={24} />}
-              </button>
+              </div>
             );
           })}
         </div>
@@ -122,10 +129,12 @@ export function PlayerSelectModal({ side, onClose, players, onSelect, onAddPlaye
         <AnimatePresence>
           {isAddingPlayer && (
             <AddPlayerModal 
-              onClose={() => setIsAddingPlayer(false)}
+              initialData={isAddingPlayer.player}
+              onClose={() => setIsAddingPlayer(null)}
               onAdd={(p) => {
-                onAddPlayer(p);
-                setSelected(prev => [...prev, p.id].slice(0, 2));
+                if (isAddingPlayer.edit) onUpdatePlayer(p);
+                else onAddPlayer(p);
+                setIsAddingPlayer(null);
               }}
             />
           )}
