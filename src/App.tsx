@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Player, Match } from './types';
-import { getPlayers, getMatches, savePlayerToCloud, saveMatchToCloud, deletePlayerFromCloud } from './lib/storage';
+import { getPlayers, getMatches, savePlayerToCloud, saveMatchToCloud, deletePlayerFromCloud, deleteMatchFromCloud } from './lib/storage';
 import { Plus, Trophy, Users, ChevronLeft, Home, MoreHorizontal, Circle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MatchList } from './components/MatchList';
@@ -61,6 +61,12 @@ export default function App() {
     setIsAddMatchOpen(false);
   };
 
+  const handleDeleteMatch = async (id: string) => {
+    if (!confirm('确定要删除这场比赛记录吗？')) return;
+    setMatches(matches.filter(m => m.id !== id));
+    await deleteMatchFromCloud(id);
+  };
+
   const handleAddPlayer = async (p: Player) => {
     setPlayers([...players, p]);
     await savePlayerToCloud(p);
@@ -119,7 +125,12 @@ export default function App() {
         {selectedTeam1.length > 0 && selectedTeam2.length > 0 ? (
           <AnimatePresence mode="popLayout">
             {h2hMatches.length > 0 ? (
-              <MatchList matches={h2hMatches} team1Ids={selectedTeam1} players={players} />
+              <MatchList 
+                matches={h2hMatches} 
+                team1Ids={selectedTeam1} 
+                players={players} 
+                onDeleteMatch={handleDeleteMatch}
+              />
             ) : (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-center py-20 text-neutral-400">
                 <Trophy size={48} className="mx-auto mb-4 opacity-20" />
