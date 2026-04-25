@@ -1,4 +1,3 @@
-
 import { useState, useRef, ChangeEvent, FormEvent } from 'react';
 import { motion } from 'motion/react';
 import { X, Camera, User, Upload } from 'lucide-react';
@@ -7,11 +6,12 @@ import { Player } from '../types';
 interface AddPlayerModalProps {
   onClose: () => void;
   onAdd: (player: Player) => void;
+  initialData?: Player;
 }
 
-export function AddPlayerModal({ onClose, onAdd }: AddPlayerModalProps) {
-  const [name, setName] = useState('');
-  const [avatar, setAvatar] = useState<string | undefined>();
+export function AddPlayerModal({ onClose, onAdd, initialData }: AddPlayerModalProps) {
+  const [name, setName] = useState(initialData?.name || '');
+  const [avatar, setAvatar] = useState<string | undefined>(initialData?.avatar);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -34,7 +34,7 @@ export function AddPlayerModal({ onClose, onAdd }: AddPlayerModalProps) {
     if (!name.trim()) return;
 
     const newPlayer: Player = {
-      id: Math.random().toString(36).substring(2, 9),
+      id: initialData?.id || Math.random().toString(36).substring(2, 9),
       name: name.trim(),
       avatar: avatar,
       initials: name.trim().slice(0, 2).toUpperCase(),
@@ -58,14 +58,13 @@ export function AddPlayerModal({ onClose, onAdd }: AddPlayerModalProps) {
         className="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl"
       >
         <div className="bg-red-600 p-6 text-white flex items-center justify-between">
-          <h2 className="text-xl font-bold">新增球员</h2>
+          <h2 className="text-xl font-bold">{initialData ? '编辑球员' : '新增球员'}</h2>
           <button onClick={onClose} className="p-1 hover:bg-white/20 rounded-full transition-colors">
             <X size={24} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-8">
-          {/* Avatar Upload */}
           <div className="flex flex-col items-center gap-4">
             <div 
               onClick={() => fileInputRef.current?.click()}
@@ -96,7 +95,6 @@ export function AddPlayerModal({ onClose, onAdd }: AddPlayerModalProps) {
             />
           </div>
 
-          {/* Name Input */}
           <div className="space-y-2">
             <label className="text-xs font-black text-neutral-400 uppercase tracking-widest pl-1">球员姓名</label>
             <input
@@ -114,7 +112,7 @@ export function AddPlayerModal({ onClose, onAdd }: AddPlayerModalProps) {
             disabled={!name.trim()}
             className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold shadow-xl shadow-red-100 disabled:bg-neutral-200 disabled:shadow-none transition-all active:scale-[0.98]"
           >
-            完成创建
+            完成{initialData ? '保存' : '创建'}
           </button>
         </form>
       </motion.div>
