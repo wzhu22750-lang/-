@@ -30,7 +30,7 @@ export function ShareMatchModal({ match, players, clubName, inviteCode, onClose 
           const dataUrl = await toPng(cardRef.current, { 
             cacheBust: true, 
             pixelRatio: 3,
-            backgroundColor: '#ef4444' // 强制红色背景
+            backgroundColor: '#dc2626' // 强制红色背景
           });
           setFinalImage(dataUrl);
           setStatus('ready');
@@ -66,7 +66,7 @@ export function ShareMatchModal({ match, players, clubName, inviteCode, onClose 
 
       {/* 核心卡片 - 隐藏在背后用于生成图片 */}
       <div className="absolute left-[-9999px] top-0">
-        <div ref={cardRef} className="w-[360px] bg-red-600 p-8 relative flex flex-col overflow-hidden">
+       <div ref={cardRef} className="w-[360px] bg-[#dc2626] p-8 relative flex flex-col overflow-hidden">
           <div className="absolute -right-16 -top-16 w-48 h-48 bg-white/10 rounded-full border-[20px] border-white/5" />
           <div className="absolute -left-16 -bottom-16 w-48 h-48 bg-white/10 rounded-full border-[20px] border-white/5" />
           
