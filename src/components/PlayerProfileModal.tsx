@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { X, Trophy, Target, TrendingUp, Users, Zap, ShieldAlert } from 'lucide-react';
+import { X, Users, Zap, ShieldAlert } from 'lucide-react';
 import { Player, Match } from '../types';
 
 interface PlayerProfileModalProps {
@@ -10,10 +10,9 @@ interface PlayerProfileModalProps {
 }
 
 export function PlayerProfileModal({ player, matches, players, onClose }: PlayerProfileModalProps) {
-  // 1. 筛选出该球员参加的所有比赛
+  // 1. 计算该球员参与的所有比赛
   const playerMatches = matches.filter(m => m.team1.includes(player.id) || m.team2.includes(player.id));
 
-  // 2. 计算胜负
   let wins = 0;
   let losses = 0;
   const partnerCount: Record<string, number> = {};
@@ -35,12 +34,14 @@ export function PlayerProfileModal({ player, matches, players, onClose }: Player
     const isWin = ourGames > oppGames;
     if (isWin) wins++; else losses++;
 
-    // 统计搭档 (双打)
-    ourTeam.forEach(pid => {
-      if (pid !== player.id) {
-        partnerCount[pid] = (partnerCount[pid] || 0) + (isWin ? 1 : 0);
-      }
-    });
+    // 统计搭档 (仅双打)
+    if (ourTeam.length > 1) {
+      ourTeam.forEach(pid => {
+        if (pid !== player.id) {
+          partnerCount[pid] = (partnerCount[pid] || 0) + (isWin ? 1 : 0);
+        }
+      });
+    }
 
     // 统计对手
     oppTeam.forEach(pid => {
@@ -49,11 +50,9 @@ export function PlayerProfileModal({ player, matches, players, onClose }: Player
     });
   });
 
-  // 找出最佳搭档
   const bestPartnerId = Object.entries(partnerCount).sort((a, b) => b[1] - a[1])[0]?.[0];
   const bestPartner = players.find(p => p.id === bestPartnerId);
 
-  // 找出苦主 (输给谁最多)
   const nemesisId = Object.entries(opponentCount).sort((a, b) => b[1].losses - a[1].losses)[0]?.[0];
   const nemesis = players.find(p => p.id === nemesisId);
 
@@ -72,22 +71,16 @@ export function PlayerProfileModal({ player, matches, players, onClose }: Player
           <X size={20} />
         </button>
 
-        {/* Top Hero Section */}
-        <div className="bg-red-600 pt-12 pb-20 px-8 text-center text-white relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
-            <div className="absolute -left-10 -top-10 w-40 h-40 border-[20px] border-white rounded-full" />
-          </div>
-          
+        <div className="bg-red-600 pt-12 pb-20 px-8 text-center text-white relative">
           <div className="w-24 h-24 rounded-full bg-white mx-auto mb-4 border-4 border-white/30 overflow-hidden shadow-xl">
-            {player.avatar ? <img src={player.avatar} className="w-full h-full object-cover" /> : 
+            {player.avatar ? <img src={player.avatar} alt={player.name} className="w-full h-full object-cover" /> : 
               <div className="w-full h-full flex items-center justify-center text-red-600 text-3xl font-black">{player.initials}</div>
             }
           </div>
           <h2 className="text-2xl font-black mb-1">{player.name}</h2>
-          <p className="text-white/70 text-sm font-bold tracking-widest uppercase">球员详细档案</p>
+          <p className="text-white/70 text-sm font-bold tracking-widest uppercase">球员档案</p>
         </div>
 
-        {/* Stats Cards */}
         <div className="px-6 -mt-10 relative z-10 pb-8">
           <div className="grid grid-cols-3 gap-3 mb-6">
             <div className="bg-white p-4 rounded-2xl shadow-sm text-center">
@@ -99,44 +92,34 @@ export function PlayerProfileModal({ player, matches, players, onClose }: Player
               <p className="text-xl font-black text-green-600">{wins}</p>
             </div>
             <div className="bg-white p-4 rounded-2xl shadow-sm text-center">
-              <p className="text-[10px] font-bold text-neutral-400 uppercase mb-1胜率</p>
+              <p className="text-[10px] font-bold text-neutral-400 uppercase mb-1">胜率</p>
               <p className="text-xl font-black text-red-600">{winRate}%</p>
             </div>
           </div>
 
           <div className="space-y-3">
-            {/* Relationship Section */}
             <div className="bg-white p-5 rounded-3xl shadow-sm flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-500">
-                  <Users size={20} />
-                </div>
+                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-500"><Users size={20} /></div>
                 <div>
                   <p className="text-[10px] font-bold text-neutral-400 uppercase">最佳搭档</p>
-                  <p className="font-bold text-neutral-800">{bestPartner?.name || '独行侠'}</p>
+                  <p className="font-bold text-neutral-800">{bestPartner?.name || '暂无数据'}</p>
                 </div>
               </div>
-              <TrendingUp className="text-blue-200" size={24} />
             </div>
 
             <div className="bg-white p-5 rounded-3xl shadow-sm flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-500">
-                  <ShieldAlert size={20} />
-                </div>
+                <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-500"><ShieldAlert size={20} /></div>
                 <div>
                   <p className="text-[10px] font-bold text-neutral-400 uppercase">一生苦主</p>
                   <p className="font-bold text-neutral-800">{nemesis?.name || '暂无对手'}</p>
                 </div>
               </div>
-              <Zap className="text-orange-200" size={24} />
             </div>
           </div>
 
-          <button 
-            onClick={onClose}
-            className="w-full mt-8 py-4 bg-neutral-900 text-white rounded-2xl font-bold shadow-lg active:scale-95 transition-transform"
-          >
+          <button onClick={onClose} className="w-full mt-8 py-4 bg-neutral-900 text-white rounded-2xl font-bold shadow-lg">
             返回列表
           </button>
         </div>
