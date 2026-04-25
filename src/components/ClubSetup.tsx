@@ -5,7 +5,7 @@ import { createClub, joinClub } from '../lib/storage';
 import { Club } from '../types';
 
 // 你可以在这里修改你的专属创建密钥
-const ADMIN_CREATE_KEY = "888888"; 
+const ADMIN_CREATE_KEY = "856999"; 
 
 export function ClubSetup({ onComplete }: { onComplete: (club: Club) => void }) {
   const [mode, setMode] = useState<'root' | 'create' | 'join'>('root');
