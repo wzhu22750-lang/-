@@ -163,7 +163,14 @@ export default function App() {
           <main className="px-4 mt-6">
             {selectedTeam1.length > 0 && selectedTeam2.length > 0 ? (
               <AnimatePresence mode="popLayout">
-                {h2hMatches.length > 0 ? <MatchList matches={h2hMatches} team1Ids={selectedTeam1} players={players} onDeleteMatch={handleDeleteMatch} /> : <div className="text-center py-20 text-neutral-400">暂无记录</div>}
+                {h2hMatches.length > 0 ? <MatchList 
+  matches={h2hMatches} 
+  team1Ids={selectedTeam1} 
+  players={players} 
+  onDeleteMatch={handleDeleteMatch}
+  clubName={club.name}
+  inviteCode={club.invite_code}
+/> : <div className="text-center py-20 text-neutral-400">暂无记录</div>}
               </AnimatePresence>
             ) : <div className="text-center py-20 text-neutral-400"><Users size={48} className="mx-auto mb-4 opacity-20" /><p>请选择球员</p></div>}
           </main>
@@ -187,4 +194,5 @@ export default function App() {
       </AnimatePresence>
     </div>
   );
+  
 }
