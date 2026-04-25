@@ -1,0 +1,6 @@
+{
+  "name": "羽球交手记录 H2H",
+  "description": "一个为运动社交圈设计的交手记录追踪小程序，支持单/双打记录、胜率统计及历史战绩回顾。",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
