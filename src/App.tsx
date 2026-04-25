@@ -1,17 +1,23 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Player, Match } from './types';
+import { Player, Match, Club } from './types';
 import { getPlayers, getMatches, savePlayerToCloud, saveMatchToCloud, deletePlayerFromCloud, deleteMatchFromCloud } from './lib/storage';
-import { Plus, Trophy, Users, ChevronLeft, Home, MoreHorizontal, Circle } from 'lucide-react';
+import { Plus, Trophy, Users, ChevronLeft, Home, MoreHorizontal, Circle, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MatchList } from './components/MatchList';
 import { H2HHero } from './components/H2HHero';
 import { AddMatchModal } from './components/AddMatchModal';
 import { PlayerSelectModal } from './components/PlayerSelectModal';
 import { PlayerProfileModal } from './components/PlayerProfileModal';
+import { ClubSetup } from './components/ClubSetup';
 
 export default function App() {
+  const [club, setClub] = useState<Club | null>(() => {
+    const saved = localStorage.getItem('h2h_club');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [players, setPlayers] = useState<Player[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
+  // ... (保留原有的 selectedTeam1 等状态)
   const [selectedTeam1, setSelectedTeam1] = useState<string[]>([]);
   const [selectedTeam2, setSelectedTeam2] = useState<string[]>([]);
   const [isAddMatchOpen, setIsAddMatchOpen] = useState(false);
@@ -19,15 +25,19 @@ export default function App() {
   const [viewingPlayer, setViewingPlayer] = useState<Player | null>(null);
 
   useEffect(() => {
-    const initData = async () => {
-      const p = await getPlayers();
-      const m = await getMatches();
-      setPlayers(p);
-      setMatches(m);
-    };
-    initData();
-  }, []);
+    if (club) {
+      localStorage.setItem('h2h_club', JSON.stringify(club));
+      const initData = async () => {
+        const p = await getPlayers(club.id);
+        const m = await getMatches(club.id);
+        setPlayers(p);
+        setMatches(m);
+      };
+      initData();
+    }
+  }, [club]);
 
+  // 计算统计和逻辑 (保留，但注意 player 增加 club_id)
   const h2hMatches = useMemo(() => {
     if (selectedTeam1.length === 0 || selectedTeam2.length === 0) return [];
     return matches.filter(m => {
@@ -58,25 +68,26 @@ export default function App() {
   }, [h2hMatches, selectedTeam1]);
 
   const handleAddMatch = async (newMatch: Match) => {
-    setMatches([newMatch, ...matches]);
-    await saveMatchToCloud(newMatch);
+    if (!club) return;
+    const matchWithClub = { ...newMatch, club_id: club.id };
+    setMatches([matchWithClub, ...matches]);
+    await saveMatchToCloud(matchWithClub);
     setIsAddMatchOpen(false);
   };
 
-  const handleDeleteMatch = async (id: string) => {
-    if (!confirm('确定要删除这场比赛记录吗？')) return;
-    setMatches(matches.filter(m => m.id !== id));
-    await deleteMatchFromCloud(id);
-  };
-
   const handleAddPlayer = async (p: Player) => {
-    setPlayers([...players, p]);
-    await savePlayerToCloud(p);
+    if (!club) return;
+    const playerWithClub = { ...p, club_id: club.id };
+    setPlayers([...players, playerWithClub]);
+    await savePlayerToCloud(playerWithClub);
   };
 
+  // ... (更新 updatePlayer 也要确保 club_id 存在)
   const handleUpdatePlayer = async (p: Player) => {
-    setPlayers(players.map(item => item.id === p.id ? p : item));
-    await savePlayerToCloud(p);
+    if (!club) return;
+    const playerWithClub = { ...p, club_id: club.id };
+    setPlayers(players.map(item => item.id === p.id ? playerWithClub : item));
+    await savePlayerToCloud(playerWithClub);
   };
 
   const handleDeletePlayer = async (id: string) => {
@@ -85,36 +96,40 @@ export default function App() {
     await deletePlayerFromCloud(id);
   };
 
-  const handleSelectPlayer = (side: 'team1' | 'team2', ids: string[]) => {
-    if (side === 'team1') setSelectedTeam1(ids);
-    else setSelectedTeam2(ids);
-    setIsPlayerSelectOpen(null);
+  const handleDeleteMatch = async (id: string) => {
+    if (!confirm('确定要删除这场比赛记录吗？')) return;
+    setMatches(matches.filter(m => m.id !== id));
+    await deleteMatchFromCloud(id);
   };
 
-  const getPlayerNames = (ids: string[]) => {
-    return ids.map(id => players.find(p => p.id === id)?.name || '未知').join(' / ');
-  };
+  if (!club) {
+    return <ClubSetup onComplete={setClub} />;
+  }
 
   return (
     <div className="min-h-screen bg-neutral-50 font-sans text-neutral-900 pb-20">
-      <div className="flex items-center justify-between px-4 py-3 bg-red-600 text-white sticky top-0 z-50">
-        <div className="flex items-center gap-4">
-          <button className="p-2 hover:bg-red-500 rounded-full transition-colors"><ChevronLeft size={24} /></button>
-          <button className="p-2 hover:bg-red-500 rounded-full transition-colors"><Home size={20} /></button>
+      <div className="flex items-center justify-between px-4 py-3 bg-red-600 text-white sticky top-0 z-50 shadow-md">
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => { if(confirm('退出俱乐部？')) { localStorage.removeItem('h2h_club'); setClub(null); }}}
+            className="p-2 hover:bg-red-500 rounded-full transition-colors"
+          >
+            <LogOut size={20} />
+          </button>
+          <div>
+            <h1 className="text-lg font-black tracking-tight leading-none">{club.name}</h1>
+            <p className="text-[10px] opacity-70 font-mono">邀请码: {club.invite_code}</p>
+          </div>
         </div>
-        <h1 className="text-xl font-bold tracking-tight">交手记录 H2H</h1>
-        <div className="flex items-center gap-2 bg-black/20 rounded-full px-3 py-1">
-          <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-          <MoreHorizontal size={20} />
-          <div className="w-px h-4 bg-white/20 mx-1" />
-          <Circle size={18} />
+        <div className="flex items-center gap-2 bg-black/20 rounded-full px-3 py-1 text-sm font-bold">
+           H2H 模式
         </div>
       </div>
 
       <H2HHero 
         stats={stats} 
-        team1Names={getPlayerNames(selectedTeam1)}
-        team2Names={getPlayerNames(selectedTeam2)}
+        team1Names={selectedTeam1.map(id => players.find(p => p.id === id)?.name || '').join(' / ')}
+        team2Names={selectedTeam2.map(id => players.find(p => p.id === id)?.name || '').join(' / ')}
         onSelectTeam1={() => setIsPlayerSelectOpen({ side: 'team1' })}
         onSelectTeam2={() => setIsPlayerSelectOpen({ side: 'team2' })}
         team1Empty={selectedTeam1.length === 0}
@@ -152,7 +167,7 @@ export default function App() {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsAddMatchOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-red-600 text-white rounded-full shadow-lg flex items-center justify-center z-40 transition-transform"
+        className="fixed bottom-6 right-6 w-14 h-14 bg-red-600 text-white rounded-full shadow-lg flex items-center justify-center z-40"
       >
         <Plus size={28} />
       </motion.button>
@@ -166,7 +181,11 @@ export default function App() {
             side={isPlayerSelectOpen.side}
             onClose={() => setIsPlayerSelectOpen(null)}
             players={players}
-            onSelect={(ids) => handleSelectPlayer(isPlayerSelectOpen.side, ids)}
+            onSelect={(ids) => {
+               if (isPlayerSelectOpen.side === 'team1') setSelectedTeam1(ids);
+               else setSelectedTeam2(ids);
+               setIsPlayerSelectOpen(null);
+            }}
             onAddPlayer={handleAddPlayer}
             onUpdatePlayer={handleUpdatePlayer}
             onDeletePlayer={handleDeletePlayer}
