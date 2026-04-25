@@ -32,3 +32,8 @@ export async function saveMatchToCloud(match: Match) {
   const { error } = await supabase.from('matches').upsert(match);
   if (error) console.error('保存比赛失败:', error.message);
 }
+
+export async function deleteMatchFromCloud(id: string) {
+  const { error } = await supabase.from('matches').delete().eq('id', id);
+  if (error) console.error('删除比赛失败:', error.message);
+}
