@@ -12,10 +12,13 @@ export async function createClub(name: string): Promise<Club | null> {
   const { data, error } = await supabase
     .from('clubs')
     .insert([{ name, invite_code }])
-    .select()
-    .single();
+    .select('*') // 必须有 select
+    .single(); // 必须有 single
   
-  if (error) { console.error(error); return null; }
+  if (error) { 
+    console.error('Supabase 插入错误:', error); 
+    return null; 
+  }
   return data;
 }
 
