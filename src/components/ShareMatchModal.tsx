@@ -1,7 +1,7 @@
-import { useRef } from 'react';
-import { motion } from 'motion/react';
+import { useRef, useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { toPng } from 'html-to-image';
-import { X, Download, Share2, Trophy, Star } from 'lucide-react';
+import { X, Loader2, Info } from 'lucide-react';
 import { Match, Player } from '../types';
 
 interface ShareMatchModalProps {
@@ -14,117 +14,137 @@ interface ShareMatchModalProps {
 
 export function ShareMatchModal({ match, players, clubName, inviteCode, onClose }: ShareMatchModalProps) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const [finalImage, setFinalImage] = useState<string | null>(null);
+  const [status, setStatus] = useState<'rendering' | 'ready'>('rendering');
 
   const getPlayer = (id: string) => players.find(p => p.id === id);
-
-  const handleDownload = async () => {
-    if (cardRef.current === null) return;
-    const dataUrl = await toPng(cardRef.current, { cacheBust: true, pixelRatio: 3 });
-    const link = document.createElement('a');
-    link.download = `战报-${new Date().getTime()}.png`;
-    link.href = dataUrl;
-    link.click();
-  };
-
   const t1Won = match.scores.filter(s => s.team1 > s.team2).length > match.scores.filter(s => s.team2 > s.team1).length;
+
+  // 自动生成图片逻辑
+  useEffect(() => {
+    const generate = async () => {
+      if (cardRef.current) {
+        try {
+          // 等待一小会儿确保字体和图片加载完成
+          await new Promise(resolve => setTimeout(resolve, 500));
+          const dataUrl = await toPng(cardRef.current, { 
+            cacheBust: true, 
+            pixelRatio: 3,
+            backgroundColor: '#ef4444' // 强制红色背景
+          });
+          setFinalImage(dataUrl);
+          setStatus('ready');
+        } catch (err) {
+          console.error('生成失败', err);
+        }
+      }
+    };
+    generate();
+  }, [match]);
 
   return (
     <motion.div 
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[150] flex flex-col items-center justify-center p-6"
+      className="fixed inset-0 bg-black/95 z-[150] flex flex-col items-center overflow-y-auto pt-12 pb-12 px-6"
     >
-      <div className="absolute top-6 right-6 flex gap-4">
-        <button onClick={handleDownload} className="bg-white/20 p-3 rounded-full text-white"><Download size={24} /></button>
-        <button onClick={onClose} className="bg-white/20 p-3 rounded-full text-white"><X size={24} /></button>
+      {/* 顶部控制栏 - 增加了安全距离 */}
+      <div className="fixed top-6 right-6 z-[160] flex gap-4">
+        <button onClick={onClose} className="bg-white/20 backdrop-blur-md p-3 rounded-full text-white shadow-lg">
+          <X size={24} />
+        </button>
       </div>
 
-      {/* 战报卡片主体 */}
-      <div ref={cardRef} className="w-full max-w-[360px] bg-red-600 rounded-[32px] overflow-hidden shadow-2xl text-white font-sans p-8 relative">
-        {/* 背景装饰 */}
-        <div className="absolute -right-16 -top-16 w-48 h-48 bg-white/10 rounded-full border-[20px] border-white/5" />
-        <div className="absolute -left-16 -bottom-16 w-48 h-48 bg-white/10 rounded-full border-[20px] border-white/5" />
+      {/* 渲染提示 */}
+      <AnimatePresence>
+        {status === 'rendering' && (
+          <motion.div exit={{ opacity: 0 }} className="flex flex-col items-center gap-3 py-20">
+            <Loader2 className="text-red-500 animate-spin" size={40} />
+            <p className="text-white/60 font-bold text-sm">正在生成精美战报...</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-        <div className="relative z-10">
-          <div className="text-center mb-10">
-            <div className="inline-block px-4 py-1 bg-black/20 rounded-full text-[10px] font-black tracking-[0.2em] mb-4">
-              BATTLE REPORT
-            </div>
-            <h2 className="text-2xl font-black italic uppercase">{match.tournament || '练习赛'}</h2>
-            <p className="text-white/60 text-xs mt-1 font-bold">
-              {new Date(match.date).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}
-            </p>
-          </div>
-
-          {/* 球员与比分 */}
-          <div className="space-y-8 mb-12">
-            {/* Team 1 */}
-            <div className={`flex items-center gap-4 ${t1Won ? 'scale-105' : 'opacity-60'}`}>
-              <div className="flex -space-x-3">
-                {match.team1.map(id => (
-                  <div key={id} className="w-12 h-12 rounded-full border-2 border-red-600 bg-white overflow-hidden shrink-0 shadow-lg">
-                    {getPlayer(id)?.avatar ? <img src={getPlayer(id)?.avatar} className="w-full h-full object-cover" /> : 
-                      <div className="w-full h-full flex items-center justify-center text-red-600 font-black">{getPlayer(id)?.initials}</div>}
-                  </div>
-                ))}
-              </div>
-              <div className="flex-1">
-                <p className="font-black text-lg truncate leading-none mb-1">{match.team1.map(id => getPlayer(id)?.name).join(' / ')}</p>
-                {t1Won && <span className="text-[10px] bg-yellow-400 text-red-700 px-2 py-0.5 rounded-full font-black">WINNER</span>}
-              </div>
-              <div className="text-3xl font-black italic">{match.scores.filter(s => s.team1 > s.team2).length}</div>
+      {/* 核心卡片 - 隐藏在背后用于生成图片 */}
+      <div className="absolute left-[-9999px] top-0">
+        <div ref={cardRef} className="w-[360px] bg-red-600 p-8 relative flex flex-col overflow-hidden">
+          <div className="absolute -right-16 -top-16 w-48 h-48 bg-white/10 rounded-full border-[20px] border-white/5" />
+          <div className="absolute -left-16 -bottom-16 w-48 h-48 bg-white/10 rounded-full border-[20px] border-white/5" />
+          
+          <div className="relative z-10 text-white">
+            <div className="text-center mb-10">
+              <div className="inline-block px-4 py-1 bg-black/20 rounded-full text-[10px] font-black tracking-[0.2em] mb-4">BATTLE REPORT</div>
+              <h2 className="text-2xl font-black italic uppercase">{match.tournament || '练习赛'}</h2>
+              <p className="text-white/60 text-xs mt-1 font-bold">{new Date(match.date).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
 
-            <div className="flex items-center gap-4 justify-center py-2 opacity-30">
-                <div className="h-px flex-1 bg-white" />
-                <span className="text-xs font-black italic">VS</span>
-                <div className="h-px flex-1 bg-white" />
+            <div className="space-y-8 mb-10">
+              <div className={`flex items-center gap-4 ${t1Won ? '' : 'opacity-60'}`}>
+                <div className="flex -space-x-3">
+                  {match.team1.map(id => (
+                    <div key={id} className="w-14 h-14 rounded-full border-2 border-red-600 bg-white overflow-hidden shadow-xl">
+                      {getPlayer(id)?.avatar ? <img src={getPlayer(id)?.avatar} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-red-600 font-black text-lg">{getPlayer(id)?.initials}</div>}
+                    </div>
+                  ))}
+                </div>
+                <div className="flex-1">
+                  <p className="font-black text-xl leading-tight mb-1">{match.team1.map(id => getPlayer(id)?.name).join(' / ')}</p>
+                  {t1Won && <span className="text-[10px] bg-yellow-400 text-red-700 px-2 py-0.5 rounded-full font-black">WINNER</span>}
+                </div>
+                <div className="text-4xl font-black italic">{match.scores.filter(s => s.team1 > s.team2).length}</div>
+              </div>
+
+              <div className="flex items-center gap-4 justify-center opacity-30"><div className="h-px flex-1 bg-white" /><span className="text-xs font-black italic">VS</span><div className="h-px flex-1 bg-white" /></div>
+
+              <div className={`flex items-center gap-4 ${!t1Won ? '' : 'opacity-60'}`}>
+                <div className="flex -space-x-3">
+                  {match.team2.map(id => (
+                    <div key={id} className="w-14 h-14 rounded-full border-2 border-red-600 bg-white overflow-hidden shadow-xl">
+                      {getPlayer(id)?.avatar ? <img src={getPlayer(id)?.avatar} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-red-600 font-black text-lg">{getPlayer(id)?.initials}</div>}
+                    </div>
+                  ))}
+                </div>
+                <div className="flex-1">
+                  <p className="font-black text-xl leading-tight mb-1">{match.team2.map(id => getPlayer(id)?.name).join(' / ')}</p>
+                  {!t1Won && <span className="text-[10px] bg-yellow-400 text-red-700 px-2 py-0.5 rounded-full font-black">WINNER</span>}
+                </div>
+                <div className="text-4xl font-black italic">{match.scores.filter(s => s.team2 > s.team1).length}</div>
+              </div>
             </div>
 
-            {/* Team 2 */}
-            <div className={`flex items-center gap-4 ${!t1Won ? 'scale-105' : 'opacity-60'}`}>
-              <div className="flex -space-x-3">
-                {match.team2.map(id => (
-                  <div key={id} className="w-12 h-12 rounded-full border-2 border-red-600 bg-white overflow-hidden shrink-0 shadow-lg">
-                    {getPlayer(id)?.avatar ? <img src={getPlayer(id)?.avatar} className="w-full h-full object-cover" /> : 
-                      <div className="w-full h-full flex items-center justify-center text-red-600 font-black">{getPlayer(id)?.initials}</div>}
-                  </div>
-                ))}
-              </div>
-              <div className="flex-1">
-                <p className="font-black text-lg truncate leading-none mb-1">{match.team2.map(id => getPlayer(id)?.name).join(' / ')}</p>
-                {!t1Won && <span className="text-[10px] bg-yellow-400 text-red-700 px-2 py-0.5 rounded-full font-black">WINNER</span>}
-              </div>
-              <div className="text-3xl font-black italic">{match.scores.filter(s => s.team2 > s.team1).length}</div>
+            <div className="bg-black/10 rounded-2xl p-4 mb-10 flex justify-center gap-8">
+              {match.scores.map((s, i) => (
+                <div key={i} className="text-center">
+                  <div className="text-[8px] font-black text-white/40 mb-1">SET {i+1}</div>
+                  <div className="font-black text-xl">{s.team1}:{s.team2}</div>
+                </div>
+              ))}
             </div>
-          </div>
 
-          {/* 小局比分详情 */}
-          <div className="bg-black/10 rounded-2xl p-4 mb-10 flex justify-center gap-6">
-            {match.scores.map((s, i) => (
-              <div key={i} className="text-center">
-                <div className="text-[8px] font-black text-white/40 mb-1">SET {i+1}</div>
-                <div className="font-black text-lg">{s.team1} : {s.team2}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* 底部信息 */}
-          <div className="flex items-end justify-between border-t border-white/20 pt-6">
-            <div>
-              <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">Club</p>
-              <p className="font-bold text-sm">{clubName}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">Invite Code</p>
-              <p className="font-mono font-bold text-sm">{inviteCode}</p>
+            <div className="flex items-end justify-between border-t border-white/20 pt-6">
+              <div><p className="text-[10px] font-black text-white/50 uppercase">Club</p><p className="font-bold text-sm">{clubName}</p></div>
+              <div className="text-right"><p className="text-[10px] font-black text-white/50 uppercase">Invite Code</p><p className="font-mono font-bold text-sm">{inviteCode}</p></div>
             </div>
           </div>
         </div>
       </div>
 
-      <p className="mt-6 text-white/40 text-sm animate-pulse flex items-center gap-2">
-        <Share2 size={16} /> 保存图片并分享到微信群
-      </p>
+      {/* 最终显示的图片 - 用户可长按保存 */}
+      {finalImage && (
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center">
+          <img 
+            src={finalImage} 
+            className="w-full max-w-[360px] rounded-3xl shadow-2xl border-4 border-white/10" 
+            alt="战报" 
+          />
+          <div className="mt-8 flex flex-col items-center gap-3">
+             <div className="flex items-center gap-2 text-yellow-400 font-bold bg-yellow-400/10 px-4 py-2 rounded-full">
+                <Info size={16} />
+                <span>长按上方图片保存到相册</span>
+             </div>
+             <p className="text-white/40 text-xs">保存后即可分享到微信群</p>
+          </div>
+        </motion.div>
+      )}
     </motion.div>
   );
 }
