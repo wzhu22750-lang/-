@@ -1,11 +1,18 @@
-
 export type MatchType = 'Singles' | 'Doubles';
+
+export interface Club {
+  id: string;
+  name: string;
+  invite_code: string;
+}
 
 export interface Player {
   id: string;
   name: string;
   avatar?: string;
   initials: string;
+  club_id: string; // 必须关联俱乐部
+  elo_rating?: number; // 预留给积分系统
 }
 
 export interface GameScore {
@@ -15,11 +22,11 @@ export interface GameScore {
 
 export interface Match {
   id: string;
-  date: number; // timestamp
+  date: number;
   type: MatchType;
-  team1: string[]; // array of player IDs
-  team2: string[]; // array of player IDs
+  team1: string[];
+  team2: string[];
   scores: GameScore[];
   tournament?: string;
-  location?: string;
+  club_id: string; // 必须关联俱乐部
 }
