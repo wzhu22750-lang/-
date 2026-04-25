@@ -8,15 +8,18 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // --- 俱乐部操作 ---
 export async function createClub(name: string): Promise<Club | null> {
+  // 生成一个更可靠的 6 位随机码
   const invite_code = Math.random().toString(36).substring(2, 8).toUpperCase();
+  
   const { data, error } = await supabase
     .from('clubs')
     .insert([{ name, invite_code }])
-    .select('*') // 必须有 select
-    .single(); // 必须有 single
+    .select() // 返回插入的数据
+    .single(); // 因为只插入一条，所以用 single
   
   if (error) { 
-    console.error('Supabase 插入错误:', error); 
+    // 如果还是失败，请在浏览器控制台查看这个报错信息
+    console.error('数据库插入错误详情:', error.message, error.details); 
     return null; 
   }
   return data;
