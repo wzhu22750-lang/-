@@ -7,6 +7,7 @@ import { MatchList } from './components/MatchList';
 import { H2HHero } from './components/H2HHero';
 import { AddMatchModal } from './components/AddMatchModal';
 import { PlayerSelectModal } from './components/PlayerSelectModal';
+import { PlayerProfileModal } from './components/PlayerProfileModal';
 
 export default function App() {
   const [players, setPlayers] = useState<Player[]>([]);
@@ -15,6 +16,7 @@ export default function App() {
   const [selectedTeam2, setSelectedTeam2] = useState<string[]>([]);
   const [isAddMatchOpen, setIsAddMatchOpen] = useState(false);
   const [isPlayerSelectOpen, setIsPlayerSelectOpen] = useState<{ side: 'team1' | 'team2' } | null>(null);
+  const [viewingPlayer, setViewingPlayer] = useState<Player | null>(null);
 
   useEffect(() => {
     const initData = async () => {
@@ -168,7 +170,16 @@ export default function App() {
             onAddPlayer={handleAddPlayer}
             onUpdatePlayer={handleUpdatePlayer}
             onDeletePlayer={handleDeletePlayer}
+            onViewProfile={(p) => setViewingPlayer(p)}
             currentSelected={isPlayerSelectOpen.side === 'team1' ? selectedTeam1 : selectedTeam2}
+          />
+        )}
+        {viewingPlayer && (
+          <PlayerProfileModal 
+            player={viewingPlayer}
+            matches={matches}
+            players={players}
+            onClose={() => setViewingPlayer(null)}
           />
         )}
       </AnimatePresence>
