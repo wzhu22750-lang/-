@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Player, Match } from './types';
-import { getPlayers, getMatches, savePlayerToCloud, saveMatchToCloud } from './lib/storage';
+import { getPlayers, getMatches, savePlayerToCloud, saveMatchToCloud, deletePlayerFromCloud } from './lib/storage';
 import { Plus, Trophy, Users, ChevronLeft, Home, MoreHorizontal, Circle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MatchList } from './components/MatchList';
@@ -16,13 +16,12 @@ export default function App() {
   const [isAddMatchOpen, setIsAddMatchOpen] = useState(false);
   const [isPlayerSelectOpen, setIsPlayerSelectOpen] = useState<{ side: 'team1' | 'team2' } | null>(null);
 
-  // 联网加载初始数据
   useEffect(() => {
     const initData = async () => {
-      const cloudPlayers = await getPlayers();
-      const cloudMatches = await getMatches();
-      setPlayers(cloudPlayers);
-      setMatches(cloudMatches);
+      const p = await getPlayers();
+      const m = await getMatches();
+      setPlayers(p);
+      setMatches(m);
     };
     initData();
   }, []);
@@ -44,8 +43,7 @@ export default function App() {
     h2hMatches.forEach(m => {
       let m1Games = 0; let m2Games = 0;
       m.scores.forEach(s => {
-        if (s.team1 > s.team2) m1Games++;
-        else if (s.team2 > s.team1) m2Games++;
+        if (s.team1 > s.team2) m1Games++; else m2Games++;
       });
       const isOurTeam1 = selectedTeam1.every(id => m.team1.includes(id)) && m.team1.length === selectedTeam1.length;
       if (isOurTeam1) {
@@ -59,13 +57,24 @@ export default function App() {
 
   const handleAddMatch = async (newMatch: Match) => {
     setMatches([newMatch, ...matches]);
-    await saveMatchToCloud(newMatch); // 同步到云端
+    await saveMatchToCloud(newMatch);
     setIsAddMatchOpen(false);
   };
 
   const handleAddPlayer = async (p: Player) => {
     setPlayers([...players, p]);
-    await savePlayerToCloud(p); // 同步到云端
+    await savePlayerToCloud(p);
+  };
+
+  const handleUpdatePlayer = async (p: Player) => {
+    setPlayers(players.map(item => item.id === p.id ? p : item));
+    await savePlayerToCloud(p);
+  };
+
+  const handleDeletePlayer = async (id: string) => {
+    if (!confirm('确定要删除这位球员吗？')) return;
+    setPlayers(players.filter(p => p.id !== id));
+    await deletePlayerFromCloud(id);
   };
 
   const handleSelectPlayer = (side: 'team1' | 'team2', ids: string[]) => {
@@ -146,6 +155,8 @@ export default function App() {
             players={players}
             onSelect={(ids) => handleSelectPlayer(isPlayerSelectOpen.side, ids)}
             onAddPlayer={handleAddPlayer}
+            onUpdatePlayer={handleUpdatePlayer}
+            onDeletePlayer={handleDeletePlayer}
             currentSelected={isPlayerSelectOpen.side === 'team1' ? selectedTeam1 : selectedTeam2}
           />
         )}
