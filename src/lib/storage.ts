@@ -1,13 +1,42 @@
 import { createClient } from '@supabase/supabase-js';
-import { Player, Match } from '../types';
+import { Player, Match, Club } from '../types';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-export async function getPlayers(): Promise<Player[]> {
-  const { data, error } = await supabase.from('players').select('*').order('name');
+// --- 俱乐部操作 ---
+export async function createClub(name: string): Promise<Club | null> {
+  const invite_code = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const { data, error } = await supabase
+    .from('clubs')
+    .insert([{ name, invite_code }])
+    .select()
+    .single();
+  
+  if (error) { console.error(error); return null; }
+  return data;
+}
+
+export async function joinClub(inviteCode: string): Promise<Club | null> {
+  const { data, error } = await supabase
+    .from('clubs')
+    .select('*')
+    .eq('invite_code', inviteCode.toUpperCase())
+    .single();
+  
+  if (error) { alert('邀请码无效'); return null; }
+  return data;
+}
+
+// --- 球员操作 (带 club_id 过滤) ---
+export async function getPlayers(clubId: string): Promise<Player[]> {
+  const { data, error } = await supabase
+    .from('players')
+    .select('*')
+    .eq('club_id', clubId)
+    .order('name');
   if (error) return [];
   return data || [];
 }
@@ -22,8 +51,13 @@ export async function deletePlayerFromCloud(id: string) {
   if (error) console.error('删除球员失败:', error.message);
 }
 
-export async function getMatches(): Promise<Match[]> {
-  const { data, error } = await supabase.from('matches').select('*').order('date', { ascending: false });
+// --- 比赛操作 (带 club_id 过滤) ---
+export async function getMatches(clubId: string): Promise<Match[]> {
+  const { data, error } = await supabase
+    .from('matches')
+    .select('*')
+    .eq('club_id', clubId)
+    .order('date', { ascending: false });
   if (error) return [];
   return data || [];
 }
