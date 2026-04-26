@@ -64,38 +64,64 @@ export default function App() {
     return { t1Wins, t2Wins, total: h2hMatches.length };
   }, [h2hMatches, selectedTeam1]);
 
-  const handleAddMatch = async (newMatch: Match) => {
+ const handleAddMatch = async (newMatch: Match) => {
     if (!club) return;
     const matchWithClub = { ...newMatch, club_id: club.id };
 
+    // 1. 获取两队球员对象
     const team1Objs = players.filter(p => newMatch.team1.includes(p.id));
     const team2Objs = players.filter(p => newMatch.team2.includes(p.id));
     
+    let change = 0;
+    let updatedPlayers = [...players];
+
     if (team1Objs.length > 0 && team2Objs.length > 0) {
+      // 2. 计算平均分
       const t1Avg = team1Objs.reduce((sum, p) => sum + (p.elo_rating || 1500), 0) / team1Objs.length;
       const t2Avg = team2Objs.reduce((sum, p) => sum + (p.elo_rating || 1500), 0) / team2Objs.length;
+      
+      // 3. 计算谁赢了
       let t1Games = 0; let t2Games = 0;
       newMatch.scores.forEach(s => { if (s.team1 > s.team2) t1Games++; else t2Games++; });
-      const change = calculateEloChange(t1Avg, t2Avg, t1Games > t2Games);
+      
+      // 4. 计算变动分数
+      change = calculateEloChange(t1Avg, t2Avg, t1Games > t2Games);
 
-      const updatedPlayers = players.map(p => {
+      // 5. 生成更新后的球员数组
+      updatedPlayers = players.map(p => {
         if (newMatch.team1.includes(p.id)) {
-          const newP = { ...p, elo_rating: (p.elo_rating || 1500) + change };
-          savePlayerToCloud(newP);
-          return newP;
+          return { ...p, elo_rating: (p.elo_rating || 1500) + change };
         }
         if (newMatch.team2.includes(p.id)) {
-          const newP = { ...p, elo_rating: (p.elo_rating || 1500) - change };
-          savePlayerToCloud(newP);
-          return newP;
+          return { ...p, elo_rating: (p.elo_rating || 1500) - change };
         }
         return p;
       });
-      setPlayers(updatedPlayers);
     }
 
+    // 6. 【关键】先更新本地 UI
+    setPlayers(updatedPlayers);
     setMatches([matchWithClub, ...matches]);
-    await saveMatchToCloud(matchWithClub);
+
+    // 7. 【关键】将变动保存到云端
+    try {
+      // 保存比赛记录
+      await saveMatchToCloud(matchWithClub);
+      
+      // 保存受影响球员的新积分 (只更新参与了比赛的球员)
+      const affectedPlayerIds = [...newMatch.team1, ...newMatch.team2];
+      for (const pid of affectedPlayerIds) {
+        const pToUpdate = updatedPlayers.find(up => up.id === pid);
+        if (pToUpdate) {
+          await savePlayerToCloud(pToUpdate);
+        }
+      }
+      console.log('积分同步成功');
+    } catch (err) {
+      console.error('保存失败:', err);
+      alert('同步失败，请刷新页面检查积分');
+    }
+
     setIsAddMatchOpen(false);
   };
 
