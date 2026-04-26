@@ -1,9 +1,26 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Player, Match, Club } from './types';
-import { getPlayers, getMatches, savePlayerToCloud, saveMatchToCloud, deletePlayerFromCloud, deleteMatchFromCloud } from './lib/storage';
+import { 
+  getPlayers, 
+  getMatches, 
+  savePlayerToCloud, 
+  saveMatchToCloud, 
+  deletePlayerFromCloud, 
+  deleteMatchFromCloud 
+} from './lib/storage';
 import { calculateEloChange } from './lib/elo';
-import { Plus, Trophy, Users, LogOut, Award, BarChart3 } from 'lucide-react';
+import { 
+  Plus, 
+  Users, 
+  LogOut, 
+  Award, 
+  BarChart3, 
+  Zap, 
+  Trophy 
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+
+// 组件导入
 import { MatchList } from './components/MatchList';
 import { H2HHero } from './components/H2HHero';
 import { AddMatchModal } from './components/AddMatchModal';
@@ -11,25 +28,43 @@ import { PlayerSelectModal } from './components/PlayerSelectModal';
 import { PlayerProfileModal } from './components/PlayerProfileModal';
 import { ClubSetup } from './components/ClubSetup';
 import { RankingList } from './components/RankingList';
+import { RecentActivity } from './components/RecentActivity';
 
 export default function App() {
+  // --- 1. 核心状态 ---
   const [club, setClub] = useState<Club | null>(() => {
     const saved = localStorage.getItem('h2h_club');
     return saved ? JSON.parse(saved) : null;
   });
+  
   const [players, setPlayers] = useState<Player[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
-  const [activeTab, setActiveTab] = useState<'h2h' | 'ranking'>('h2h');
+  const [activeTab, setActiveTab] = useState<'recent' | 'h2h' | 'ranking'>('recent');
   
+  // 选择与弹窗状态
   const [selectedTeam1, setSelectedTeam1] = useState<string[]>([]);
   const [selectedTeam2, setSelectedTeam2] = useState<string[]>([]);
   const [isAddMatchOpen, setIsAddMatchOpen] = useState(false);
   const [isPlayerSelectOpen, setIsPlayerSelectOpen] = useState<{ side: 'team1' | 'team2' } | null>(null);
   const [viewingPlayer, setViewingPlayer] = useState<Player | null>(null);
 
+  // --- 2. 数据初始化与俱乐部历史记忆 ---
   useEffect(() => {
     if (club) {
+      // 保存当前进入的俱乐部
       localStorage.setItem('h2h_club', JSON.stringify(club));
+      
+      // 更新俱乐部历史列表 (用于快速进入功能)
+      const historySaved = localStorage.getItem('h2h_club_history');
+      let history: Club[] = historySaved ? JSON.parse(historySaved) : [];
+      
+      // 如果不在历史里，则添加 (去重)
+      if (!history.find(c => c.id === club.id)) {
+        history = [club, ...history].slice(0, 5); // 最多记5个
+        localStorage.setItem('h2h_club_history', JSON.stringify(history));
+      }
+
+      // 获取云端数据
       const initData = async () => {
         const p = await getPlayers(club.id);
         const m = await getMatches(club.id);
@@ -40,6 +75,7 @@ export default function App() {
     }
   }, [club]);
 
+  // --- 3. H2H 数据计算逻辑 ---
   const h2hMatches = useMemo(() => {
     if (selectedTeam1.length === 0 || selectedTeam2.length === 0) return [];
     return matches.filter(m => {
@@ -58,70 +94,52 @@ export default function App() {
       let m1Games = 0; let m2Games = 0;
       m.scores.forEach(s => { if (s.team1 > s.team2) m1Games++; else m2Games++; });
       const isOurTeam1 = selectedTeam1.every(id => m.team1.includes(id)) && m.team1.length === selectedTeam1.length;
-      if (isOurTeam1) { if (m1Games > m2Games) t1Wins++; else t2Wins++; }
-      else { if (m2Games > m1Games) t1Wins++; else t2Wins++; }
+      if (isOurTeam1) { 
+        if (m1Games > m2Games) t1Wins++; else t2Wins++; 
+      } else { 
+        if (m2Games > m1Games) t1Wins++; else t2Wins++; 
+      }
     });
     return { t1Wins, t2Wins, total: h2hMatches.length };
   }, [h2hMatches, selectedTeam1]);
 
- const handleAddMatch = async (newMatch: Match) => {
+  // --- 4. 核心交互处理 ---
+  const handleAddMatch = async (newMatch: Match) => {
     if (!club) return;
     const matchWithClub = { ...newMatch, club_id: club.id };
 
-    // 1. 获取两队球员对象
+    // ELO 积分变动计算
     const team1Objs = players.filter(p => newMatch.team1.includes(p.id));
     const team2Objs = players.filter(p => newMatch.team2.includes(p.id));
     
-    let change = 0;
-    let updatedPlayers = [...players];
-
     if (team1Objs.length > 0 && team2Objs.length > 0) {
-      // 2. 计算平均分
       const t1Avg = team1Objs.reduce((sum, p) => sum + (p.elo_rating || 1500), 0) / team1Objs.length;
       const t2Avg = team2Objs.reduce((sum, p) => sum + (p.elo_rating || 1500), 0) / team2Objs.length;
       
-      // 3. 计算谁赢了
       let t1Games = 0; let t2Games = 0;
       newMatch.scores.forEach(s => { if (s.team1 > s.team2) t1Games++; else t2Games++; });
       
-      // 4. 计算变动分数
-      change = calculateEloChange(t1Avg, t2Avg, t1Games > t2Games);
+      const change = calculateEloChange(t1Avg, t2Avg, t1Games > t2Games);
 
-      // 5. 生成更新后的球员数组
-      updatedPlayers = players.map(p => {
+      // 更新受影响球员的本地分数并同步云端
+      const updatedPlayers = players.map(p => {
         if (newMatch.team1.includes(p.id)) {
-          return { ...p, elo_rating: (p.elo_rating || 1500) + change };
+          const updated = { ...p, elo_rating: (p.elo_rating || 1500) + change };
+          savePlayerToCloud(updated);
+          return updated;
         }
         if (newMatch.team2.includes(p.id)) {
-          return { ...p, elo_rating: (p.elo_rating || 1500) - change };
+          const updated = { ...p, elo_rating: (p.elo_rating || 1500) - change };
+          savePlayerToCloud(updated);
+          return updated;
         }
         return p;
       });
+      setPlayers(updatedPlayers);
     }
 
-    // 6. 【关键】先更新本地 UI
-    setPlayers(updatedPlayers);
     setMatches([matchWithClub, ...matches]);
-
-    // 7. 【关键】将变动保存到云端
-    try {
-      // 保存比赛记录
-      await saveMatchToCloud(matchWithClub);
-      
-      // 保存受影响球员的新积分 (只更新参与了比赛的球员)
-      const affectedPlayerIds = [...newMatch.team1, ...newMatch.team2];
-      for (const pid of affectedPlayerIds) {
-        const pToUpdate = updatedPlayers.find(up => up.id === pid);
-        if (pToUpdate) {
-          await savePlayerToCloud(pToUpdate);
-        }
-      }
-      console.log('积分同步成功');
-    } catch (err) {
-      console.error('保存失败:', err);
-      alert('同步失败，请刷新页面检查积分');
-    }
-
+    await saveMatchToCloud(matchWithClub);
     setIsAddMatchOpen(false);
   };
 
@@ -138,87 +156,165 @@ export default function App() {
   };
 
   const handleDeletePlayer = async (id: string) => {
-    if (!confirm('确定删除？')) return;
-    setPlayers(players.filter(p => p.id !== id));
+    if (!confirm('确定要删除这位球员吗？')) return;
     await deletePlayerFromCloud(id);
+    setPlayers(players.filter(p => p.id !== id));
   };
 
   const handleDeleteMatch = async (id: string) => {
-    if (!confirm('确定删除比赛记录？')) return;
-    setMatches(matches.filter(m => m.id !== id));
+    if (!confirm('确定要删除这场比赛记录吗？')) return;
     await deleteMatchFromCloud(id);
+    setMatches(matches.filter(m => m.id !== id));
   };
 
+  // --- 5. 视图切换逻辑 ---
   if (!club) return <ClubSetup onComplete={setClub} />;
 
   return (
-    <div className="min-h-screen bg-neutral-50 pb-20">
+    <div className="min-h-screen bg-neutral-50 pb-24 font-sans text-neutral-900">
+      {/* 顶部导航栏 */}
       <div className="bg-red-600 text-white sticky top-0 z-50 shadow-lg">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            <button onClick={() => { if(confirm('退出俱乐部？')) { localStorage.removeItem('h2h_club'); setClub(null); }}} className="p-2 hover:bg-white/10 rounded-full"><LogOut size={20} /></button>
+            <button 
+              onClick={() => { if(confirm('退出当前俱乐部？')) { localStorage.removeItem('h2h_club'); setClub(null); }}} 
+              className="p-2 hover:bg-white/10 rounded-full transition-colors"
+            >
+              <LogOut size={20} />
+            </button>
             <div>
               <h1 className="text-lg font-black leading-none">{club.name}</h1>
-              <p className="text-[10px] opacity-70 font-mono">INVITE: {club.invite_code}</p>
+              <p className="text-[10px] opacity-70 font-mono tracking-wider">CODE: {club.invite_code}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 bg-black/20 rounded-full px-3 py-1">
-            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-            <span className="text-[10px] font-bold uppercase">Live Sync</span>
+          <div className="bg-black/20 rounded-full px-3 py-1 flex items-center gap-2">
+            <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+            <span className="text-[10px] font-black uppercase italic tracking-tighter">Live Sync</span>
           </div>
         </div>
-        <div className="flex px-4 gap-8 text-sm font-bold border-t border-white/10">
-          <button onClick={() => setActiveTab('h2h')} className={`flex items-center gap-2 py-3 border-b-2 transition-all ${activeTab === 'h2h' ? 'border-white text-white' : 'border-transparent text-white/50'}`}><BarChart3 size={16} /> 对战分析</button>
-          <button onClick={() => setActiveTab('ranking')} className={`flex items-center gap-2 py-3 border-b-2 transition-all ${activeTab === 'ranking' ? 'border-white text-white' : 'border-transparent text-white/50'}`}><Award size={16} /> 战力排行</button>
+
+        {/* Tab 切换栏 */}
+        <div className="flex px-4 gap-6 text-sm font-bold border-t border-white/10 overflow-x-auto no-scrollbar">
+          <button 
+            onClick={() => setActiveTab('recent')} 
+            className={`flex items-center gap-2 py-3 border-b-2 shrink-0 transition-all ${activeTab === 'recent' ? 'border-white text-white' : 'border-transparent text-white/50'}`}
+          >
+            <Zap size={16} /> 最近动态
+          </button>
+          <button 
+            onClick={() => setActiveTab('h2h')} 
+            className={`flex items-center gap-2 py-3 border-b-2 shrink-0 transition-all ${activeTab === 'h2h' ? 'border-white text-white' : 'border-transparent text-white/50'}`}
+          >
+            <BarChart3 size={16} /> 交手分析
+          </button>
+          <button 
+            onClick={() => setActiveTab('ranking')} 
+            className={`flex items-center gap-2 py-3 border-b-2 shrink-0 transition-all ${activeTab === 'ranking' ? 'border-white text-white' : 'border-transparent text-white/50'}`}
+          >
+            <Award size={16} /> 战力排行
+          </button>
         </div>
       </div>
 
-      {activeTab === 'h2h' ? (
-        <>
-          <H2HHero 
-            stats={stats} 
-            team1Names={selectedTeam1.map(id => players.find(p => p.id === id)?.name || '').join(' / ')}
-            team2Names={selectedTeam2.map(id => players.find(p => p.id === id)?.name || '').join(' / ')}
-            onSelectTeam1={() => setIsPlayerSelectOpen({ side: 'team1' })}
-            onSelectTeam2={() => setIsPlayerSelectOpen({ side: 'team2' })}
-            team1Empty={selectedTeam1.length === 0}
-            team2Empty={selectedTeam2.length === 0}
-            player1={players.find(p => p.id === selectedTeam1[0])}
-            player2={players.find(p => p.id === selectedTeam2[0])}
-          />
-          <main className="px-4 mt-6">
-            {selectedTeam1.length > 0 && selectedTeam2.length > 0 ? (
-              <AnimatePresence mode="popLayout">
-                {h2hMatches.length > 0 ? <MatchList 
-  matches={h2hMatches} 
-  team1Ids={selectedTeam1} 
-  players={players} 
-  onDeleteMatch={handleDeleteMatch}
-  clubName={club.name}
-  inviteCode={club.invite_code}
-/> : <div className="text-center py-20 text-neutral-400">暂无记录</div>}
-              </AnimatePresence>
-            ) : <div className="text-center py-20 text-neutral-400"><Users size={48} className="mx-auto mb-4 opacity-20" /><p>请选择球员</p></div>}
-          </main>
-        </>
-      ) : (
-        <main className="px-4 mt-6"><RankingList players={players} /></main>
-      )}
+      {/* 主内容区 */}
+      <main className="px-4 mt-6">
+        {activeTab === 'recent' && (
+          <RecentActivity matches={matches} players={players} />
+        )}
 
-      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setIsAddMatchOpen(true)} className="fixed bottom-6 right-6 w-14 h-14 bg-red-600 text-white rounded-full shadow-2xl flex items-center justify-center z-40"><Plus size={28} /></motion.button>
+        {activeTab === 'h2h' && (
+          <div className="space-y-6">
+            <H2HHero 
+              stats={stats} 
+              team1Names={selectedTeam1.map(id => players.find(p => p.id === id)?.name || '').join('/')} 
+              team2Names={selectedTeam2.map(id => players.find(p => p.id === id)?.name || '').join('/')} 
+              onSelectTeam1={() => setIsPlayerSelectOpen({ side: 'team1' })} 
+              onSelectTeam2={() => setIsPlayerSelectOpen({ side: 'team2' })} 
+              team1Empty={selectedTeam1.length === 0} 
+              team2Empty={selectedTeam2.length === 0} 
+              player1={players.find(p => p.id === selectedTeam1[0])} 
+              player2={players.find(p => p.id === selectedTeam2[0])} 
+            />
+            
+            <AnimatePresence mode="popLayout">
+              {selectedTeam1.length > 0 && selectedTeam2.length > 0 ? (
+                h2hMatches.length > 0 ? (
+                  <MatchList 
+                    matches={h2hMatches} 
+                    team1Ids={selectedTeam1} 
+                    players={players} 
+                    onDeleteMatch={handleDeleteMatch} 
+                    clubName={club.name} 
+                    inviteCode={club.invite_code} 
+                  />
+                ) : (
+                  <div className="text-center py-20 text-neutral-400">
+                    <Trophy size={48} className="mx-auto mb-4 opacity-10" />
+                    <p className="font-bold">暂无此组合的对局记录</p>
+                  </div>
+                )
+              ) : (
+                <div className="text-center py-20 text-neutral-400">
+                  <Users size={48} className="mx-auto mb-4 opacity-10" />
+                  <p className="font-bold font-sans">请选择球员开始对战分析</p>
+                </div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
 
+        {activeTab === 'ranking' && (
+          <RankingList players={players} />
+        )}
+      </main>
+
+      {/* 悬浮添加按钮 (FAB) */}
+      <motion.button 
+        whileHover={{ scale: 1.05 }} 
+        whileTap={{ scale: 0.95 }} 
+        onClick={() => setIsAddMatchOpen(true)} 
+        className="fixed bottom-8 right-6 w-14 h-14 bg-red-600 text-white rounded-full shadow-2xl flex items-center justify-center z-40 border-4 border-white"
+      >
+        <Plus size={28} />
+      </motion.button>
+
+      {/* 所有的模态框组件 */}
       <AnimatePresence>
-        {isAddMatchOpen && <AddMatchModal onClose={() => setIsAddMatchOpen(false)} players={players} onAdd={handleAddMatch} />}
-        {isPlayerSelectOpen && (
-          <PlayerSelectModal
-            side={isPlayerSelectOpen.side} onClose={() => setIsPlayerSelectOpen(null)} players={players}
-            onSelect={(ids) => { if (isPlayerSelectOpen.side === 'team1') setSelectedTeam1(ids); else setSelectedTeam2(ids); setIsPlayerSelectOpen(null); }}
-            onAddPlayer={handleAddPlayer} onUpdatePlayer={handleUpdatePlayer} onDeletePlayer={handleDeletePlayer} onViewProfile={setViewingPlayer} currentSelected={isPlayerSelectOpen.side === 'team1' ? selectedTeam1 : selectedTeam2}
+        {isAddMatchOpen && (
+          <AddMatchModal 
+            onClose={() => setIsAddMatchOpen(false)} 
+            players={players} 
+            onAdd={handleAddMatch} 
           />
         )}
-        {viewingPlayer && <PlayerProfileModal player={viewingPlayer} matches={matches} players={players} onClose={() => setViewingPlayer(null)} />}
+        
+        {isPlayerSelectOpen && (
+          <PlayerSelectModal 
+            side={isPlayerSelectOpen.side} 
+            onClose={() => setIsPlayerSelectOpen(null)} 
+            players={players} 
+            onSelect={(ids) => { 
+              if (isPlayerSelectOpen.side === 'team1') setSelectedTeam1(ids); 
+              else setSelectedTeam2(ids); 
+              setIsPlayerSelectOpen(null); 
+            }} 
+            onAddPlayer={handleAddPlayer} 
+            onUpdatePlayer={handleUpdatePlayer} 
+            onDeletePlayer={handleDeletePlayer} 
+            onViewProfile={setViewingPlayer} 
+            currentSelected={isPlayerSelectOpen.side === 'team1' ? selectedTeam1 : selectedTeam2} 
+          />
+        )}
+        
+        {viewingPlayer && (
+          <PlayerProfileModal 
+            player={viewingPlayer} 
+            matches={matches} 
+            players={players} 
+            onClose={() => setViewingPlayer(null)} 
+          />
+        )}
       </AnimatePresence>
     </div>
   );
-  
 }
