@@ -48,6 +48,7 @@ export async function getPlayers(clubId: string): Promise<Player[]> {
 }
 
 export async function savePlayerToCloud(player: Player) {
+  // 确保 player 对象里包含了 elo_rating
   const { error } = await supabase.from('players').upsert(player);
   if (error) console.error('保存球员失败:', error.message);
 }
