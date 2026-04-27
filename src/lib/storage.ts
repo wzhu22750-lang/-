@@ -51,7 +51,7 @@ export async function saveMatchToCloud(match: Match) {
 
 export async function deleteMatchFromCloud(id: string) {
   await supabase.from('matches').delete().eq('id', id);
-}}
+}
 
 // --- 球员操作 (带 club_id 过滤) ---
 export async function getPlayers(clubId: string): Promise<Player[]> {
