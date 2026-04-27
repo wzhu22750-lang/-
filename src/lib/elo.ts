@@ -7,9 +7,7 @@ const K_FACTOR = 32;
 
 /**
  * 核心逻辑：基于当前所有比赛战绩全量重算球员积分
- * @param players 当前俱乐部所有球员
- * @param matches 当前存在的比赛记录（已删除的记录不应包含在内）
- * @returns 带有最新 elo_rating 的球员数组
+ * 修复了球员数据丢失可能导致的 NaN 风险
  */
 export function recalculateAllElo(players: Player[], matches: Match[]): Player[] {
   // 1. 初始化所有人的积分为初始值
@@ -23,12 +21,16 @@ export function recalculateAllElo(players: Player[], matches: Match[]): Player[]
 
   // 3. 逐场计算积分变动
   sortedMatches.forEach(match => {
-    const t1Ids = match.team1;
-    const t2Ids = match.team2;
+    // 过滤出当前仍存在于球员列表中的 ID，防止引用不存在的球员导致 NaN
+    const validT1 = match.team1.filter(id => ratings[id] !== undefined);
+    const validT2 = match.team2.filter(id => ratings[id] !== undefined);
+
+    // 如果某一边没有有效球员（比如都被删了），跳过此场比赛计算
+    if (validT1.length === 0 || validT2.length === 0) return;
 
     // 计算两队当前的平均 Elo
-    const t1Avg = t1Ids.reduce((sum, id) => sum + (ratings[id] || INITIAL_ELO), 0) / t1Ids.length;
-    const t2Avg = t2Ids.reduce((sum, id) => sum + (ratings[id] || INITIAL_ELO), 0) / t2Ids.length;
+    const t1Avg = validT1.reduce((sum, id) => sum + ratings[id], 0) / validT1.length;
+    const t2Avg = validT2.reduce((sum, id) => sum + ratings[id], 0) / validT2.length;
 
     // 判定胜负 (根据小局比分)
     let t1WinGames = 0;
@@ -38,7 +40,7 @@ export function recalculateAllElo(players: Player[], matches: Match[]): Player[]
       else if (s.team2 > s.team1) t2WinGames++;
     });
 
-    // 如果平局（比如记录不完整），不计分
+    // 如果平局（比如记录不完整或确实战平），不计分
     if (t1WinGames === t2WinGames) return;
 
     const t1Won = t1WinGames > t2WinGames;
@@ -49,12 +51,12 @@ export function recalculateAllElo(players: Player[], matches: Match[]): Player[]
     const actualScore1 = t1Won ? 1 : 0;
     const change = Math.round(K_FACTOR * (actualScore1 - expectedScore1));
 
-    // 更新参与者的积分
-    t1Ids.forEach(id => {
-      if (ratings[id] !== undefined) ratings[id] += change;
+    // 更新参与者的积分 (只更新仍存在的球员)
+    validT1.forEach(id => {
+      ratings[id] += change;
     });
-    t2Ids.forEach(id => {
-      if (ratings[id] !== undefined) ratings[id] -= change;
+    validT2.forEach(id => {
+      ratings[id] -= change;
     });
   });
 
@@ -63,15 +65,6 @@ export function recalculateAllElo(players: Player[], matches: Match[]): Player[]
     ...p,
     elo_rating: ratings[p.id] || INITIAL_ELO
   }));
-}
-
-/**
- * 计算单场比赛的积分变动（用于弹窗预览）
- */
-export function calculateEloChange(team1Avg: number, team2Avg: number, team1Won: boolean) {
-  const expectedScore1 = 1 / (1 + Math.pow(10, (team2Avg - team1Avg) / 400));
-  const actualScore1 = team1Won ? 1 : 0;
-  return Math.round(K_FACTOR * (actualScore1 - expectedScore1));
 }
 
 /**
