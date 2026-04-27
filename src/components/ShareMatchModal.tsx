@@ -20,22 +20,28 @@ export function ShareMatchModal({ match, players, clubName, inviteCode, onClose 
   const getPlayer = (id: string) => players.find(p => p.id === id);
   const t1Won = match.scores.filter(s => s.team1 > s.team2).length > match.scores.filter(s => s.team2 > s.team1).length;
 
-  // 自动生成图片逻辑
   useEffect(() => {
     const generate = async () => {
       if (cardRef.current) {
         try {
-          // 等待一小会儿确保字体和图片加载完成
-          await new Promise(resolve => setTimeout(resolve, 500));
+          // 关键点 1：增加延时，确保远程头像图片加载完成
+          await new Promise(resolve => setTimeout(resolve, 800));
+          
+          // 关键点 2：优化生成参数，pixelRatio 2 在手机端最稳定
           const dataUrl = await toPng(cardRef.current, { 
             cacheBust: true, 
-            pixelRatio: 3,
-            backgroundColor: '#dc2626' // 强制红色背景
+            pixelRatio: 2, 
+            backgroundColor: '#dc2626',
+            style: {
+              opacity: '1',
+              transform: 'scale(1)',
+            }
           });
           setFinalImage(dataUrl);
           setStatus('ready');
         } catch (err) {
-          console.error('生成失败', err);
+          console.error('生成战报失败:', err);
+          setStatus('ready'); // 即使失败也停止加载动画
         }
       }
     };
@@ -47,9 +53,9 @@ export function ShareMatchModal({ match, players, clubName, inviteCode, onClose 
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black/95 z-[150] flex flex-col items-center overflow-y-auto pt-12 pb-12 px-6"
     >
-      {/* 顶部控制栏 - 增加了安全距离 */}
-      <div className="fixed top-6 right-6 z-[160] flex gap-4">
-        <button onClick={onClose} className="bg-white/20 backdrop-blur-md p-3 rounded-full text-white shadow-lg">
+      {/* 顶部控制栏 */}
+      <div className="fixed top-6 right-6 z-[160]">
+        <button onClick={onClose} className="bg-white/20 backdrop-blur-md p-3 rounded-full text-white shadow-lg active:scale-90 transition-transform">
           <X size={24} />
         </button>
       </div>
@@ -59,14 +65,14 @@ export function ShareMatchModal({ match, players, clubName, inviteCode, onClose 
         {status === 'rendering' && (
           <motion.div exit={{ opacity: 0 }} className="flex flex-col items-center gap-3 py-20">
             <Loader2 className="text-red-500 animate-spin" size={40} />
-            <p className="text-white/60 font-bold text-sm">正在生成精美战报...</p>
+            <p className="text-white/60 font-bold text-sm">正在雕琢你的战报...</p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* 核心卡片 - 隐藏在背后用于生成图片 */}
-      <div className="absolute left-[-9999px] top-0">
-       <div ref={cardRef} className="w-[360px] bg-[#dc2626] p-8 relative flex flex-col overflow-hidden">
+      {/* 关键点 3：隐藏的渲染源，使用 fixed + opacity-0 避免 iOS 渲染失效 */}
+      <div className="fixed top-0 left-0 -z-50 opacity-0 pointer-events-none h-0 overflow-hidden">
+       <div ref={cardRef} className="w-[360px] bg-[#dc2626] p-8 relative flex flex-col">
           <div className="absolute -right-16 -top-16 w-48 h-48 bg-white/10 rounded-full border-[20px] border-white/5" />
           <div className="absolute -left-16 -bottom-16 w-48 h-48 bg-white/10 rounded-full border-[20px] border-white/5" />
           
@@ -128,7 +134,7 @@ export function ShareMatchModal({ match, players, clubName, inviteCode, onClose 
         </div>
       </div>
 
-      {/* 最终显示的图片 - 用户可长按保存 */}
+      {/* 最终显示的图片 */}
       {finalImage && (
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center">
           <img 
