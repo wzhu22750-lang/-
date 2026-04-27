@@ -15,8 +15,7 @@ import {
   LogOut, 
   Award, 
   BarChart3, 
-  Zap, 
-  Trophy 
+  Zap 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -41,32 +40,48 @@ export default function App() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [activeTab, setActiveTab] = useState<'recent' | 'h2h' | 'ranking'>('recent');
   
-  // 选择与弹窗状态
   const [selectedTeam1, setSelectedTeam1] = useState<string[]>([]);
   const [selectedTeam2, setSelectedTeam2] = useState<string[]>([]);
   const [isAddMatchOpen, setIsAddMatchOpen] = useState(false);
   const [isPlayerSelectOpen, setIsPlayerSelectOpen] = useState<{ side: 'team1' | 'team2' } | null>(null);
   const [viewingPlayer, setViewingPlayer] = useState<Player | null>(null);
 
-  // --- 2. 数据初始化与俱乐部历史记忆 ---
+  // --- 2. 加载逻辑：本地缓存优先 + 云端静默同步 ---
   useEffect(() => {
     if (club) {
       localStorage.setItem('h2h_club', JSON.stringify(club));
       
+      // A. 先从本地缓存加载 (实现秒开)
+      const cachedPlayers = localStorage.getItem(`cache_players_${club.id}`);
+      const cachedMatches = localStorage.getItem(`cache_matches_${club.id}`);
+      if (cachedPlayers) setPlayers(JSON.parse(cachedPlayers));
+      if (cachedMatches) setMatches(JSON.parse(cachedMatches));
+
+      // B. 异步拉取云端最新数据
+      const initData = async () => {
+        try {
+          const p = await getPlayers(club.id);
+          const m = await getMatches(club.id);
+          
+          setPlayers(p);
+          setMatches(m);
+
+          // C. 更新缓存
+          localStorage.setItem(`cache_players_${club.id}`, JSON.stringify(p));
+          localStorage.setItem(`cache_matches_${club.id}`, JSON.stringify(m));
+        } catch (err) {
+          console.error('云端同步失败，当前使用的是离线缓存数据');
+        }
+      };
+      initData();
+
+      // 更新俱乐部历史
       const historySaved = localStorage.getItem('h2h_club_history');
       let history: Club[] = historySaved ? JSON.parse(historySaved) : [];
       if (!history.find(c => c.id === club.id)) {
         history = [club, ...history].slice(0, 5);
         localStorage.setItem('h2h_club_history', JSON.stringify(history));
       }
-
-      const initData = async () => {
-        const p = await getPlayers(club.id);
-        const m = await getMatches(club.id);
-        setPlayers(p);
-        setMatches(m);
-      };
-      initData();
     }
   }, [club]);
 
@@ -89,8 +104,11 @@ export default function App() {
       let m1Games = 0; let m2Games = 0;
       m.scores.forEach(s => { if (s.team1 > s.team2) m1Games++; else m2Games++; });
       const isOurTeam1 = selectedTeam1.every(id => m.team1.includes(id)) && m.team1.length === selectedTeam1.length;
-      if (isOurTeam1) { if (m1Games > m2Games) t1Wins++; else t2Wins++; }
-      else { if (m2Games > m1Games) t1Wins++; else t2Wins++; }
+      if (isOurTeam1) { 
+        if (m1Games > m2Games) t1Wins++; else t2Wins++; 
+      } else { 
+        if (m2Games > m1Games) t1Wins++; else t2Wins++; 
+      }
     });
     return { t1Wins, t2Wins, total: h2hMatches.length };
   }, [h2hMatches, selectedTeam1]);
@@ -136,17 +154,20 @@ export default function App() {
       <div className="bg-red-600 text-white sticky top-0 z-50 shadow-lg">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            <button onClick={() => { if(confirm('退出俱乐部？')) { localStorage.removeItem('h2h_club'); setClub(null); }}} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+            <button 
+              onClick={() => { if(confirm('退出俱乐部？')) { localStorage.removeItem('h2h_club'); setClub(null); }}} 
+              className="p-2 hover:bg-white/10 rounded-full transition-colors"
+            >
               <LogOut size={20} />
             </button>
             <div>
               <h1 className="text-lg font-black leading-none">{club.name}</h1>
-              <p className="text-[10px] opacity-70 font-mono">CODE: {club.invite_code}</p>
+              <p className="text-[10px] opacity-70 font-mono tracking-wider">CODE: {club.invite_code}</p>
             </div>
           </div>
-          <div className="bg-black/20 rounded-full px-3 py-1 flex items-center gap-2">
+          <div className="bg-black/20 rounded-full px-3 py-1 flex items-center gap-2 border border-white/10">
             <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-            <span className="text-[10px] font-black uppercase italic italic">Live</span>
+            <span className="text-[10px] font-black uppercase italic tracking-tighter">Live</span>
           </div>
         </div>
 
@@ -175,8 +196,9 @@ export default function App() {
               onViewProfile={setViewingPlayer} 
               team1Empty={selectedTeam1.length === 0} 
               team2Empty={selectedTeam2.length === 0} 
-              player1={players.find(p => p.id === selectedTeam1[0])} 
-              player2={players.find(p => p.id === selectedTeam2[0])} 
+              // 【关键修复】传递选中的球员对象数组给 H2HHero
+              team1Players={players.filter(p => selectedTeam1.includes(p.id))}
+              team2Players={players.filter(p => selectedTeam2.includes(p.id))}
             />
             {selectedTeam1.length > 0 && selectedTeam2.length > 0 ? (
               <MatchList 
@@ -185,9 +207,9 @@ export default function App() {
                 clubName={club.name} inviteCode={club.invite_code} 
               />
             ) : (
-              <div className="text-center py-20 text-neutral-400">
+              <div className="text-center py-20 text-neutral-400 font-bold">
                 <Users size={48} className="mx-auto mb-4 opacity-10" />
-                <p className="font-bold">请选择球员开始对战分析</p>
+                <p>请选择球员开始对战分析</p>
               </div>
             )}
           </div>
@@ -198,7 +220,7 @@ export default function App() {
         )}
       </main>
 
-      {/* Floating Button */}
+      {/* FAB */}
       <motion.button 
         whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} 
         onClick={() => setIsAddMatchOpen(true)} 
