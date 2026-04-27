@@ -18,6 +18,7 @@ import {
   Zap 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { RatingChangeModal } from './components/RatingChangeModal';
 
 // 组件导入
 import { MatchList } from './components/MatchList';
@@ -45,6 +46,7 @@ export default function App() {
   const [isAddMatchOpen, setIsAddMatchOpen] = useState(false);
   const [isPlayerSelectOpen, setIsPlayerSelectOpen] = useState<{ side: 'team1' | 'team2' } | null>(null);
   const [viewingPlayer, setViewingPlayer] = useState<Player | null>(null);
+  const [lastMatchResult, setLastMatchResult] = useState<{ change: number, newRating: number } | null>(null);
 
   // --- 2. 加载逻辑：本地缓存优先 + 云端静默同步 ---
   useEffect(() => {
@@ -124,9 +126,19 @@ export default function App() {
     if (team1Objs.length > 0 && team2Objs.length > 0) {
       const t1Avg = team1Objs.reduce((sum, p) => sum + (p.elo_rating || 1500), 0) / team1Objs.length;
       const t2Avg = team2Objs.reduce((sum, p) => sum + (p.elo_rating || 1500), 0) / team2Objs.length;
+      
       let t1Games = 0; let t2Games = 0;
       newMatch.scores.forEach(s => { if (s.team1 > s.team2) t1Games++; else t2Games++; });
+      
+      // 计算变动分数
       const change = calculateEloChange(t1Avg, t2Avg, t1Games > t2Games);
+
+      // --- 【新增代码】：触发结算弹窗 ---
+      // 假设我们以 Team A 的第一个人为例展示积分变动（或者你可以逻辑更复杂点）
+      setLastMatchResult({ 
+        change: change, 
+        newRating: (team1Objs[0].elo_rating || 1500) + change 
+      });
 
       const updatedPlayers = players.map(p => {
         if (newMatch.team1.includes(p.id)) {
@@ -145,7 +157,6 @@ export default function App() {
     await saveMatchToCloud(matchWithClub);
     setIsAddMatchOpen(false);
   };
-
   if (!club) return <ClubSetup onComplete={setClub} />;
 
   return (
@@ -216,8 +227,8 @@ export default function App() {
         )}
 
         {activeTab === 'ranking' && (
-          <RankingList players={players} onViewProfile={setViewingPlayer} />
-        )}
+  <RankingList players={players} matches={matches} onViewProfile={setViewingPlayer} />
+)}
       </main>
 
       {/* FAB */}
@@ -245,6 +256,14 @@ export default function App() {
         {viewingPlayer && (
           <PlayerProfileModal player={viewingPlayer} matches={matches} players={players} onClose={() => setViewingPlayer(null)} />
         )}
+        {/* 【新增】：战力升降结算弹窗 */}
+  {lastMatchResult && (
+    <RatingChangeModal 
+      change={lastMatchResult.change}
+      newRating={lastMatchResult.newRating}
+      onClose={() => setLastMatchResult(null)}
+    />
+  )}
       </AnimatePresence>
     </div>
   );
