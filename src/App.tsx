@@ -1,14 +1,16 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Player, Match, Club } from './types';
 import { 
   getPlayers, 
   getMatches, 
   savePlayerToCloud, 
+  savePlayersToCloud, // 确保 storage.ts 中已添加此批量保存函数
   saveMatchToCloud, 
   deletePlayerFromCloud, 
-  deleteMatchFromCloud 
+  deleteMatchFromCloud,
+  supabase // 导出 supabase client 以便监听
 } from './lib/storage';
-import { calculateEloChange, recalculateAllElo } from './lib/elo'; // 确保 elo.ts 有这两个函数
+import { recalculateAllElo } from './lib/elo'; 
 import { 
   Plus, 
   Users, 
@@ -16,7 +18,6 @@ import {
   Award, 
   BarChart3, 
   Zap,
-  Trophy
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { RatingChangeModal } from './components/RatingChangeModal';
@@ -49,48 +50,64 @@ export default function App() {
   const [viewingPlayer, setViewingPlayer] = useState<Player | null>(null);
   const [lastMatchResult, setLastMatchResult] = useState<{ change: number, newRating: number } | null>(null);
 
-  // --- 2. 核心加载逻辑 (秒开策略) ---
+  // --- 2. 数据加载与同步逻辑 ---
+
+  // 核心刷新函数：从云端获取最新数据并全量重算
+  const refreshData = useCallback(async (clubId: string) => {
+    try {
+      const [cloudPlayers, cloudMatches] = await Promise.all([
+        getPlayers(clubId),
+        getMatches(clubId)
+      ]);
+      
+      const finalizedPlayers = recalculateAllElo(cloudPlayers, cloudMatches);
+      
+      setPlayers(finalizedPlayers);
+      setMatches(cloudMatches);
+      
+      // 更新本地缓存
+      localStorage.setItem(`cache_players_${clubId}`, JSON.stringify(finalizedPlayers));
+      localStorage.setItem(`cache_matches_${clubId}`, JSON.stringify(cloudMatches));
+    } catch (err) {
+      console.error('云端同步失败，当前处于离线模式');
+    }
+  }, []);
+
   useEffect(() => {
     if (!club) return;
 
-    // A. 立即执行：保存当前俱乐部并加载本地缓存
+    // A. 立即加载本地缓存（秒开）
     localStorage.setItem('h2h_club', JSON.stringify(club));
     const cachedP = localStorage.getItem(`cache_players_${club.id}`);
     const cachedM = localStorage.getItem(`cache_matches_${club.id}`);
     if (cachedP) setPlayers(JSON.parse(cachedP));
     if (cachedM) setMatches(JSON.parse(cachedM));
 
-    // B. 后台异步执行：从云端刷新数据
-    const refreshData = async () => {
-      try {
-        const [cloudPlayers, cloudMatches] = await Promise.all([
-          getPlayers(club.id),
-          getMatches(club.id)
-        ]);
-        
-        // 使用全量重算确保积分绝对准确（解决删除记录积分不退回的问题）
-        const finalizedPlayers = recalculateAllElo(cloudPlayers, cloudMatches);
-        
-        setPlayers(finalizedPlayers);
-        setMatches(cloudMatches);
-        
-        // 更新缓存
-        localStorage.setItem(`cache_players_${club.id}`, JSON.stringify(finalizedPlayers));
-        localStorage.setItem(`cache_matches_${club.id}`, JSON.stringify(cloudMatches));
-      } catch (err) {
-        console.error('同步失败，已切换至离线模式');
-      }
-    };
-    refreshData();
+    // B. 执行初始刷新
+    refreshData(club.id);
 
-    // C. 维护历史记录
+    // C. 开启实时监听 (Realtime)
+    // 监听当前俱乐部的比赛表变动，一旦有人发布/删除比赛，所有客户端同步刷新
+    const channel = supabase
+      .channel(`club_sync_${club.id}`)
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'matches', filter: `club_id=eq.${club.id}` }, 
+        () => refreshData(club.id)
+      )
+      .subscribe();
+
+    // D. 维护俱乐部访问历史
     const historySaved = localStorage.getItem('h2h_club_history');
     let history: Club[] = historySaved ? JSON.parse(historySaved) : [];
     if (!history.find(c => c.id === club.id)) {
       history = [club, ...history].slice(0, 5);
       localStorage.setItem('h2h_club_history', JSON.stringify(history));
     }
-  }, [club]);
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [club, refreshData]);
 
   // --- 3. H2H 计算逻辑 ---
   const h2hMatches = useMemo(() => {
@@ -119,43 +136,54 @@ export default function App() {
 
   // --- 4. 交互处理 ---
 
-  // 发布比赛逻辑：采用重算模式
+  // 发布比赛逻辑：全量重算 + 批量更新
   const handleAddMatch = async (newMatch: Match) => {
     if (!club) return;
     const matchWithClub = { ...newMatch, club_id: club.id };
     const newMatches = [matchWithClub, ...matches];
 
-    // 全量重算获取新积分
+    // 1. 全量重算获取新积分
     const updatedPlayers = recalculateAllElo(players, newMatches);
     
-    // 找出积分变动用于弹窗显示 (取 Team1 第一人为例)
-    const oldScore = players.find(p => p.id === newMatch.team1[0])?.elo_rating || 1500;
-    const newScore = updatedPlayers.find(p => p.id === newMatch.team1[0])?.elo_rating || 1500;
+    // 2. 找出 Team1 第一人的变动用于弹窗
+    const p1Id = newMatch.team1[0];
+    const oldScore = players.find(p => p.id === p1Id)?.elo_rating || 1500;
+    const newScore = updatedPlayers.find(p => p.id === p1Id)?.elo_rating || 1500;
     
+    // 3. 更新 UI
     setLastMatchResult({ change: newScore - oldScore, newRating: newScore });
     setMatches(newMatches);
     setPlayers(updatedPlayers);
-
-    // 云端同步
-    await saveMatchToCloud(matchWithClub);
-    const affectedIds = [...newMatch.team1, ...newMatch.team2];
-    for (const pid of affectedIds) {
-      const pData = updatedPlayers.find(up => up.id === pid);
-      if (pData) await savePlayerToCloud(pData);
-    }
     setIsAddMatchOpen(false);
+
+    // 4. 云端异步批量同步（核心优化：减少网络请求）
+    try {
+      await Promise.all([
+        saveMatchToCloud(matchWithClub),
+        savePlayersToCloud(updatedPlayers) 
+      ]);
+    } catch (err) {
+      console.error('同步至云端失败');
+    }
   };
 
+  // 删除比赛逻辑：全量重算 + 批量更新
   const handleDeleteMatch = async (id: string) => {
-    if (!confirm('确定删除？积分将重新计算。')) return;
+    if (!confirm('确定删除？积分将重新计算并同步。')) return;
     const newMatches = matches.filter(m => m.id !== id);
     const updatedPlayers = recalculateAllElo(players, newMatches);
     
     setMatches(newMatches);
     setPlayers(updatedPlayers);
     
-    await deleteMatchFromCloud(id);
-    for (const p of updatedPlayers) await savePlayerToCloud(p);
+    try {
+      await Promise.all([
+        deleteMatchFromCloud(id),
+        savePlayersToCloud(updatedPlayers)
+      ]);
+    } catch (err) {
+      console.error('云端同步失败');
+    }
   };
 
   if (!club) return <ClubSetup onComplete={setClub} />;
