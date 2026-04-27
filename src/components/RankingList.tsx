@@ -46,12 +46,18 @@ export function RankingList({ players, matches, onViewProfile }: RankingListProp
         return (
           <motion.div
             key={player.id}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.05 }}
-            onClick={() => onViewProfile(player)}
-            className="bg-white p-4 rounded-[28px] shadow-sm flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all border border-transparent hover:border-red-100 group relative overflow-hidden"
-          >
+  layout // 关键：开启布局平滑动画
+  initial={{ opacity: 0, x: 20 }}
+  animate={{ opacity: 1, x: 0 }}
+  transition={{ 
+    type: "spring", 
+    stiffness: 300, 
+    damping: 30,
+    opacity: { duration: 0.2 }
+  }}
+  onClick={() => onViewProfile(player)}
+  className="bg-white p-4 rounded-[28px] shadow-sm flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all border border-transparent hover:border-red-100 group relative overflow-hidden"
+>
             {/* 背景装饰：前三名有特殊背景 */}
             {index < 3 && (
               <div className={`absolute left-0 top-0 bottom-0 w-1 ${
