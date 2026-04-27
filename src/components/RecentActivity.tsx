@@ -1,11 +1,12 @@
 import { motion } from 'motion/react';
 import { Match, Player } from '../types';
-import { Calendar, Trophy, Zap } from 'lucide-react';
+import { Calendar, Trophy, Zap, Flame } from 'lucide-react';
+import { calculateStreak } from '../lib/elo';
 
 interface RecentActivityProps {
   matches: Match[];
   players: Player[];
-  onViewProfile: (p: Player) => void; // 新增：点击查看档案
+  onViewProfile: (p: Player) => void;
 }
 
 export function RecentActivity({ matches, players, onViewProfile }: RecentActivityProps) {
@@ -24,10 +25,10 @@ export function RecentActivity({ matches, players, onViewProfile }: RecentActivi
     <div className="space-y-4 pb-10">
       <div className="flex items-center justify-between mb-2 px-2">
         <h3 className="font-black text-neutral-400 text-[10px] uppercase tracking-widest flex items-center gap-2">
-          <Zap size={12} className="fill-current" /> 俱乐部实时快讯
+          <Zap size={12} className="fill-current text-yellow-500" /> 俱乐部实时动态
         </h3>
-        <span className="bg-red-100 text-red-600 text-[10px] font-black px-2 py-0.5 rounded-full italic">
-          RECENT {matches.length}
+        <span className="bg-red-100 text-red-600 text-[10px] font-black px-2 py-0.5 rounded-full italic uppercase tracking-tighter">
+          Activity Feed
         </span>
       </div>
 
@@ -63,19 +64,21 @@ export function RecentActivity({ matches, players, onViewProfile }: RecentActivi
             </div>
 
             {/* 对阵信息 */}
-            <div className="grid grid-cols-[1fr,auto,1fr] gap-4 items-center px-2">
+            <div className="grid grid-cols-[1fr,auto,1fr] gap-4 items-center px-1">
+              
               {/* Team 1 */}
               <div className="flex flex-col items-center">
                 <div className="flex justify-center -space-x-3 mb-3">
                   {match.team1.map(id => {
                     const p = getPlayer(id);
+                    const streak = calculateStreak(id, matches);
                     return (
                       <motion.button
                         key={id}
                         whileHover={{ scale: 1.1, zIndex: 10 }}
                         whileTap={{ scale: 0.9 }}
-                        onClick={() => p && onViewProfile(p)} // 点击头像查看档案
-                        className="w-12 h-12 rounded-full border-2 border-white bg-neutral-100 overflow-hidden shadow-md ring-2 ring-transparent hover:ring-red-500 transition-all"
+                        onClick={() => p && onViewProfile(p)}
+                        className="w-12 h-12 rounded-full border-2 border-white bg-neutral-100 overflow-hidden shadow-md relative"
                       >
                         {p?.avatar ? (
                           <img src={p.avatar} alt={p.name} className="w-full h-full object-cover" />
@@ -84,16 +87,31 @@ export function RecentActivity({ matches, players, onViewProfile }: RecentActivi
                             {p?.initials}
                           </div>
                         )}
+                        {/* 连胜小角标 */}
+                        {streak >= 3 && (
+                          <div className="absolute top-0 right-0 bg-orange-500 text-white p-0.5 rounded-full border border-white">
+                            <Flame size={8} fill="currentColor" />
+                          </div>
+                        )}
                       </motion.button>
                     );
                   })}
                 </div>
-                <p className="text-[11px] font-black truncate max-w-[100px] text-neutral-800">
-                  {match.team1.map(id => getPlayer(id)?.name).join('/')}
-                </p>
+                <div className="flex flex-col items-center gap-0.5">
+                  {match.team1.map(id => {
+                    const p = getPlayer(id);
+                    const streak = calculateStreak(id, matches);
+                    return (
+                      <div key={id} className="flex items-center gap-1">
+                        <p className="text-[10px] font-black truncate max-w-[60px] text-neutral-800">{p?.name}</p>
+                        {streak >= 3 && <Flame size={10} fill="currentColor" className="text-orange-500" />}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* 大比分展示 */}
+              {/* 比分中心 */}
               <div className="flex flex-col items-center justify-center">
                 <div className="text-3xl font-black italic tracking-tighter flex items-center gap-2">
                    <span className={t1Games > t2Games ? 'text-red-600' : 'text-neutral-200'}>{t1Games}</span>
@@ -114,13 +132,14 @@ export function RecentActivity({ matches, players, onViewProfile }: RecentActivi
                 <div className="flex justify-center -space-x-3 mb-3">
                   {match.team2.map(id => {
                     const p = getPlayer(id);
+                    const streak = calculateStreak(id, matches);
                     return (
                       <motion.button
                         key={id}
                         whileHover={{ scale: 1.1, zIndex: 10 }}
                         whileTap={{ scale: 0.9 }}
-                        onClick={() => p && onViewProfile(p)} // 点击头像查看档案
-                        className="w-12 h-12 rounded-full border-2 border-white bg-neutral-100 overflow-hidden shadow-md ring-2 ring-transparent hover:ring-red-500 transition-all"
+                        onClick={() => p && onViewProfile(p)}
+                        className="w-12 h-12 rounded-full border-2 border-white bg-neutral-100 overflow-hidden shadow-md relative"
                       >
                         {p?.avatar ? (
                           <img src={p.avatar} alt={p.name} className="w-full h-full object-cover" />
@@ -129,13 +148,27 @@ export function RecentActivity({ matches, players, onViewProfile }: RecentActivi
                             {p?.initials}
                           </div>
                         )}
+                        {streak >= 3 && (
+                          <div className="absolute top-0 right-0 bg-orange-500 text-white p-0.5 rounded-full border border-white">
+                            <Flame size={8} fill="currentColor" />
+                          </div>
+                        )}
                       </motion.button>
                     );
                   })}
                 </div>
-                <p className="text-[11px] font-black truncate max-w-[100px] text-neutral-800">
-                  {match.team2.map(id => getPlayer(id)?.name).join('/')}
-                </p>
+                <div className="flex flex-col items-center gap-0.5">
+                  {match.team2.map(id => {
+                    const p = getPlayer(id);
+                    const streak = calculateStreak(id, matches);
+                    return (
+                      <div key={id} className="flex items-center gap-1">
+                        <p className="text-[10px] font-black truncate max-w-[60px] text-neutral-800">{p?.name}</p>
+                        {streak >= 3 && <Flame size={10} fill="currentColor" className="text-orange-500" />}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </motion.div>
