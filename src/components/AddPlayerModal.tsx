@@ -10,6 +10,7 @@ interface AddPlayerModalProps {
 }
 
 export function AddPlayerModal({ onClose, onAdd, initialData }: AddPlayerModalProps) {
+  // 核心修复：状态初始化需完整映射 initialData
   const [name, setName] = useState(initialData?.name || '');
   const [avatar, setAvatar] = useState<string | undefined>(initialData?.avatar);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -33,11 +34,14 @@ export function AddPlayerModal({ onClose, onAdd, initialData }: AddPlayerModalPr
     e.preventDefault();
     if (!name.trim()) return;
 
+    // 核心修复：编辑模式下必须保留原有的 id 和 club_id
     const newPlayer: Player = {
       id: initialData?.id || Math.random().toString(36).substring(2, 9),
       name: name.trim(),
       avatar: avatar,
       initials: name.trim().slice(0, 2).toUpperCase(),
+      club_id: initialData?.club_id || "", // 确保 club_id 不会在编辑时丢失
+      elo_rating: initialData?.elo_rating // 保留现有积分，不触发重算时使用
     };
 
     onAdd(newPlayer);
@@ -58,13 +62,14 @@ export function AddPlayerModal({ onClose, onAdd, initialData }: AddPlayerModalPr
         className="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl"
       >
         <div className="bg-red-600 p-6 text-white flex items-center justify-between">
-          <h2 className="text-xl font-bold">{initialData ? '编辑球员' : '新增球员'}</h2>
+          <h2 className="text-xl font-bold">{initialData ? '编辑球员信息' : '新增俱乐部球员'}</h2>
           <button onClick={onClose} className="p-1 hover:bg-white/20 rounded-full transition-colors">
             <X size={24} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-8">
+          {/* 头像上传预览区 */}
           <div className="flex flex-col items-center gap-4">
             <div 
               onClick={() => fileInputRef.current?.click()}
@@ -82,9 +87,9 @@ export function AddPlayerModal({ onClose, onAdd, initialData }: AddPlayerModalPr
             <button 
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="text-sm font-bold text-red-600 flex items-center gap-2"
+              className="text-sm font-bold text-red-600 flex items-center gap-2 active:opacity-60 transition-opacity"
             >
-              <Upload size={16} /> 上传头像
+              <Upload size={16} /> {avatar ? '更换头像' : '上传头像'}
             </button>
             <input 
               type="file" 
@@ -112,7 +117,7 @@ export function AddPlayerModal({ onClose, onAdd, initialData }: AddPlayerModalPr
             disabled={!name.trim()}
             className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold shadow-xl shadow-red-100 disabled:bg-neutral-200 disabled:shadow-none transition-all active:scale-[0.98]"
           >
-            完成{initialData ? '保存' : '创建'}
+            {initialData ? '保存修改' : '确认加入'}
           </button>
         </form>
       </motion.div>
