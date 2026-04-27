@@ -4,11 +4,11 @@ import {
   getPlayers, 
   getMatches, 
   savePlayerToCloud, 
-  savePlayersToCloud, // 确保 storage.ts 中已添加此批量保存函数
+  savePlayersToCloud, 
   saveMatchToCloud, 
   deletePlayerFromCloud, 
   deleteMatchFromCloud,
-  supabase // 导出 supabase client 以便监听
+  supabase 
 } from './lib/storage';
 import { recalculateAllElo } from './lib/elo'; 
 import { 
@@ -50,9 +50,8 @@ export default function App() {
   const [viewingPlayer, setViewingPlayer] = useState<Player | null>(null);
   const [lastMatchResult, setLastMatchResult] = useState<{ change: number, newRating: number } | null>(null);
 
-  // --- 2. 数据加载与同步逻辑 ---
+  // --- 2. 核心加载与同步逻辑 ---
 
-  // 核心刷新函数：从云端获取最新数据并全量重算
   const refreshData = useCallback(async (clubId: string) => {
     try {
       const [cloudPlayers, cloudMatches] = await Promise.all([
@@ -65,51 +64,97 @@ export default function App() {
       setPlayers(finalizedPlayers);
       setMatches(cloudMatches);
       
-      // 更新本地缓存
       localStorage.setItem(`cache_players_${clubId}`, JSON.stringify(finalizedPlayers));
       localStorage.setItem(`cache_matches_${clubId}`, JSON.stringify(cloudMatches));
     } catch (err) {
-      console.error('云端同步失败，当前处于离线模式');
+      console.error('刷新失败，请检查网络连接');
     }
   }, []);
 
   useEffect(() => {
     if (!club) return;
 
-    // A. 立即加载本地缓存（秒开）
     localStorage.setItem('h2h_club', JSON.stringify(club));
+    
+    // A. 立即加载缓存（实现秒开）
     const cachedP = localStorage.getItem(`cache_players_${club.id}`);
     const cachedM = localStorage.getItem(`cache_matches_${club.id}`);
     if (cachedP) setPlayers(JSON.parse(cachedP));
     if (cachedM) setMatches(JSON.parse(cachedM));
 
-    // B. 执行初始刷新
+    // B. 后台同步最新数据
     refreshData(club.id);
 
-    // C. 开启实时监听 (Realtime)
-    // 监听当前俱乐部的比赛表变动，一旦有人发布/删除比赛，所有客户端同步刷新
+    // C. 设置实时同步频道
     const channel = supabase
-      .channel(`club_sync_${club.id}`)
+      .channel(`db_sync_${club.id}`)
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'matches', filter: `club_id=eq.${club.id}` }, 
         () => refreshData(club.id)
       )
       .subscribe();
 
-    // D. 维护俱乐部访问历史
-    const historySaved = localStorage.getItem('h2h_club_history');
-    let history: Club[] = historySaved ? JSON.parse(historySaved) : [];
-    if (!history.find(c => c.id === club.id)) {
-      history = [club, ...history].slice(0, 5);
-      localStorage.setItem('h2h_club_history', JSON.stringify(history));
-    }
-
     return () => {
       supabase.removeChannel(channel);
     };
   }, [club, refreshData]);
 
-  // --- 3. H2H 计算逻辑 ---
+  // --- 3. 交互逻辑 ---
+
+  const handleAddMatch = async (newMatch: Match) => {
+    if (!club) return;
+    const matchWithClub = { ...newMatch, club_id: club.id };
+    const newMatches = [matchWithClub, ...matches];
+
+    const updatedPlayers = recalculateAllElo(players, newMatches);
+    
+    // 计算积分变动预览
+    const p1Id = newMatch.team1[0];
+    const oldScore = players.find(p => p.id === p1Id)?.elo_rating || 1500;
+    const newScore = updatedPlayers.find(p => p.id === p1Id)?.elo_rating || 1500;
+    
+    setLastMatchResult({ change: newScore - oldScore, newRating: newScore });
+    
+    // 立即更新本地状态
+    setMatches(newMatches);
+    setPlayers(updatedPlayers);
+    setIsAddMatchOpen(false);
+
+    // 异步同步云端（批量操作）
+    try {
+      await Promise.all([
+        saveMatchToCloud(matchWithClub),
+        savePlayersToCloud(updatedPlayers)
+      ]);
+    } catch (err) {
+      console.error('云端同步失败，数据可能存在延迟');
+    }
+  };
+
+  const handleDeleteMatch = async (id: string) => {
+    if (!confirm('确定删除此记录？积分将重新计算。')) return;
+    if (!club) return;
+
+    const newMatches = matches.filter(m => m.id !== id);
+    const updatedPlayers = recalculateAllElo(players, newMatches);
+    
+    setMatches(newMatches);
+    setPlayers(updatedPlayers);
+
+    // 关键：立即更新本地缓存，防止页面刷新后数据回滚
+    localStorage.setItem(`cache_players_${club.id}`, JSON.stringify(updatedPlayers));
+    localStorage.setItem(`cache_matches_${club.id}`, JSON.stringify(newMatches));
+    
+    try {
+      await Promise.all([
+        deleteMatchFromCloud(id),
+        savePlayersToCloud(updatedPlayers)
+      ]);
+    } catch (err) {
+      console.error('云端删除失败');
+    }
+  };
+
   const h2hMatches = useMemo(() => {
     if (selectedTeam1.length === 0 || selectedTeam2.length === 0) return [];
     return matches.filter(m => {
@@ -134,63 +179,11 @@ export default function App() {
     return { t1Wins, t2Wins, total: h2hMatches.length };
   }, [h2hMatches, selectedTeam1]);
 
-  // --- 4. 交互处理 ---
-
-  // 发布比赛逻辑：全量重算 + 批量更新
-  const handleAddMatch = async (newMatch: Match) => {
-    if (!club) return;
-    const matchWithClub = { ...newMatch, club_id: club.id };
-    const newMatches = [matchWithClub, ...matches];
-
-    // 1. 全量重算获取新积分
-    const updatedPlayers = recalculateAllElo(players, newMatches);
-    
-    // 2. 找出 Team1 第一人的变动用于弹窗
-    const p1Id = newMatch.team1[0];
-    const oldScore = players.find(p => p.id === p1Id)?.elo_rating || 1500;
-    const newScore = updatedPlayers.find(p => p.id === p1Id)?.elo_rating || 1500;
-    
-    // 3. 更新 UI
-    setLastMatchResult({ change: newScore - oldScore, newRating: newScore });
-    setMatches(newMatches);
-    setPlayers(updatedPlayers);
-    setIsAddMatchOpen(false);
-
-    // 4. 云端异步批量同步（核心优化：减少网络请求）
-    try {
-      await Promise.all([
-        saveMatchToCloud(matchWithClub),
-        savePlayersToCloud(updatedPlayers) 
-      ]);
-    } catch (err) {
-      console.error('同步至云端失败');
-    }
-  };
-
-  // 删除比赛逻辑：全量重算 + 批量更新
-  const handleDeleteMatch = async (id: string) => {
-    if (!confirm('确定删除？积分将重新计算并同步。')) return;
-    const newMatches = matches.filter(m => m.id !== id);
-    const updatedPlayers = recalculateAllElo(players, newMatches);
-    
-    setMatches(newMatches);
-    setPlayers(updatedPlayers);
-    
-    try {
-      await Promise.all([
-        deleteMatchFromCloud(id),
-        savePlayersToCloud(updatedPlayers)
-      ]);
-    } catch (err) {
-      console.error('云端同步失败');
-    }
-  };
-
   if (!club) return <ClubSetup onComplete={setClub} />;
 
   return (
     <div className="min-h-screen bg-neutral-50 pb-24 font-sans text-neutral-900">
-      {/* 顶部导航 */}
+      {/* Header */}
       <div className="bg-red-600 text-white sticky top-0 z-50 shadow-lg">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
@@ -215,7 +208,6 @@ export default function App() {
         </div>
       </div>
 
-      {/* 主内容 */}
       <main className="px-4 mt-6">
         {activeTab === 'recent' && (
           <RecentActivity matches={matches} players={players} onViewProfile={setViewingPlayer} />
@@ -255,7 +247,6 @@ export default function App() {
         )}
       </main>
 
-      {/* 悬浮按钮 */}
       <motion.button 
         whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} 
         onClick={() => setIsAddMatchOpen(true)} 
@@ -264,7 +255,6 @@ export default function App() {
         <Plus size={28} />
       </motion.button>
 
-      {/* 所有的模态框 */}
       <AnimatePresence>
         {isAddMatchOpen && <AddMatchModal onClose={() => setIsAddMatchOpen(false)} players={players} onAdd={handleAddMatch} />}
         
@@ -274,7 +264,7 @@ export default function App() {
             onSelect={(ids) => { if (isPlayerSelectOpen.side === 'team1') setSelectedTeam1(ids); else setSelectedTeam2(ids); setIsPlayerSelectOpen(null); }} 
             onAddPlayer={async (p) => { if(!club) return; const up = {...p, club_id: club.id, elo_rating: 1500}; setPlayers([...players, up]); await savePlayerToCloud(up); }} 
             onUpdatePlayer={async (p) => { setPlayers(players.map(item => item.id === p.id ? p : item)); await savePlayerToCloud(p); }} 
-            onDeletePlayer={async (id) => { if(!confirm('删除球员？')) return; await deletePlayerFromCloud(id); setPlayers(players.filter(p => p.id !== id)); }} 
+            onDeletePlayer={async (id) => { if(!confirm('确定删除该球员？')) return; await deletePlayerFromCloud(id); setPlayers(players.filter(p => p.id !== id)); }} 
             onViewProfile={setViewingPlayer} currentSelected={isPlayerSelectOpen.side === 'team1' ? selectedTeam1 : selectedTeam2} 
           />
         )}
