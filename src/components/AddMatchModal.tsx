@@ -17,15 +17,21 @@ export function AddMatchModal({ onClose, players, onAdd }: AddMatchModalProps) {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [isChoosingPlayers, setIsChoosingPlayers] = useState<'team1' | 'team2' | null>(null);
 
+  // 校验逻辑：防止同一球员出现在两队
   const isDuplicate = team1.some(id => team2.includes(id));
+
+  const handleSubmit = () => {
+    if (team1.length === 0 || team2.length === 0 || isDuplicate) return;
+    
     const newMatch: Match = {
       id: Math.random().toString(36).substr(2, 9),
       date: new Date(date).getTime(),
       type: team1.length > 1 ? 'Doubles' : 'Singles',
       team1,
       team2,
-      scores: scores.filter(s => s.team1 > 0 || s.team2 > 0),
-      tournament: tournament || '练习赛'
+      scores: scores.filter(s => (s.team1 > 0 || s.team2 > 0)),
+      tournament: tournament || '练习赛',
+      club_id: "" // 这里由 App.tsx 在发布前注入真实的 club_id
     };
     onAdd(newMatch);
   };
@@ -88,14 +94,8 @@ export function AddMatchModal({ onClose, players, onAdd }: AddMatchModalProps) {
                       <input type="number" value={score.team2 === 0 ? '' : score.team2} placeholder="0" onChange={(e) => updateScore(idx, 'team2', parseInt(e.target.value) || 0)} className="w-12 text-center text-xl font-black outline-none" />
                       <button onClick={() => updateScore(idx, 'team2', score.team2+1)} className="p-1 text-neutral-300 hover:text-red-500"><Plus size={16}/></button>
                    </div>
-                   {/* 删除本局按钮 */}
                    {scores.length > 1 && (
-                     <button 
-                      onClick={() => setScores(scores.filter((_, sIdx) => sIdx !== idx))}
-                      className="absolute -right-2 top-1/2 -translate-y-1/2 w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                     >
-                       <X size={12} />
-                     </button>
+                     <button onClick={() => setScores(scores.filter((_, sIdx) => sIdx !== idx))} className="absolute -right-2 top-1/2 -translate-y-1/2 w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X size={12} /></button>
                    )}
                  </div>
                ))}
@@ -118,15 +118,15 @@ export function AddMatchModal({ onClose, players, onAdd }: AddMatchModalProps) {
         </div>
 
         <div className="p-6 bg-white border-t border-neutral-100 shrink-0">
-         <button 
-  onClick={handleSubmit} 
-  disabled={team1.length === 0 || team2.length === 0 || isDuplicate} 
-  className={`w-full py-4 rounded-2xl font-bold transition-all active:scale-[0.98] ${
-    isDuplicate ? 'bg-neutral-200 text-neutral-400' : 'bg-red-600 text-white shadow-xl shadow-red-100'
-  }`}
->
-  {isDuplicate ? '同一球员不能在两队' : '发布记录'}
-</button>
+          <button 
+            onClick={handleSubmit} 
+            disabled={team1.length === 0 || team2.length === 0 || isDuplicate} 
+            className={`w-full py-4 rounded-2xl font-bold transition-all active:scale-[0.98] ${
+              isDuplicate ? 'bg-neutral-200 text-neutral-400' : 'bg-red-600 text-white shadow-xl shadow-red-100'
+            }`}
+          >
+            {isDuplicate ? '同一球员不能在两队' : '发布记录'}
+          </button>
         </div>
 
         {isChoosingPlayers && (
