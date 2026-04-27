@@ -60,13 +60,24 @@ export default function App() {
       if (cachedMatches) setMatches(JSON.parse(cachedMatches));
 
       // B. 异步拉取云端最新数据
-      const initData = async () => {
-        try {
-          const p = await getPlayers(club.id);
-          const m = await getMatches(club.id);
-          
-          setPlayers(p);
-          setMatches(m);
+    const initData = async () => {
+  try {
+    // 【优化】两个请求同时发出，总时间缩短一半
+    const [p, m] = await Promise.all([
+      getPlayers(club.id),
+      getMatches(club.id)
+    ]);
+    
+    setPlayers(p);
+    setMatches(m);
+    
+    // 更新缓存
+    localStorage.setItem(`cache_players_${club.id}`, JSON.stringify(p));
+    localStorage.setItem(`cache_matches_${club.id}`, JSON.stringify(m));
+  } catch (err) {
+    console.error('加载失败');
+  }
+};
 
           // C. 更新缓存
           localStorage.setItem(`cache_players_${club.id}`, JSON.stringify(p));
