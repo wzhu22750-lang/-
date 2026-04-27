@@ -15,3 +15,27 @@ export function getPlayerTier(elo: number = 1500) {
   if (elo < 2100) return { label: '俱乐部大腿', color: 'text-purple-600', bg: 'bg-purple-50', rank: 'Platinum' };
   return { label: '大魔王', color: 'text-red-600', bg: 'bg-red-50', rank: 'Diamond' };
 }
+
+// 在 src/lib/elo.ts 底部添加
+import { Match } from '../types';
+
+export function calculateStreak(playerId: string, matches: Match[]) {
+  const playerMatches = matches
+    .filter(m => m.team1.includes(playerId) || m.team2.includes(playerId))
+    .sort((a, b) => b.date - a.date); // 按时间倒序
+
+  let streak = 0;
+  for (const m of playerMatches) {
+    const isT1 = m.team1.includes(playerId);
+    let t1G = 0; let t2G = 0;
+    m.scores.forEach(s => { if (s.team1 > s.team2) t1G++; else if (s.team2 > s.team1) t2G++; });
+    
+    const won = isT1 ? t1G > t2G : t2G > t1G;
+    if (won) {
+      streak++;
+    } else {
+      break; // 一旦输球，连胜中断
+    }
+  }
+  return streak;
+}
