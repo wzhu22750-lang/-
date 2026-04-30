@@ -4,6 +4,7 @@ import { Trophy, Users, ArrowRight, ShieldCheck, AlertCircle, ChevronRight, Hist
 import { createClub, joinClub } from '../lib/storage';
 import { Club } from '../types';
 
+// 管理员创建俱乐部的全局密钥
 const ADMIN_CREATE_KEY = "888888"; 
 
 export function ClubSetup({ onComplete }: { onComplete: (club: Club) => void }) {
@@ -14,7 +15,7 @@ export function ClubSetup({ onComplete }: { onComplete: (club: Club) => void }) 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // 历史记录
+  // 历史记录状态
   const [clubHistory, setClubHistory] = useState<Club[]>([]);
 
   useEffect(() => {
@@ -22,13 +23,28 @@ export function ClubSetup({ onComplete }: { onComplete: (club: Club) => void }) 
     if (saved) setClubHistory(JSON.parse(saved));
   }, []);
 
+  // 核心逻辑：保存管理令牌
+  const saveManagerToken = (clubId: string, token: string) => {
+    const savedTokens = localStorage.getItem('h2h_manager_tokens');
+    const tokens = savedTokens ? JSON.parse(savedTokens) : {};
+    tokens[clubId] = token;
+    localStorage.setItem('h2h_manager_tokens', JSON.stringify(tokens));
+  };
+
   const handleCreate = async () => {
     if (!name) return setError('请输入俱乐部名称');
-    if (key !== ADMIN_CREATE_KEY) return setError('管理密钥错误');
+    if (key !== ADMIN_CREATE_KEY) return setError('管理密钥错误，你没有权限创建俱乐部');
+    
     setIsLoading(true);
     const club = await createClub(name);
-    if (club) onComplete(club);
-    else setError('创建失败');
+    
+    if (club && club.manager_token) {
+      // 【关键】：如果是创建者，立即把这把“钥匙”存入本地
+      saveManagerToken(club.id, club.manager_token);
+      onComplete(club);
+    } else {
+      setError('创建失败，请重试');
+    }
     setIsLoading(false);
   };
 
@@ -36,8 +52,11 @@ export function ClubSetup({ onComplete }: { onComplete: (club: Club) => void }) 
     if (!inviteCode) return setError('请输入邀请码');
     setIsLoading(true);
     const club = await joinClub(inviteCode);
-    if (club) onComplete(club);
-    else setError('邀请码无效');
+    if (club) {
+      onComplete(club);
+    } else {
+      setError('邀请码无效或网络异常');
+    }
     setIsLoading(false);
   };
 
@@ -46,17 +65,22 @@ export function ClubSetup({ onComplete }: { onComplete: (club: Club) => void }) 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-md w-full">
         <Trophy size={64} className="mx-auto mb-6 text-red-200" />
         <h1 className="text-3xl font-black mb-2 italic">世纪馆 H2H</h1>
-        <p className="text-red-100 mb-8 opacity-80 font-bold uppercase tracking-tighter">Badminton Social Club</p>
+        <p className="text-red-100 mb-8 opacity-80 font-bold uppercase tracking-tighter">Badminton Social Hub</p>
 
-        {error && <div className="mb-6 p-4 bg-black/20 rounded-2xl text-xs font-bold border border-white/10 flex items-center gap-2"><AlertCircle size={14}/>{error}</div>}
+        {error && (
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="mb-6 p-4 bg-black/20 rounded-2xl text-xs font-bold border border-white/10 flex items-center gap-2">
+            <AlertCircle size={14} className="shrink-0" />
+            {error}
+          </motion.div>
+        )}
 
         {mode === 'root' && (
           <div className="space-y-6">
-            {/* 历史俱乐部记忆 */}
+            {/* 快速进入历史俱乐部 */}
             {clubHistory.length > 0 && (
-              <div className="bg-black/10 rounded-[32px] p-5 border border-white/5">
+              <div className="bg-black/10 rounded-[32px] p-5 border border-white/5 shadow-inner">
                 <p className="text-[10px] font-black text-red-200 uppercase tracking-widest mb-4 flex items-center justify-center gap-2">
-                  <History size={12} /> 快速进入
+                   <History size={12} /> 快速进入我的俱乐部
                 </p>
                 <div className="space-y-2">
                   {clubHistory.map(club => (
@@ -77,11 +101,17 @@ export function ClubSetup({ onComplete }: { onComplete: (club: Club) => void }) 
             )}
 
             <div className="grid grid-cols-1 gap-3">
-              <button onClick={() => setMode('join')} className="w-full py-4 bg-white text-red-600 rounded-2xl font-black shadow-xl flex items-center justify-center gap-2">
-                加入俱乐部 <Users size={20} />
+              <button 
+                onClick={() => setMode('join')} 
+                className="w-full py-4 bg-white text-red-600 rounded-2xl font-black shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all"
+              >
+                加入现有俱乐部 <Users size={20} />
               </button>
-              <button onClick={() => setMode('create')} className="w-full py-4 bg-red-500 text-white border-2 border-red-400 rounded-2xl font-black text-sm">
-                创建新俱乐部
+              <button 
+                onClick={() => setMode('create')} 
+                className="w-full py-4 bg-red-500 text-white border-2 border-red-400 rounded-2xl font-black text-sm active:scale-95 transition-all"
+              >
+                创建新俱乐部 (仅限管理)
               </button>
             </div>
           </div>
@@ -90,28 +120,37 @@ export function ClubSetup({ onComplete }: { onComplete: (club: Club) => void }) 
         {mode === 'create' && (
           <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-white/10 backdrop-blur-md p-8 rounded-[40px] border border-white/20">
             <div className="space-y-5">
-              <input className="w-full bg-white text-neutral-900 px-6 py-4 rounded-2xl outline-none font-black text-lg" placeholder="俱乐部名称" value={name} onChange={(e) => setName(e.target.value)} />
-              <div className="relative">
-                <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-300" size={20} />
-                <input type="password" className="w-full bg-white text-neutral-900 pl-12 pr-6 py-4 rounded-2xl outline-none font-black text-lg" placeholder="管理员密钥" value={key} onChange={(e) => setKey(e.target.value)} />
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-red-200 uppercase text-left block pl-2">俱乐部名称</label>
+                <input className="w-full bg-white text-neutral-900 px-6 py-4 rounded-2xl outline-none font-black text-lg shadow-inner" placeholder="例如：世纪馆羽球社" value={name} onChange={(e) => setName(e.target.value)} />
               </div>
-              <button onClick={handleCreate} disabled={isLoading} className="w-full py-4 bg-white text-red-600 rounded-2xl font-black shadow-lg flex items-center justify-center gap-2 disabled:opacity-50">
-                {isLoading ? '正在创建...' : '立即开启'} <ArrowRight size={20} />
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-red-200 uppercase text-left block pl-2">管理创建密钥</label>
+                <div className="relative">
+                  <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-300" size={20} />
+                  <input type="password" className="w-full bg-white text-neutral-900 pl-12 pr-6 py-4 rounded-2xl outline-none font-black text-lg shadow-inner" placeholder="输入创建权限码" value={key} onChange={(e) => setKey(e.target.value)} />
+                </div>
+              </div>
+              <button onClick={handleCreate} disabled={isLoading} className="w-full py-4 bg-white text-red-600 rounded-2xl font-black shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95 transition-all">
+                {isLoading ? '正在建立连接...' : '立即开启俱乐部'} <ArrowRight size={20} />
               </button>
             </div>
-            <button onClick={() => setMode('root')} className="mt-6 text-xs text-red-200 opacity-60">返回</button>
+            <button onClick={() => { setMode('root'); setError(''); }} className="mt-6 text-xs text-red-200 opacity-60 font-bold uppercase tracking-widest">返回主菜单</button>
           </motion.div>
         )}
 
         {mode === 'join' && (
           <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-white/10 backdrop-blur-md p-8 rounded-[40px] border border-white/20">
             <div className="space-y-5">
-              <input className="w-full bg-white text-neutral-900 px-6 py-4 rounded-2xl outline-none text-center font-black text-2xl uppercase" placeholder="邀请码" value={inviteCode} onChange={(e) => setInviteCode(e.target.value.toUpperCase())} maxLength={6} />
-              <button onClick={handleJoin} disabled={isLoading} className="w-full py-4 bg-white text-red-600 rounded-2xl font-black shadow-lg flex items-center justify-center gap-2 disabled:opacity-50">
-                {isLoading ? '正在验证...' : '进入'} <ArrowRight size={20} />
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-red-200 uppercase text-center block">输入6位邀请码</label>
+                <input className="w-full bg-white text-neutral-900 px-6 py-4 rounded-2xl outline-none text-center font-black text-2xl uppercase tracking-widest shadow-inner" placeholder="X7Y2Z9" value={inviteCode} onChange={(e) => setInviteCode(e.target.value.toUpperCase())} maxLength={6} />
+              </div>
+              <button onClick={handleJoin} disabled={isLoading} className="w-full py-4 bg-white text-red-600 rounded-2xl font-black shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95 transition-all">
+                {isLoading ? '正在核对密钥...' : '立即进入'} <ArrowRight size={20} />
               </button>
             </div>
-            <button onClick={() => setMode('root')} className="mt-6 text-xs text-red-200 opacity-60">返回</button>
+            <button onClick={() => { setMode('root'); setError(''); }} className="mt-6 text-xs text-red-200 opacity-60 font-bold uppercase tracking-widest">返回主菜单</button>
           </motion.div>
         )}
       </motion.div>
