@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import { X, Trophy, Award, ChevronRight, Activity, Target } from 'lucide-react';
 import { Player, Match } from '../types';
-import { getStartOfThisWeek, calculateEloChange } from '../lib/elo';
+import { getStartOfThisWeek } from '../lib/elo';
 
 interface PlayerProfileModalProps {
   player: Player;
@@ -14,7 +14,7 @@ interface PlayerProfileModalProps {
 export function PlayerProfileModal({ player, matches = [], players = [], onClose, onViewProfile }: PlayerProfileModalProps) {
   const startOfThisWeek = getStartOfThisWeek();
 
-  // --- 1. 数据逻辑 ---
+  // --- 1. 数据统计 ---
   const playerMatches = matches.filter(m => (m.team1 || []).includes(player.id) || (m.team2 || []).includes(player.id));
   const weeklyMatches = playerMatches.filter(m => m.date >= startOfThisWeek);
   
@@ -39,27 +39,6 @@ export function PlayerProfileModal({ player, matches = [], players = [], onClose
   const totalWins = allStats.sW + allStats.dW;
   const winRate = playerMatches.length > 0 ? Math.round((totalWins / playerMatches.length) * 100) : 0;
 
-  // 最高战力重算逻辑
-  const calculatePeakRating = () => {
-    let simElo: Record<string, number> = {};
-    players.forEach(p => simElo[p.id] = 1500);
-    let myMaxElo = 1500;
-    const sortedMatches = [...matches].sort((a, b) => a.date - b.date);
-    sortedMatches.forEach(m => {
-      const t1 = m.team1; const t2 = m.team2;
-      const t1Avg = t1.reduce((sum, id) => sum + (simElo[id] || 1500), 0) / t1.length;
-      const t2Avg = t2.reduce((sum, id) => sum + (simElo[id] || 1500), 0) / t2.length;
-      let g1 = 0; let g2 = 0;
-      m.scores.forEach(s => { if (s.team1 > s.team2) g1++; else g2++; });
-      const change = calculateEloChange(t1Avg, t2Avg, g1 > g2);
-      t1.forEach(id => simElo[id] = (simElo[id] || 1500) + change);
-      t2.forEach(id => simElo[id] = (simElo[id] || 1500) - change);
-      if (t1.includes(player.id) || t2.includes(player.id)) { myMaxElo = Math.max(myMaxElo, simElo[player.id]); }
-    });
-    return myMaxElo;
-  };
-
-  const peakRating = calculatePeakRating();
   const allPlayersSorted = [...players].sort((a, b) => (b.elo_rating || 1500) - (a.elo_rating || 1500));
   const clubRank = allPlayersSorted.findIndex(p => p.id === player.id) + 1;
   const topOpponents = Object.entries(allStats.opps).sort(([, a], [, b]) => b - a).slice(0, 5);
@@ -68,9 +47,10 @@ export function PlayerProfileModal({ player, matches = [], players = [], onClose
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/90 backdrop-blur-md z-[150] flex items-center justify-center overflow-y-auto">
       <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} transition={{ type: 'spring', damping: 30 }} className="bg-[#f5f5f5] w-full max-w-lg min-h-screen sm:min-h-0 sm:rounded-[40px] overflow-hidden relative shadow-2xl flex flex-col">
         
-        {/* 1. 顶部 Header - 显著拉高 pt 并精简内容 */}
-        <div className="bg-[#2d2d2e] pt-20 pb-14 px-8 relative shrink-0">
-          <button onClick={onClose} className="absolute left-6 top-10 text-white/40 hover:text-white transition-colors z-30">
+        {/* 1. 顶部 Header - 增加 pt-32 彻底解决微信阻挡 */}
+        <div className="bg-[#2d2d2e] pt-32 pb-14 px-8 relative shrink-0">
+          {/* 关闭按钮下移 */}
+          <button onClick={onClose} className="absolute left-6 top-14 text-white/40 hover:text-white transition-colors z-30">
             <X size={24} />
           </button>
           
@@ -85,7 +65,7 @@ export function PlayerProfileModal({ player, matches = [], players = [], onClose
               </div>
             </div>
 
-            {/* 头像容器 - 下移并放大 */}
+            {/* 头像容器 */}
             <div className="shrink-0">
                <div className="w-24 h-24 rounded-full border-[6px] border-white/5 overflow-hidden bg-[#3d3d3f] shadow-2xl">
                  {player.avatar ? <img src={player.avatar} className="w-full h-full object-cover" /> : 
@@ -95,29 +75,19 @@ export function PlayerProfileModal({ player, matches = [], players = [], onClose
           </div>
         </div>
 
-        {/* 2. 核心战力悬浮栏 */}
-        <div className="bg-white px-5 py-6 flex items-center border-b border-neutral-100 shrink-0 relative z-20 shadow-sm">
-           <div className="flex-1 grid grid-cols-2 gap-1 border-r border-neutral-100 px-1">
-              <div className="text-center">
-                 <p className="text-2xl font-black text-orange-500 italic leading-none">{clubRank}</p>
-                 <p className="text-[8px] font-bold text-neutral-400 uppercase mt-2 tracking-tighter">本周排名</p>
-              </div>
-              <div className="text-center border-l border-neutral-50">
-                 <p className="text-lg font-black text-neutral-300 italic leading-none">#1</p>
-                 <p className="text-[8px] font-bold text-neutral-300 uppercase mt-2 tracking-tighter">最高排名</p>
-              </div>
+        {/* 2. 核心排名战力栏 - 恢复大字排版 */}
+        <div className="bg-white px-8 py-7 flex items-center border-b border-neutral-100 shrink-0 relative z-20 shadow-sm">
+           <div className="flex-1 text-center border-r border-neutral-100">
+              <p className="text-4xl font-black text-orange-500 italic leading-none">{clubRank}</p>
+              <p className="text-[10px] font-bold text-neutral-400 uppercase mt-2 tracking-widest">本周排名</p>
            </div>
-           <div className="flex-1 grid grid-cols-2 gap-1 px-1">
-              <div className="text-center">
-                 <p className="text-2xl font-black text-neutral-800 italic leading-none">{player.elo_rating || 1500}</p>
-                 <p className="text-[8px] font-bold text-neutral-400 uppercase mt-2 tracking-tighter">当前战力</p>
-              </div>
-              <div className="text-center border-l border-neutral-50">
-                 <p className="text-lg font-black text-neutral-300 italic leading-none">{peakRating}</p>
-                 <p className="text-[8px] font-bold text-neutral-300 uppercase mt-2 tracking-tighter">最高战力</p>
-              </div>
+           <div className="flex-1 text-center">
+              <p className="text-4xl font-black text-neutral-800 italic leading-none">{player.elo_rating || 1500}</p>
+              <p className="text-[10px] font-bold text-neutral-400 uppercase mt-2 tracking-widest">当前战力</p>
            </div>
-           <button className="ml-3 bg-[#e11d48] text-white px-5 py-3 rounded-2xl font-black text-[10px] shadow-lg shadow-red-100 uppercase tracking-widest active:scale-95 transition-all">支持 TA</button>
+           <div className="pl-4">
+              <button className="bg-[#e11d48] text-white px-7 py-3 rounded-2xl font-black text-xs shadow-xl shadow-red-100 uppercase tracking-widest active:scale-95 transition-all">支持 TA</button>
+           </div>
         </div>
 
         {/* 3. 统计区 */}
@@ -137,15 +107,15 @@ export function PlayerProfileModal({ player, matches = [], players = [], onClose
           <div className="space-y-4">
              <div className="flex items-center justify-between px-2">
                 <h3 className="text-sm font-black text-neutral-800 italic uppercase">主要对手 H2H</h3>
-                <span className="text-[9px] font-bold text-neutral-300 uppercase tracking-widest">Global Data</span>
+                <span className="text-[9px] font-bold text-neutral-300 uppercase tracking-widest">Since Joined</span>
              </div>
              <div className="flex gap-5 overflow-x-auto no-scrollbar pb-4 px-1">
                 {topOpponents.map(([oid, count]) => {
                   const opp = players.find(p => p.id === oid);
                   if (!opp) return null;
                   return (
-                    <motion.button key={oid} onClick={() => onViewProfile && onViewProfile(opp)} className="flex flex-col items-center shrink-0 group">
-                       <div className="w-16 h-16 rounded-full p-1 bg-white shadow-sm border border-neutral-100 group-hover:shadow-md transition-all">
+                    <motion.button key={oid} onClick={() => onViewProfile && onViewProfile(opp)} className="flex flex-col items-center shrink-0">
+                       <div className="w-16 h-16 rounded-full p-1 bg-white shadow-sm border border-neutral-100">
                           <div className="w-full h-full rounded-full overflow-hidden bg-neutral-50">
                              {opp.avatar ? <img src={opp.avatar} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xs font-bold text-neutral-300">{opp.initials}</div>}
                           </div>
@@ -159,7 +129,7 @@ export function PlayerProfileModal({ player, matches = [], players = [], onClose
           </div>
         </div>
 
-        {/* 4. 底部按钮 - BWF 风格按钮 */}
+        {/* 4. 底部按钮 */}
         <div className="p-8 bg-white border-t border-neutral-100 shrink-0">
            <button onClick={onClose} className="w-full py-4 bg-[#1a1a1b] text-white rounded-[20px] font-black text-[11px] uppercase tracking-[0.4em] shadow-2xl active:scale-95 transition-all">
              关闭球员档案
@@ -176,7 +146,7 @@ function StatCard({ label, value, icon }: any) {
   return (
     <div className="bg-white p-3 rounded-[24px] shadow-sm border border-neutral-50 flex flex-col items-center justify-between h-28">
        <div className="flex-1 flex items-center justify-center">{icon}</div>
-       <p className="text-xs font-black text-neutral-800 italic">{value}</p>
+       <p className="text-xs font-black text-neutral-800 italic leading-none">{value}</p>
        <p className="text-[7px] font-black text-neutral-400 uppercase tracking-tighter mt-1">{label}</p>
     </div>
   );
@@ -185,13 +155,13 @@ function StatCard({ label, value, icon }: any) {
 function RecordRow({ type, title, win, loss }: any) {
   const rate = win + loss > 0 ? Math.round(win/(win+loss)*100) : 0;
   return (
-    <div className="p-5 flex items-center justify-between border-b border-neutral-50 last:border-0 hover:bg-neutral-50 transition-colors">
+    <div className="p-5 flex items-center justify-between border-b border-neutral-50 last:border-0">
        <div className="flex items-center gap-4">
           <div className={`w-12 h-6 flex items-center justify-center rounded-[4px] text-[10px] font-black text-white italic tracking-tighter shadow-sm ${
             type === 'Single' ? 'bg-[#e11d48]' : 'bg-[#1a1a1b]'
           }`}>{type}</div>
           <div>
-            <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest leading-none mb-1.5">{title}</p>
+            <p className="text-[9px] font-black text-neutral-400 uppercase tracking-widest leading-none mb-1.5">{title}</p>
             <p className="text-sm font-black text-neutral-800">{win} <span className="text-[10px] text-neutral-200 font-normal mx-0.5">胜</span> / {loss} <span className="text-[10px] text-neutral-200 font-normal mx-0.5">负</span></p>
           </div>
        </div>
