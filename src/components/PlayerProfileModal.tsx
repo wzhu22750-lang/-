@@ -78,7 +78,7 @@ export function PlayerProfileModal({ player, matches = [], players = [], onClose
                  </div>
                  <div>
                     <p className="text-white/30 text-[10px] font-black uppercase tracking-widest mb-1">Joined</p>
-                    <p className="text-sm font-bold text-white">2024</p>
+                    <p className="text-sm font-bold text-white">2026</p>
                  </div>
               </div>
             </div>
@@ -122,14 +122,14 @@ export function PlayerProfileModal({ player, matches = [], players = [], onClose
           {/* 生涯记录列表 (模仿 BWF 样式) */}
           <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-neutral-100">
              <RecordItem 
-                type="BWF" 
+                type="Single" 
                 title="单打生涯记录" 
                 win={allStats.sW} 
                 loss={allStats.sL} 
                 rate={allStats.sW + allStats.sL > 0 ? Math.round(allStats.sW/(allStats.sW+allStats.sL)*100) : 0} 
              />
              <RecordItem 
-                type="TOUR" 
+                type="Double" 
                 title="双打生涯记录" 
                 win={allStats.dW} 
                 loss={allStats.dL} 
