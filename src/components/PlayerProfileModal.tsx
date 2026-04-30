@@ -97,10 +97,7 @@ export function PlayerProfileModal({ player, matches = [], players = [], onClose
                     <p className="text-white/30 text-[9px] font-black uppercase tracking-widest mb-1">Status</p>
                     <p className="text-xs font-bold text-green-400 uppercase tracking-tighter">● Active</p>
                  </div>
-                 <div>
-                    <p className="text-white/30 text-[9px] font-black uppercase tracking-widest mb-1">Joined</p>
-                    <p className="text-xs font-bold text-white/90">2024</p>
-                 </div>
+                
               </div>
             </div>
 
