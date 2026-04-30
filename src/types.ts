@@ -4,6 +4,7 @@ export interface Club {
   id: string;
   name: string;
   invite_code: string;
+  manager_token?: string; // 新增：用于识别管理员身份的隐形令牌
 }
 
 export interface Player {
@@ -11,8 +12,8 @@ export interface Player {
   name: string;
   avatar?: string;
   initials: string;
-  club_id: string; // 必须关联俱乐部
-  elo_rating?: number; // 预留给积分系统
+  club_id: string;
+  elo_rating?: number;
 }
 
 export interface GameScore {
@@ -28,5 +29,6 @@ export interface Match {
   team2: string[];
   scores: GameScore[];
   tournament?: string;
-  club_id: string; // 必须关联俱乐部
+  club_id: string;
+  video_url?: string; // 预留视频录像字段
 }
