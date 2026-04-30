@@ -237,4 +237,13 @@ function RecordRow({ type, title, win, loss }: any) {
             <p className="text-sm font-black text-neutral-800">{win} <span className="text-[10px] text-neutral-300 font-normal not-italic">胜</span> / {loss} <span className="text-[10px] text-neutral-300 font-normal not-italic">负</span></p>
           </div>
        </div>
-       <div className="text
+       <div className="text-right flex items-center gap-4">
+          <div>
+            <p className="text-lg font-black text-neutral-800 italic leading-none">{rate}%</p>
+            <p className="text-[8px] font-bold text-neutral-300 uppercase tracking-widest mt-1">胜率</p>
+          </div>
+          <ChevronRight size={16} className="text-neutral-200" />
+       </div>
+    </div>
+  );
+}
