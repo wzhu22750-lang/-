@@ -91,3 +91,12 @@ export function getPlayerTier(elo: number = 1500) {
   if (elo < 2100) return { label: '俱乐部大腿', color: 'text-purple-600', bg: 'bg-purple-50', rank: 'Platinum' };
   return { label: '一代宗师', color: 'text-red-600', bg: 'bg-red-50', rank: 'Diamond' };
 }
+
+export function getStartOfThisWeek() {
+  const now = new Date();
+  const day = now.getDay(); // 0是周日
+  const diff = now.getDate() - (day === 0 ? 6 : day - 1); // 调整到周一
+  const monday = new Date(now.setDate(diff));
+  monday.setHours(0, 0, 0, 0);
+  return monday.getTime();
+}
