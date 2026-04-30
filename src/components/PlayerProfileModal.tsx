@@ -197,7 +197,7 @@ function RecordItem({ title, win, loss, rate, type }: any) {
   return (
     <div className="p-5 flex items-center justify-between border-b border-neutral-50 last:border-0 hover:bg-neutral-50 transition-colors cursor-pointer group">
        <div className="flex items-center gap-4">
-          <div className={`w-10 h-6 flex items-center justify-center rounded text-[10px] font-black text-white ${type === 'BWF' ? 'bg-[#e11d48]' : 'bg-[#1a1a1b]'}`}>
+          <div className={`w-10 h-6 flex items-center justify-center rounded text-[10px] font-black text-white ${type === 'Single' ? 'bg-[#e11d48]' : 'bg-[#1a1a1b]'}`}>
             {type}
           </div>
           <div>
