@@ -1,5 +1,4 @@
 import { motion } from 'motion/react';
-// 修复：添加了 ChevronRight 的导入
 import { X, Trophy, Award, ChevronLeft, ChevronRight, Activity, Target } from 'lucide-react';
 import { Player, Match } from '../types';
 import { getStartOfThisWeek } from '../lib/elo';
@@ -55,12 +54,12 @@ export function PlayerProfileModal({ player, matches = [], players = [], onClose
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         className="bg-[#f5f5f5] w-full max-w-lg min-h-screen sm:min-h-0 sm:rounded-[40px] overflow-hidden relative shadow-2xl flex flex-col"
       >
-        {/* 1. 顶部 Header */}
-        <div className="bg-[#2d2d2e] pt-20 pb-14 px-8 relative shrink-0">
+        {/* 1. 顶部 Header - pt 从 20 修改为 50 */}
+        <div className="bg-[#2d2d2e] pt-50 pb-14 px-8 relative shrink-0">
           
           <button 
             onClick={onClose} 
-            className="absolute left-6 top-10 flex items-center gap-1 text-white/40 hover:text-white transition-colors z-30 font-black text-[10px] uppercase tracking-[0.2em]"
+            className="absolute left-6 top-14 flex items-center gap-1 text-white/40 hover:text-white transition-colors z-30 font-black text-[10px] uppercase tracking-[0.2em]"
           >
             <ChevronLeft size={18} /> Exit
           </button>
@@ -100,10 +99,11 @@ export function PlayerProfileModal({ player, matches = [], players = [], onClose
         {/* 3. 统计区 */}
         <div className="p-6 flex-1 overflow-y-auto no-scrollbar space-y-6">
           <div className="grid grid-cols-4 gap-2.5">
-             <StatCard label="总胜率" value={`${winRate}%`} icon={<div className="w-9 h-9 rounded-full border-[3px] border-red-500 flex items-center justify-center text-[9px] font-black">{winRate}%</div>} />
-             <StatCard label="本周胜场" value={weekStats.sW + weekStats.dW} icon={<Activity size={18} className="text-blue-500" />} />
-             <StatCard label="生涯胜场" value={allStats.sW + allStats.dW} icon={<Award size={18} className="text-yellow-500" />} />
-             <StatCard label="总场次" value={playerMatches.length} icon={<Trophy size={18} className="text-green-500" />} />
+             {/* 字体在这里的 StatCard 组件内部放大了 */}
+             <StatCard label="总胜率" value={`${winRate}%`} icon={<div className="w-10 h-10 rounded-full border-[3px] border-red-500 flex items-center justify-center text-[10px] font-black">{winRate}%</div>} />
+             <StatCard label="本周胜场" value={weekStats.sW + weekStats.dW} icon={<Activity size={20} className="text-blue-500" />} />
+             <StatCard label="生涯胜场" value={allStats.sW + allStats.dW} icon={<Award size={20} className="text-yellow-500" />} />
+             <StatCard label="总场次" value={playerMatches.length} icon={<Trophy size={20} className="text-green-500" />} />
           </div>
 
           <div className="bg-white rounded-[32px] overflow-hidden shadow-sm border border-neutral-100">
@@ -154,12 +154,13 @@ export function PlayerProfileModal({ player, matches = [], players = [], onClose
   );
 }
 
+// 辅助组件：放大了字体和图标
 function StatCard({ label, value, icon }: any) {
   return (
-    <div className="bg-white p-3 rounded-[24px] shadow-sm border border-neutral-50 flex flex-col items-center justify-between h-28">
-       <div className="flex-1 flex items-center justify-center">{icon}</div>
-       <p className="text-xs font-black text-neutral-800 italic leading-none">{value}</p>
-       <p className="text-[7px] font-black text-neutral-400 uppercase tracking-tighter mt-1">{label}</p>
+    <div className="bg-white p-3 rounded-[24px] shadow-sm border border-neutral-50 flex flex-col items-center justify-between h-32">
+       <div className="flex-1 flex items-center justify-center scale-110">{icon}</div>
+       <p className="text-lg font-black text-neutral-800 italic leading-none">{value}</p>
+       <p className="text-[9px] font-black text-neutral-400 uppercase tracking-tighter mt-1">{label}</p>
     </div>
   );
 }
@@ -182,7 +183,6 @@ function RecordRow({ type, title, win, loss }: any) {
             <p className="text-lg font-black text-neutral-800 italic leading-none">{rate}%</p>
             <p className="text-[8px] font-bold text-neutral-300 uppercase tracking-widest mt-1">胜率</p>
           </div>
-          {/* 这里修复了未定义 ChevronRight 的引用 */}
           <ChevronRight size={16} className="text-neutral-200" />
        </div>
     </div>
