@@ -192,4 +192,4 @@ function RecordRow({ type, title, win, loss }: any) {
        </div>
     </div>
   );
-}a
+}
