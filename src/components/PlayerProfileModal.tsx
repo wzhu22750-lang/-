@@ -1,5 +1,6 @@
 import { motion } from 'motion/react';
-import { X, Trophy, Award, ChevronLeft, Activity, Target } from 'lucide-react';
+// 修复：添加了 ChevronRight 的导入
+import { X, Trophy, Award, ChevronLeft, ChevronRight, Activity, Target } from 'lucide-react';
 import { Player, Match } from '../types';
 import { getStartOfThisWeek } from '../lib/elo';
 
@@ -8,7 +9,7 @@ interface PlayerProfileModalProps {
   matches: Match[];
   players: Player[];
   onClose: () => void;
-  onCompareH2H?: (p1Id: string, p2Id: string) => void; // 跳转回调
+  onCompareH2H?: (p1Id: string, p2Id: string) => void;
 }
 
 export function PlayerProfileModal({ player, matches = [], players = [], onClose, onCompareH2H }: PlayerProfileModalProps) {
@@ -54,13 +55,12 @@ export function PlayerProfileModal({ player, matches = [], players = [], onClose
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         className="bg-[#f5f5f5] w-full max-w-lg min-h-screen sm:min-h-0 sm:rounded-[40px] overflow-hidden relative shadow-2xl flex flex-col"
       >
-        {/* 1. 顶部 Header - 增加 pt-32 解决手机顶部阻挡 */}
-        <div className="bg-[#2d2d2e] pt-50 pb-14 px-8 relative shrink-0">
+        {/* 1. 顶部 Header */}
+        <div className="bg-[#2d2d2e] pt-20 pb-14 px-8 relative shrink-0">
           
-          {/* 左上角退出按钮 */}
           <button 
             onClick={onClose} 
-            className="absolute left-6 top-14 flex items-center gap-1 text-white/40 hover:text-white transition-colors z-30 font-black text-[10px] uppercase tracking-[0.2em]"
+            className="absolute left-6 top-10 flex items-center gap-1 text-white/40 hover:text-white transition-colors z-30 font-black text-[10px] uppercase tracking-[0.2em]"
           >
             <ChevronLeft size={18} /> Exit
           </button>
@@ -76,7 +76,6 @@ export function PlayerProfileModal({ player, matches = [], players = [], onClose
               </div>
             </div>
 
-            {/* 头像 */}
             <div className="shrink-0">
                <div className="w-24 h-24 rounded-full border-[6px] border-white/5 overflow-hidden bg-[#3d3d3f] shadow-2xl">
                  {player.avatar ? <img src={player.avatar} className="w-full h-full object-cover" /> : 
@@ -107,13 +106,11 @@ export function PlayerProfileModal({ player, matches = [], players = [], onClose
              <StatCard label="总场次" value={playerMatches.length} icon={<Trophy size={18} className="text-green-500" />} />
           </div>
 
-          {/* 生涯记录 */}
           <div className="bg-white rounded-[32px] overflow-hidden shadow-sm border border-neutral-100">
              <RecordRow type="Single" title="单打生涯记录" win={allStats.sW} loss={allStats.sL} />
              <RecordRow type="Double" title="双打生涯记录" win={allStats.dW} loss={allStats.dL} />
           </div>
 
-          {/* 主要对手 H2H - 点击头像跳转 */}
           <div className="space-y-4 pb-8">
              <div className="flex items-center justify-between px-2">
                 <h3 className="text-sm font-black text-neutral-800 italic uppercase">主要对手 H2H</h3>
@@ -127,7 +124,7 @@ export function PlayerProfileModal({ player, matches = [], players = [], onClose
                     <motion.button 
                       key={oid} 
                       whileTap={{ scale: 0.9 }}
-                      onClick={() => onCompareH2H && onCompareH2H(player.id, opp.id)} // 核心跳转
+                      onClick={() => onCompareH2H && onCompareH2H(player.id, opp.id)}
                       className="flex flex-col items-center shrink-0 group"
                     >
                        <div className="w-16 h-16 rounded-full p-1 bg-white shadow-sm border border-neutral-100 group-hover:border-red-500 transition-colors">
@@ -144,7 +141,6 @@ export function PlayerProfileModal({ player, matches = [], players = [], onClose
           </div>
         </div>
 
-        {/* 4. 底部 BWF 风格按钮 */}
         <div className="p-8 bg-white border-t border-neutral-100 shrink-0">
            <button 
              onClick={onClose} 
@@ -157,8 +153,6 @@ export function PlayerProfileModal({ player, matches = [], players = [], onClose
     </motion.div>
   );
 }
-
-// --- 辅助小组件 ---
 
 function StatCard({ label, value, icon }: any) {
   return (
@@ -188,6 +182,7 @@ function RecordRow({ type, title, win, loss }: any) {
             <p className="text-lg font-black text-neutral-800 italic leading-none">{rate}%</p>
             <p className="text-[8px] font-bold text-neutral-300 uppercase tracking-widest mt-1">胜率</p>
           </div>
+          {/* 这里修复了未定义 ChevronRight 的引用 */}
           <ChevronRight size={16} className="text-neutral-200" />
        </div>
     </div>
