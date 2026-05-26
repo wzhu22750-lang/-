@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import { motion } from 'motion/react';
-import { X, Trophy, Award, ChevronRight, Activity } from 'lucide-react';
+import { X, Trophy, Award, ChevronRight, Activity, Clock } from 'lucide-react';
 import { Player, Match } from '../types';
-import { getStartOfThisWeek } from '../lib/elo';
+import { getStartOfThisWeek, getPlayerTier, getLastMatchDate } from '../lib/elo';
 
 interface PlayerProfileModalProps {
   player: Player;
@@ -45,6 +45,9 @@ export function PlayerProfileModal({ player, matches = [], players = [], onClose
   const clubRank = allPlayersSorted.findIndex(p => p.id === player.id) + 1;
   const topOpponents = Object.entries(allStats.opps).sort(([, a], [, b]) => b - a).slice(0, 5);
 
+  const tier = getPlayerTier(player.elo_rating || 1500);
+  const lastMatchDate = getLastMatchDate(player.id, matches);
+  const isInactive = lastMatchDate && (Date.now() - lastMatchDate > 30 * 24 * 60 * 60 * 1000);
   const headerPaddingTop = 'max(env(safe-area-inset-top), 28px)';
 
   return (
@@ -97,9 +100,11 @@ export function PlayerProfileModal({ player, matches = [], players = [], onClose
                 {player.name}
               </h1>
               <div className="flex items-center gap-1.5 mt-1.5">
-                <span className="text-base leading-none">🇨🇳</span>
-                <span className="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] border-l border-white/15 pl-1.5">
-                  Elite Member
+                <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${tier.bg} ${tier.color}`}>
+                  {tier.label}
+                </span>
+                <span className="text-white/30 text-[10px] font-bold uppercase tracking-[0.2em] border-l border-white/15 pl-1.5">
+                  {tier.rank}
                 </span>
               </div>
             </div>
@@ -114,12 +119,20 @@ export function PlayerProfileModal({ player, matches = [], players = [], onClose
           </div>
           <div className="flex-1 text-center">
             <p className="text-[32px] font-black text-neutral-800 italic leading-none">{player.elo_rating || 1500}</p>
-            <p className="text-[10px] font-bold text-neutral-400 uppercase mt-1.5 tracking-widest">当前战力</p>
+            <p className={`text-[10px] font-black mt-1.5 tracking-widest ${tier.color}`}>{tier.label}</p>
           </div>
         </div>
 
         {/* ── Scrollable Body ── */}
         <div className="p-5 flex-1 overflow-y-auto space-y-5">
+          {/* Inactivity warning */}
+          {isInactive && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 flex items-center gap-2">
+              <Clock size={16} className="text-amber-500 shrink-0" />
+              <p className="text-xs font-bold text-amber-700">该球员已超过 30 天未参赛，战力评分可能已失效</p>
+            </div>
+          )}
+
           {/* Stat cards — 2x2 grid */}
           <div className="grid grid-cols-2 gap-2.5">
             <StatCard

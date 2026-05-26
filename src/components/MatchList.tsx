@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Match, Player } from '../types';
-import { PlayCircle, Trophy, Trash2, Share2 } from 'lucide-react';
+import { PlayCircle, Trophy, Trash2, Share2, Pencil } from 'lucide-react';
 import { ShareMatchModal } from './ShareMatchModal';
 
 interface MatchListProps {
@@ -9,6 +9,7 @@ interface MatchListProps {
   team1Ids: string[];
   players: Player[];
   onDeleteMatch: (id: string) => void;
+  onEditMatch?: (match: Match) => void;
   clubName: string;
   inviteCode: string;
 }
@@ -29,7 +30,7 @@ const formatDateWithTime = (timestamp: number) => {
   return `${dateStr} ${period}${displayHours}:${minutes}`;
 };
 
-export function MatchList({ matches, team1Ids, players, onDeleteMatch, clubName, inviteCode }: MatchListProps) {
+export function MatchList({ matches, team1Ids, players, onDeleteMatch, onEditMatch, clubName, inviteCode }: MatchListProps) {
   const [sharingMatch, setSharingMatch] = useState<Match | null>(null);
   const getPlayerName = (id: string) => players.find(p => p.id === id)?.name || '未知';
 
@@ -68,6 +69,7 @@ export function MatchList({ matches, team1Ids, players, onDeleteMatch, clubName,
                 <span className="text-[10px] font-bold text-neutral-400 mr-2 uppercase">{formatDateWithTime(match.date)}</span>
                 
                 <button onClick={() => setSharingMatch(match)} className="p-2 text-neutral-400 hover:text-red-600 transition-colors"><Share2 size={16} /></button>
+                {onEditMatch && <button onClick={() => onEditMatch(match)} className="p-2 text-neutral-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"><Pencil size={15} /></button>}
                 <button onClick={() => onDeleteMatch(match.id)} className="p-2 text-neutral-300 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16} /></button>
               </div>
             </div>

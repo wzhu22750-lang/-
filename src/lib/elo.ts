@@ -2,14 +2,24 @@ import { Player, Match } from '../types';
 
 export const INITIAL_ELO = 1500;
 const K_FACTOR = 32;
+const PROVISIONAL_MATCHES = 15;
+const PROVISIONAL_K = 48;
 
 function getScoreMarginFactor(scores: { team1: number; team2: number }[]): number {
   if (scores.length === 0) return 1.0;
   const avgMargin = scores.reduce((sum, s) => sum + Math.abs(s.team1 - s.team2), 0) / scores.length;
-  if (avgMargin <= 2) return 0.6;
-  if (avgMargin <= 6) return 0.8;
-  if (avgMargin <= 12) return 1.0;
-  return 1.3;
+  // Continuous linear interpolation: 0.6 at margin=0, 1.4 at margin=15+
+  const min = 0.6;
+  const max = 1.4;
+  const factor = min + ((max - min) * Math.min(avgMargin, 15)) / 15;
+  return Math.round(factor * 100) / 100;
+}
+
+export function getProvisionalK(matchCount: number, mode: 'club' | 'tournament' = 'club'): number {
+  if (mode === 'tournament') return K_FACTOR;
+  if (matchCount >= PROVISIONAL_MATCHES) return K_FACTOR;
+  const ratio = matchCount / PROVISIONAL_MATCHES;
+  return Math.round(PROVISIONAL_K - ratio * (PROVISIONAL_K - K_FACTOR));
 }
 
 /**
@@ -22,10 +32,11 @@ export function calculateEloChange(team1Avg: number, team2Avg: number, team1Won:
 }
 
 /**
- * 2. 全量重算所有球员积分 (核心：解决删除记录积分不退回的问题)
+ * 2. 全量重算所有球员积分 (按时间顺序重放比赛，支持临时 K 因子)
  */
 export function recalculateAllElo(allPlayers: Player[], allMatches: Match[], mode: 'club' | 'tournament' = 'club'): Player[] {
   const updatedPlayers = allPlayers.map(p => ({ ...p, elo_rating: 1500 }));
+  const playerMatchCounts = new Map<string, number>();
 
   const sortedMatches = [...allMatches].sort((a, b) => a.date - b.date);
 
@@ -46,9 +57,24 @@ export function recalculateAllElo(allPlayers: Player[], allMatches: Match[], mod
         else if (s.team2 > s.team1) t2Games++;
       });
 
+      // 平局跳过，不产生 ELO 变化
+      if (t1Games === t2Games) {
+        [...team1Ids, ...team2Ids].forEach(pid => {
+          playerMatchCounts.set(pid, (playerMatchCounts.get(pid) || 0) + 1);
+        });
+        return;
+      }
+
       let k = K_FACTOR;
       if (mode === 'tournament') {
         k = Math.round(K_FACTOR * getScoreMarginFactor(match.scores));
+      } else {
+        // 俱乐部模式：根据球员平均参赛场次使用临时 K 因子
+        const t1Counts = t1Players.map(p => playerMatchCounts.get(p.id) || 0);
+        const t2Counts = t2Players.map(p => playerMatchCounts.get(p.id) || 0);
+        const allCounts = [...t1Counts, ...t2Counts];
+        const avgCount = allCounts.reduce((s, c) => s + c, 0) / allCounts.length;
+        k = getProvisionalK(Math.floor(avgCount), mode);
       }
 
       const change = calculateEloChange(t1Avg, t2Avg, t1Games > t2Games, k);
@@ -58,40 +84,47 @@ export function recalculateAllElo(allPlayers: Player[], allMatches: Match[], mod
         if (team2Ids.includes(p.id)) p.elo_rating = (p.elo_rating || 1500) - change;
       });
     }
+
+    // 增加所有参赛球员的场次计数（每场比赛之后）
+    [...team1Ids, ...team2Ids].forEach(pid => {
+      playerMatchCounts.set(pid, (playerMatchCounts.get(pid) || 0) + 1);
+    });
   });
 
   return updatedPlayers;
 }
 
 /**
- * 3. 计算球员当前的连胜数 (用于显示火苗勋章)
+ * 3. 计算球员当前的连胜数
  */
 export function calculateStreak(playerId: string, matches: Match[]) {
   const playerMatches = matches
     .filter(m => m.team1.includes(playerId) || m.team2.includes(playerId))
-    .sort((a, b) => b.date - a.date); // 倒序：从最近的看起
+    .sort((a, b) => b.date - a.date);
 
   let streak = 0;
   for (const m of playerMatches) {
     const isT1 = m.team1.includes(playerId);
     let t1G = 0; let t2G = 0;
-    m.scores.forEach(s => { 
-      if (s.team1 > s.team2) t1G++; 
-      else if (s.team2 > s.team1) t2G++; 
+    m.scores.forEach(s => {
+      if (s.team1 > s.team2) t1G++;
+      else if (s.team2 > s.team1) t2G++;
     });
-    
+
+    // 平局终止连胜
+    if (t1G === t2G) break;
     const won = isT1 ? t1G > t2G : t2G > t1G;
     if (won) {
       streak++;
     } else {
-      break; // 只要输一场，连胜立刻终止
+      break;
     }
   }
   return streak;
 }
 
 /**
- * 4. 段位识别系统 (用于个人档案展示)
+ * 4. 段位识别系统
  */
 export function getPlayerTier(elo: number = 1500) {
   if (elo < 1300) return { label: '羽球萌新', color: 'text-neutral-400', bg: 'bg-neutral-100', rank: 'Bronze' };
@@ -103,9 +136,15 @@ export function getPlayerTier(elo: number = 1500) {
 
 export function getStartOfThisWeek() {
   const now = new Date();
-  const day = now.getDay(); // 0是周日
-  const diff = now.getDate() - (day === 0 ? 6 : day - 1); // 调整到周一
+  const day = now.getDay();
+  const diff = now.getDate() - (day === 0 ? 6 : day - 1);
   const monday = new Date(now.setDate(diff));
   monday.setHours(0, 0, 0, 0);
   return monday.getTime();
+}
+
+export function getLastMatchDate(playerId: string, matches: Match[]): number | null {
+  const playerMatches = matches.filter(m => m.team1.includes(playerId) || m.team2.includes(playerId));
+  if (playerMatches.length === 0) return null;
+  return Math.max(...playerMatches.map(m => m.date));
 }

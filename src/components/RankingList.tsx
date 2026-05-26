@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import { Player, Match } from '../types';
-import { Trophy, Medal, Star, ChevronRight, Flame } from 'lucide-react';
-import { calculateStreak } from '../lib/elo';
+import { Trophy, Medal, Star, ChevronRight, Flame, Clock } from 'lucide-react';
+import { calculateStreak, getPlayerTier, getStartOfThisWeek, getLastMatchDate } from '../lib/elo';
 
 interface RankingListProps {
   players: Player[];
@@ -12,6 +12,18 @@ interface RankingListProps {
 export function RankingList({ players, matches, onViewProfile }: RankingListProps) {
   // 按积分从高到低排序
   const sorted = [...players].sort((a, b) => (b.elo_rating || 1500) - (a.elo_rating || 1500));
+
+  // 本周统计
+  const weekStart = getStartOfThisWeek();
+  const weeklyMatches = matches.filter(m => m.date >= weekStart);
+  const playerParticipation: Record<string, number> = {};
+  weeklyMatches.forEach(m => {
+    [...m.team1, ...m.team2].forEach(pid => {
+      playerParticipation[pid] = (playerParticipation[pid] || 0) + 1;
+    });
+  });
+  const mostActiveEntry = Object.entries(playerParticipation).sort(([, a], [, b]) => b - a)[0];
+  const mostActivePlayer = mostActiveEntry ? players.find(p => p.id === mostActiveEntry[0]) : null;
 
   if (players.length === 0) {
     return (
@@ -25,23 +37,33 @@ export function RankingList({ players, matches, onViewProfile }: RankingListProp
   return (
     <div className="space-y-3 pb-10">
       {/* 头部统计信息 */}
-      <div className="flex items-center justify-between px-2 mb-4">
-        <div>
-          <h3 className="text-[10px] font-black text-neutral-400 uppercase tracking-widest leading-none mb-1">
-            俱乐部战力排行
-          </h3>
-          <p className="text-[10px] font-bold text-neutral-300">活跃人数: {players.length}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 px-2 py-1 bg-orange-50 rounded-lg">
-             <Flame size={12} className="text-orange-500" fill="currentColor" />
-             <span className="text-[9px] font-black text-orange-600 uppercase tracking-tighter">强者连胜中</span>
+      <div className="mb-5 space-y-3">
+        <h3 className="text-[10px] font-black text-neutral-400 uppercase tracking-widest px-2">俱乐部战力排行</h3>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="bg-white rounded-2xl p-3 text-center shadow-sm border border-neutral-50">
+            <p className="text-xl font-black text-red-500 italic leading-none">{weeklyMatches.length}</p>
+            <p className="text-[8px] font-bold text-neutral-400 uppercase tracking-tight mt-1">本周比赛</p>
+          </div>
+          <div className="bg-white rounded-2xl p-3 text-center shadow-sm border border-neutral-50">
+            <p className="text-xl font-black text-blue-500 italic leading-none truncate px-1">
+              {mostActivePlayer ? mostActivePlayer.name : '—'}
+            </p>
+            <p className="text-[8px] font-bold text-neutral-400 uppercase tracking-tight mt-1">
+              {mostActiveEntry ? `${mostActiveEntry[1]}场 · 最活跃` : '暂无数据'}
+            </p>
+          </div>
+          <div className="bg-white rounded-2xl p-3 text-center shadow-sm border border-neutral-50">
+            <p className="text-xl font-black text-green-500 italic leading-none">{players.length}</p>
+            <p className="text-[8px] font-bold text-neutral-400 uppercase tracking-tight mt-1">俱乐部人数</p>
           </div>
         </div>
       </div>
 
       {sorted.map((player, index) => {
         const streak = calculateStreak(player.id, matches);
+        const tier = getPlayerTier(player.elo_rating || 1500);
+        const lastMatch = getLastMatchDate(player.id, matches);
+        const isInactive = lastMatch && (Date.now() - lastMatch > 30 * 24 * 60 * 60 * 1000);
         
         return (
           <motion.div
@@ -56,7 +78,7 @@ export function RankingList({ players, matches, onViewProfile }: RankingListProp
     opacity: { duration: 0.2 }
   }}
   onClick={() => onViewProfile(player)}
-  className="bg-white p-4 rounded-[28px] shadow-sm flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all border border-transparent hover:border-red-100 group relative overflow-hidden"
+  className={`bg-white p-4 rounded-[28px] shadow-sm flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all border border-transparent hover:border-red-100 group relative overflow-hidden ${isInactive ? 'opacity-50' : ''}`}
 >
             {/* 背景装饰：前三名有特殊背景 */}
             {index < 3 && (
@@ -91,10 +113,15 @@ export function RankingList({ players, matches, onViewProfile }: RankingListProp
                   <span className="font-black text-neutral-800 text-lg leading-tight">
                     {player.name}
                   </span>
-                  
+
+                  {/* 段位徽章 */}
+                  <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${tier.bg} ${tier.color}`}>
+                    {tier.label}
+                  </span>
+
                   {/* 连胜火苗显示逻辑 */}
                   {streak >= 3 && (
-                    <motion.div 
+                    <motion.div
                       animate={{ scale: [1, 1.1, 1] }}
                       transition={{ repeat: Infinity, duration: 1.5 }}
                       className="flex items-center gap-0.5 px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded-full border border-orange-200"
@@ -104,8 +131,13 @@ export function RankingList({ players, matches, onViewProfile }: RankingListProp
                     </motion.div>
                   )}
                 </div>
-                <span className="text-[8px] font-bold text-neutral-300 uppercase tracking-tighter">
-                  {index === 0 ? 'Current Champion' : 'Club Member'}
+                <span className="text-[8px] font-bold text-neutral-300 uppercase tracking-tighter flex items-center gap-1">
+                  {tier.rank} · {index === 0 ? '本周第一' : `#${index + 1}`}
+                  {isInactive && (
+                    <span className="inline-flex items-center gap-0.5 text-amber-500" title="超过30天未参赛">
+                      <Clock size={10} />
+                    </span>
+                  )}
                 </span>
               </div>
             </div>

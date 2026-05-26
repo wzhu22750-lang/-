@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { X, Trophy, Calendar, Plus, Minus, Video, Loader2, Film } from 'lucide-react';
 import { Player, Match, GameScore } from '../types';
@@ -7,20 +7,26 @@ interface AddMatchModalProps {
   onClose: () => void;
   players: Player[];
   onAdd: (match: Match) => void;
+  editMatch?: Match;
 }
 
-export function AddMatchModal({ onClose, players, onAdd }: AddMatchModalProps) {
-  const [team1, setTeam1] = useState<string[]>([]);
-  const [team2, setTeam2] = useState<string[]>([]);
-  const [scores, setScores] = useState<GameScore[]>([{ team1: 0, team2: 0 }]);
-  const [tournament, setTournament] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+function tsToDateStr(ts: number): string {
+  return new Date(ts).toISOString().split('T')[0];
+}
+
+export function AddMatchModal({ onClose, players, onAdd, editMatch }: AddMatchModalProps) {
+  const isEditing = !!editMatch;
+
+  const [team1, setTeam1] = useState<string[]>(editMatch?.team1 || []);
+  const [team2, setTeam2] = useState<string[]>(editMatch?.team2 || []);
+  const [scores, setScores] = useState<GameScore[]>(editMatch?.scores?.length ? editMatch.scores : [{ team1: 0, team2: 0 }]);
+  const [tournament, setTournament] = useState(editMatch?.tournament || '');
+  const [date, setDate] = useState(() => editMatch?.date ? tsToDateStr(editMatch.date) : new Date().toISOString().split('T')[0]);
   const [isChoosingPlayers, setIsChoosingPlayers] = useState<'team1' | 'team2' | null>(null);
 
   const handleSubmit = () => {
     if (team1.length === 0 || team2.length === 0) return;
 
-    // 【新增】：自动记录当前具体时间
     const now = new Date();
     const selectedDate = new Date(date);
     selectedDate.setHours(now.getHours());
@@ -28,14 +34,14 @@ export function AddMatchModal({ onClose, players, onAdd }: AddMatchModalProps) {
     selectedDate.setSeconds(now.getSeconds());
 
     const newMatch: Match = {
-      id: Math.random().toString(36).substr(2, 9),
-      date: selectedDate.getTime(), // 存入包含时分秒的时间戳
+      id: editMatch?.id || Math.random().toString(36).substr(2, 9),
+      date: selectedDate.getTime(),
       type: team1.length > 1 ? 'Doubles' : 'Singles',
       team1,
       team2,
       scores: scores.filter(s => s.team1 > 0 || s.team2 > 0),
       tournament: tournament || '练习赛',
-      club_id: '' // 由 App.tsx 填充
+      club_id: editMatch?.club_id || '',
     };
     onAdd(newMatch);
   };
@@ -58,7 +64,9 @@ export function AddMatchModal({ onClose, players, onAdd }: AddMatchModalProps) {
         className="bg-[#f5f5f5] w-full max-w-lg rounded-t-[40px] sm:rounded-3xl overflow-hidden flex flex-col max-h-[95vh] text-neutral-900 shadow-2xl"
       >
         <div className="bg-[#2d2d2e] pt-8 pb-5 px-6 text-white text-center relative shrink-0" style={{ paddingTop: 'max(env(safe-area-inset-top), 32px)' }}>
-          <h2 className="text-xl font-black italic uppercase tracking-widest">Record Battle</h2>
+          <h2 className="text-xl font-black italic uppercase tracking-widest">
+            {isEditing ? 'Edit Battle' : 'Record Battle'}
+          </h2>
           <button onClick={onClose} className="absolute right-6 top-6 p-2 text-white/30 hover:text-white transition-colors" style={{ top: 'max(env(safe-area-inset-top), 24px)' }}>
             <X size={24} />
           </button>
@@ -123,7 +131,7 @@ export function AddMatchModal({ onClose, players, onAdd }: AddMatchModalProps) {
 
         <div className="p-8 bg-white border-t border-neutral-100 shrink-0">
           <button onClick={handleSubmit} disabled={team1.length === 0 || team2.length === 0} className="w-full py-5 bg-[#e11d48] text-white rounded-[24px] font-black uppercase tracking-[0.2em] shadow-xl shadow-red-100 transition-all active:scale-[0.98] disabled:opacity-50">
-            Publish Match
+            {isEditing ? 'Update Match' : 'Publish Match'}
           </button>
         </div>
 

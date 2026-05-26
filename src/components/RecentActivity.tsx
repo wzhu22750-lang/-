@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Match, Player } from '../types';
+import { Match, MatchType, Player } from '../types';
 import { Calendar, Trophy, Zap, Flame } from 'lucide-react';
 import { calculateStreak } from '../lib/elo';
 
@@ -26,7 +27,9 @@ const formatDateWithTime = (timestamp: number) => {
 };
 
 export function RecentActivity({ matches, players, onViewProfile }: RecentActivityProps) {
+  const [filter, setFilter] = useState<'all' | MatchType>('all');
   const getPlayer = (id: string) => players.find(p => p.id === id);
+  const filteredMatches = filter === 'all' ? matches : matches.filter(m => m.type === filter);
 
   if (matches.length === 0) {
     return (
@@ -37,6 +40,11 @@ export function RecentActivity({ matches, players, onViewProfile }: RecentActivi
     );
   }
 
+  const filterPills = (['all', 'Singles', 'Doubles'] as const).map(f => ({
+    key: f,
+    label: f === 'all' ? '全部' : f === 'Singles' ? '单打' : '双打',
+  }));
+
   return (
     <div className="space-y-4 pb-10">
       <div className="flex items-center justify-between mb-2 px-2">
@@ -44,11 +52,31 @@ export function RecentActivity({ matches, players, onViewProfile }: RecentActivi
           <Zap size={12} className="fill-current text-yellow-500" /> Live Feed
         </h3>
         <span className="bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded italic uppercase tracking-widest shadow-sm shadow-red-200">
-          Latest {matches.length}
+          {filteredMatches.length} 场
         </span>
       </div>
 
-      {matches.map((match, idx) => {
+      {/* Filter pills */}
+      <div className="flex gap-2 mb-1 px-2">
+        {filterPills.map(f => (
+          <button
+            key={f.key}
+            onClick={() => setFilter(f.key)}
+            className={`text-[10px] font-black px-3 py-1.5 rounded-xl uppercase tracking-tight transition-all ${
+              filter === f.key ? 'bg-neutral-800 text-white' : 'bg-neutral-100 text-neutral-400 hover:bg-neutral-200'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {filteredMatches.length === 0 ? (
+        <div className="text-center py-12 text-neutral-400">
+          <p className="text-sm font-bold">该类型暂无比赛</p>
+        </div>
+      ) : (
+        filteredMatches.map((match, idx) => {
         let t1Games = 0; let t2Games = 0;
         (match.scores || []).forEach(s => { 
           if (s.team1 > s.team2) t1Games++; 
@@ -143,7 +171,7 @@ export function RecentActivity({ matches, players, onViewProfile }: RecentActivi
             </div>
           </motion.div>
         );
-      })}
+      }))}
     </div>
   );
 }

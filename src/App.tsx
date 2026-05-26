@@ -10,13 +10,14 @@ import {
 } from './lib/storage';
 import { calculateEloChange, recalculateAllElo } from './lib/elo';
 import { 
-  Plus, 
-  Users, 
-  LogOut, 
-  Award, 
-  BarChart3, 
+  Plus,
+  Users,
+  LogOut,
+  Award,
+  BarChart3,
   Zap,
-  ShieldCheck
+  ShieldCheck,
+  Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -27,6 +28,7 @@ import { AddMatchModal } from './components/AddMatchModal';
 import { PlayerSelectModal } from './components/PlayerSelectModal';
 import { PlayerProfileModal } from './components/PlayerProfileModal';
 import { ClubSetup } from './components/ClubSetup';
+import { DataExportModal } from './components/DataExportModal';
 import { RankingList } from './components/RankingList';
 import { RecentActivity } from './components/RecentActivity';
 import { RatingChangeModal } from './components/RatingChangeModal';
@@ -47,7 +49,12 @@ export default function App() {
   const [isAddMatchOpen, setIsAddMatchOpen] = useState(false);
   const [isPlayerSelectOpen, setIsPlayerSelectOpen] = useState<{ side: 'team1' | 'team2' } | null>(null);
   const [viewingPlayer, setViewingPlayer] = useState<Player | null>(null);
-  const [lastMatchResult, setLastMatchResult] = useState<{ change: number, newRating: number } | null>(null);
+  const [lastMatchResult, setLastMatchResult] = useState<{
+    changes: Array<{ playerId: string; name: string; initials: string; avatar?: string; oldRating: number; newRating: number; change: number }>;
+    winner: 'team1' | 'team2';
+  } | null>(null);
+  const [editingMatch, setEditingMatch] = useState<Match | null>(null);
+  const [isExportOpen, setIsExportOpen] = useState(false);
 
   // --- 2. 权限与跳转逻辑 ---
   const isAdmin = useMemo(() => {
@@ -130,11 +137,36 @@ export default function App() {
   const handleAddMatch = async (newMatch: Match) => {
     if (!club) return;
     const matchWithClub = { ...newMatch, club_id: club.id };
-    const newMatches = [matchWithClub, ...matches];
+    const isEdit = matches.some(m => m.id === newMatch.id);
+    const newMatches = isEdit
+      ? matches.map(m => m.id === newMatch.id ? matchWithClub : m)
+      : [matchWithClub, ...matches];
     const updatedPlayers = recalculateAllElo(players, newMatches, club.mode);
-    const oldScore = players.find(p => p.id === newMatch.team1[0])?.elo_rating || 1500;
-    const newScore = updatedPlayers.find(p => p.id === newMatch.team1[0])?.elo_rating || 1500;
-    setLastMatchResult({ change: newScore - oldScore, newRating: newScore });
+
+    // 计算所有参赛球员的 ELO 变化
+    const allIds = [...newMatch.team1, ...newMatch.team2];
+    const changes = allIds.map(pid => {
+      const old = players.find(p => p.id === pid);
+      const updated = updatedPlayers.find(p => p.id === pid);
+      return {
+        playerId: pid,
+        name: updated?.name || old?.name || 'Unknown',
+        initials: updated?.initials || old?.initials || '?',
+        avatar: updated?.avatar || old?.avatar,
+        oldRating: old?.elo_rating || 1500,
+        newRating: updated?.elo_rating || 1500,
+        change: (updated?.elo_rating || 1500) - (old?.elo_rating || 1500),
+      };
+    });
+
+    // 判定胜负（与 recalculateAllElo 一致：比局数）
+    let t1Games = 0; let t2Games = 0;
+    newMatch.scores.forEach(s => {
+      if (s.team1 > s.team2) t1Games++;
+      else if (s.team2 > s.team1) t2Games++;
+    });
+
+    setLastMatchResult({ changes, winner: t1Games > t2Games ? 'team1' : 'team2' });
     setMatches(newMatches);
     setPlayers(updatedPlayers);
     await saveMatchToCloud(matchWithClub);
@@ -144,10 +176,10 @@ export default function App() {
       if (pData) await savePlayerToCloud(pData);
     }
     setIsAddMatchOpen(false);
+    setEditingMatch(null);
   };
 
   const handleDeleteMatch = async (id: string) => {
-    if (!isAdmin) return alert('权限不足：只有管理员可以删除战绩！');
     if (!confirm('确定删除这场战绩吗？积分将全量重算。')) return;
     const newMatches = matches.filter(m => m.id !== id);
     const updatedPlayers = recalculateAllElo(players, newMatches, club.mode);
@@ -184,12 +216,17 @@ export default function App() {
               <p className="text-[10px] opacity-70 font-mono tracking-widest leading-none mt-1">CODE: {club.invite_code}</p>
             </div>
           </div>
-          {isAdmin && (
-            <div className="flex items-center gap-1.5 bg-white/20 px-3 py-1 rounded-full border border-white/20">
-               <ShieldCheck size={12} className="text-yellow-300" />
-               <span className="text-[10px] font-black uppercase tracking-widest">Admin</span>
-            </div>
-          )}
+          <div className="flex items-center gap-1.5">
+            <button onClick={() => setIsExportOpen(true)} className="p-2 hover:bg-white/10 rounded-full transition-colors" title="数据导出">
+              <Download size={16} className="text-white/60" />
+            </button>
+            {isAdmin && (
+              <div className="flex items-center gap-1.5 bg-white/20 px-3 py-1 rounded-full border border-white/20">
+                 <ShieldCheck size={12} className="text-yellow-300" />
+                 <span className="text-[10px] font-black uppercase tracking-widest">Admin</span>
+              </div>
+            )}
+          </div>
         </div>
         <div className="flex px-4 gap-6 text-sm font-bold border-t border-white/10 overflow-x-auto no-scrollbar bg-black/5">
           <button onClick={() => setActiveTab('recent')} className={`flex items-center gap-2 py-3 border-b-2 shrink-0 transition-all ${activeTab === 'recent' ? 'border-white text-white' : 'border-transparent text-white/50'}`}><Zap size={16} /> 最近动态</button>
@@ -218,10 +255,11 @@ export default function App() {
               team2Players={players.filter(p => selectedTeam2.includes(p.id))}
             />
             {selectedTeam1.length > 0 && selectedTeam2.length > 0 ? (
-              <MatchList 
-                matches={h2hMatches} team1Ids={selectedTeam1} players={players} 
-                onDeleteMatch={handleDeleteMatch} 
-                clubName={club.name} inviteCode={club.invite_code} 
+              <MatchList
+                matches={h2hMatches} team1Ids={selectedTeam1} players={players}
+                onDeleteMatch={handleDeleteMatch}
+                onEditMatch={(m) => { setEditingMatch(m); setIsAddMatchOpen(true); }}
+                clubName={club.name} inviteCode={club.invite_code}
               />
             ) : (
               <div className="text-center py-20 text-neutral-400 font-bold leading-relaxed"><Users size={48} className="mx-auto mb-4 opacity-10" /><p>选择球员开始深度对战分析</p></div>
@@ -236,7 +274,7 @@ export default function App() {
 
       {/* Modals */}
       <AnimatePresence>
-        {isAddMatchOpen && <AddMatchModal onClose={() => setIsAddMatchOpen(false)} players={players} onAdd={handleAddMatch} />}
+        {isAddMatchOpen && <AddMatchModal onClose={() => { setIsAddMatchOpen(false); setEditingMatch(null); }} players={players} onAdd={handleAddMatch} editMatch={editingMatch || undefined} />}
         {isPlayerSelectOpen && (
           <PlayerSelectModal 
             side={isPlayerSelectOpen.side} onClose={() => setIsPlayerSelectOpen(null)} players={players} 
@@ -255,7 +293,10 @@ export default function App() {
           />
         )}
         {lastMatchResult && (
-          <RatingChangeModal change={lastMatchResult.change} newRating={lastMatchResult.newRating} onClose={() => setLastMatchResult(null)} />
+          <RatingChangeModal changes={lastMatchResult.changes} winner={lastMatchResult.winner} onClose={() => setLastMatchResult(null)} />
+        )}
+        {isExportOpen && (
+          <DataExportModal players={players} matches={matches} onClose={() => setIsExportOpen(false)} />
         )}
       </AnimatePresence>
     </div>

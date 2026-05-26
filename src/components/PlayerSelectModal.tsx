@@ -74,9 +74,9 @@ export function PlayerSelectModal({
                 className={`group w-full flex items-center gap-4 p-4 rounded-xl transition-all ${isSelected ? 'bg-red-50' : 'bg-neutral-50'}`}
               >
                 <div className="flex-1 flex items-center gap-4 cursor-pointer">
-                  <div 
-                    onClick={(e) => { e.stopPropagation(); onViewProfile(p); }}
-                    className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center overflow-hidden shrink-0 border-2 border-transparent hover:border-red-500 transition-all"
+                  <div
+                    onClick={() => toggle(p.id)}
+                    className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center overflow-hidden shrink-0 border-2 border-transparent hover:border-red-500 transition-all cursor-pointer"
                   >
                     {p.avatar ? <img src={p.avatar} alt={p.name} className="w-full h-full object-cover" /> : 
                       <span className="text-lg font-bold text-neutral-400">{p.initials}</span>
