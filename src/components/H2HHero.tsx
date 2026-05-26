@@ -57,7 +57,7 @@ export function H2HHero({
 
         <div className="grid grid-cols-2 gap-4">
           {/* Team A */}
-          <motion.div onClick={onSelectTeam1} whileTap={{ scale: 0.98 }} className="bg-white rounded-[28px] p-4 text-neutral-800 shadow-2xl flex flex-col h-40 justify-between cursor-pointer">
+          <motion.div onClick={onSelectTeam1} whileTap={{ scale: 0.98 }} className="bg-white rounded-2xl p-4 text-neutral-800 shadow-2xl flex flex-col h-40 justify-between cursor-pointer">
             <div className="flex justify-between items-start">
               <Plus size={18} className="text-neutral-200" />
               {renderAvatars(team1Players, 'left')}
@@ -69,7 +69,7 @@ export function H2HHero({
           </motion.div>
 
           {/* Team B */}
-          <motion.div onClick={onSelectTeam2} whileTap={{ scale: 0.98 }} className="bg-white rounded-[28px] p-4 text-neutral-800 shadow-2xl flex flex-col h-40 justify-between cursor-pointer">
+          <motion.div onClick={onSelectTeam2} whileTap={{ scale: 0.98 }} className="bg-white rounded-2xl p-4 text-neutral-800 shadow-2xl flex flex-col h-40 justify-between cursor-pointer">
             <div className="flex justify-between items-start flex-row-reverse">
               <Plus size={18} className="text-neutral-200" />
               {renderAvatars(team2Players, 'right')}

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { Trophy, TrendingUp, TrendingDown, X } from 'lucide-react';
 
@@ -17,10 +18,37 @@ interface RatingChangeModalProps {
   onClose: () => void;
 }
 
+// 随机生成粒子位置
+const particles = Array.from({ length: 10 }, (_, i) => ({
+  id: i,
+  x: Math.random() * 100,
+  delay: Math.random() * 0.5,
+  duration: 0.8 + Math.random() * 0.6,
+  emoji: ['🏸', '🎉', '✨', '🔥', '💪'][i % 5],
+}));
+
+function CountUp({ from, to }: { from: number; to: number }) {
+  const [count, setCount] = useState(from);
+  useEffect(() => {
+    if (from === to) return;
+    const steps = 15;
+    const diff = to - from;
+    let step = 0;
+    const timer = setInterval(() => {
+      step++;
+      setCount(Math.round(from + (diff * step) / steps));
+      if (step >= steps) clearInterval(timer);
+    }, 40);
+    return () => clearInterval(timer);
+  }, [from, to]);
+  return <span>{count}</span>;
+}
+
 export function RatingChangeModal({ changes, winner, onClose }: RatingChangeModalProps) {
   const team1Changes = changes.filter((_, i) => i < changes.length / 2);
   const team2Changes = changes.filter((_, i) => i >= changes.length / 2);
   const team1Won = winner === 'team1';
+  const t1Won = team1Changes.some(c => c.change > 0) || team1Won;
 
   return (
     <motion.div
@@ -29,17 +57,40 @@ export function RatingChangeModal({ changes, winner, onClose }: RatingChangeModa
     >
       <motion.div
         initial={{ scale: 0.5, y: 100 }} animate={{ scale: 1, y: 0 }}
-        className="bg-white rounded-[40px] w-full max-w-sm overflow-hidden shadow-2xl text-center"
+        className="bg-white rounded-[32px] w-full max-w-sm overflow-hidden shadow-2xl text-center relative"
       >
+        {/* Confetti particles */}
+        {t1Won && particles.map(p => (
+          <motion.div
+            key={p.id}
+            initial={{ opacity: 0, y: 0, x: 0 }}
+            animate={{ opacity: [0, 1, 0], y: -120 - Math.random() * 80, x: (Math.random() - 0.5) * 80 }}
+            transition={{ delay: p.delay, duration: p.duration, ease: 'easeOut' }}
+            className="absolute top-1/2 left-1/2 text-lg pointer-events-none z-10"
+            style={{ left: `${p.x}%` }}
+          >
+            {p.emoji}
+          </motion.div>
+        ))}
+
         {/* Header */}
-        <div className={`pt-8 pb-6 ${team1Won ? 'bg-green-500' : 'bg-red-500'} text-white relative`}>
-          <button onClick={onClose} className="absolute top-4 right-4 text-white/50 hover:text-white"><X size={20} /></button>
-          <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 backdrop-blur-md">
+        <div className={`pt-8 pb-6 ${t1Won ? 'bg-green-500' : 'bg-red-500'} text-white relative overflow-hidden`}>
+          <button onClick={onClose} className="absolute top-4 right-4 text-white/50 hover:text-white z-20"><X size={20} /></button>
+
+          <motion.div
+            animate={t1Won ? { rotate: [0, -8, 8, 0] } : {}}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 backdrop-blur-md"
+          >
             <Trophy size={32} className="text-yellow-300" />
-          </div>
+          </motion.div>
+
           <h2 className="text-xl font-black italic tracking-widest">
-            {team1Won ? 'A 队 获胜' : 'B 队 获胜'}
+            {t1Won ? 'VICTORY' : 'DEFEAT'}
           </h2>
+          {!t1Won && (
+            <p className="text-[10px] text-white/60 mt-1 font-bold">再接再厉，下次必胜</p>
+          )}
         </div>
 
         {/* Team sections */}
@@ -50,7 +101,7 @@ export function RatingChangeModal({ changes, winner, onClose }: RatingChangeModa
               {team1Won ? '胜方' : '负方'} · A 队
             </p>
             {team1Changes.map(pc => (
-              <PlayerRatingRow key={pc.playerId} data={pc} won={team1Won} />
+              <PlayerRatingRow key={pc.playerId} data={pc} />
             ))}
           </div>
 
@@ -62,7 +113,7 @@ export function RatingChangeModal({ changes, winner, onClose }: RatingChangeModa
               {!team1Won ? '胜方' : '负方'} · B 队
             </p>
             {team2Changes.map(pc => (
-              <PlayerRatingRow key={pc.playerId} data={pc} won={!team1Won} />
+              <PlayerRatingRow key={pc.playerId} data={pc} />
             ))}
           </div>
 
@@ -78,8 +129,8 @@ export function RatingChangeModal({ changes, winner, onClose }: RatingChangeModa
   );
 }
 
-function PlayerRatingRow({ data, won }: { data: PlayerChange; won: boolean; key?: string }) {
-  const isPositive = won;
+function PlayerRatingRow({ data }: { data: PlayerChange; key?: string }) {
+  const isPositive = data.change > 0;
   return (
     <div className="flex items-center gap-3 bg-neutral-50 rounded-2xl p-3">
       {/* Avatar */}
@@ -95,17 +146,22 @@ function PlayerRatingRow({ data, won }: { data: PlayerChange; won: boolean; key?
       <div className="text-left flex-1 min-w-0">
         <p className="text-sm font-black text-neutral-800 truncate">{data.name}</p>
         <p className="text-[9px] font-bold text-neutral-400">
-          {data.oldRating} → {data.newRating}
+          {data.oldRating} → <CountUp from={data.oldRating} to={data.newRating} />
         </p>
       </div>
 
       {/* Change badge */}
-      <div className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl font-black text-sm ${
-        isPositive ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
-      }`}>
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 20, delay: 0.3 }}
+        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl font-black text-sm ${
+          isPositive ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+        }`}
+      >
         {isPositive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
         {isPositive ? '+' : ''}{data.change}
-      </div>
+      </motion.div>
     </div>
   );
 }

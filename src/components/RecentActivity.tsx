@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Match, MatchType, Player } from '../types';
-import { Calendar, Trophy, Zap, Flame } from 'lucide-react';
+import { Calendar, Trophy, Zap, Flame, RotateCcw } from 'lucide-react';
 import { calculateStreak } from '../lib/elo';
 
 interface RecentActivityProps {
   matches: Match[];
   players: Player[];
   onViewProfile: (p: Player) => void;
+  onQuickRematch?: (match: Match) => void;
 }
 
 // 智能时间格式化工具
@@ -26,7 +27,7 @@ const formatDateWithTime = (timestamp: number) => {
   return `${dateStr} ${period}${displayHours}:${minutes}`;
 };
 
-export function RecentActivity({ matches, players, onViewProfile }: RecentActivityProps) {
+export function RecentActivity({ matches, players, onViewProfile, onQuickRematch }: RecentActivityProps) {
   const [filter, setFilter] = useState<'all' | MatchType>('all');
   const getPlayer = (id: string) => players.find(p => p.id === id);
   const filteredMatches = filter === 'all' ? matches : matches.filter(m => m.type === filter);
@@ -99,6 +100,17 @@ export function RecentActivity({ matches, players, onViewProfile }: RecentActivi
                  {match.tournament || 'Daily Session'}
                </span>
             </div>
+
+            {onQuickRematch && (
+              <div className="flex justify-end mb-3">
+                <button
+                  onClick={(e) => { e.stopPropagation(); onQuickRematch(match); }}
+                  className="flex items-center gap-1 text-[10px] font-black text-neutral-400 hover:text-red-600 bg-neutral-50 hover:bg-red-50 px-2.5 py-1.5 rounded-xl transition-colors"
+                >
+                  <RotateCcw size={12} /> 再来一局
+                </button>
+              </div>
+            )}
 
             <div className="grid grid-cols-[1fr,auto,1fr] gap-4 items-center">
               {/* Team 1 */}

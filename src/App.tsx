@@ -24,6 +24,7 @@ import { motion, AnimatePresence } from 'motion/react';
 // 组件导入
 import { MatchList } from './components/MatchList';
 import { H2HHero } from './components/H2HHero';
+import { H2HTrend } from './components/H2HTrend';
 import { AddMatchModal } from './components/AddMatchModal';
 import { PlayerSelectModal } from './components/PlayerSelectModal';
 import { PlayerProfileModal } from './components/PlayerProfileModal';
@@ -54,6 +55,7 @@ export default function App() {
     winner: 'team1' | 'team2';
   } | null>(null);
   const [editingMatch, setEditingMatch] = useState<Match | null>(null);
+  const [prefillTeams, setPrefillTeams] = useState<{ team1: string[]; team2: string[] } | null>(null);
   const [isExportOpen, setIsExportOpen] = useState(false);
 
   // --- 2. 权限与跳转逻辑 ---
@@ -238,7 +240,7 @@ export default function App() {
       {/* Main Content */}
       <main className="px-4 mt-6">
         {activeTab === 'recent' && (
-          <RecentActivity matches={matches} players={players} onViewProfile={setViewingPlayer} />
+          <RecentActivity matches={matches} players={players} onViewProfile={setViewingPlayer} onQuickRematch={(m) => { setPrefillTeams({ team1: m.team1, team2: m.team2 }); setIsAddMatchOpen(true); }} />
         )}
         {activeTab === 'h2h' && (
           <div className="space-y-6">
@@ -254,6 +256,9 @@ export default function App() {
               team1Players={players.filter(p => selectedTeam1.includes(p.id))}
               team2Players={players.filter(p => selectedTeam2.includes(p.id))}
             />
+            {selectedTeam1.length > 0 && selectedTeam2.length > 0 && (
+              <H2HTrend matches={h2hMatches} team1Ids={selectedTeam1} />
+            )}
             {selectedTeam1.length > 0 && selectedTeam2.length > 0 ? (
               <MatchList
                 matches={h2hMatches} team1Ids={selectedTeam1} players={players}
@@ -270,11 +275,11 @@ export default function App() {
       </main>
 
       {/* FAB */}
-      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setIsAddMatchOpen(true)} className={`fixed bottom-8 right-6 w-14 h-14 text-white rounded-full shadow-2xl flex items-center justify-center z-40 border-4 border-white ${club.mode === 'tournament' ? 'bg-amber-600' : 'bg-red-600'}`}><Plus size={28} /></motion.button>
+      <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={() => { setEditingMatch(null); setPrefillTeams(null); setIsAddMatchOpen(true); }} className={`fixed bottom-8 right-6 text-white rounded-full shadow-2xl flex items-center justify-center gap-2 z-40 border-[3px] border-white px-5 py-3.5 font-black text-sm tracking-wide ${club.mode === 'tournament' ? 'bg-amber-600' : 'bg-red-600'}`}><Plus size={22} /> 录比赛</motion.button>
 
       {/* Modals */}
       <AnimatePresence>
-        {isAddMatchOpen && <AddMatchModal onClose={() => { setIsAddMatchOpen(false); setEditingMatch(null); }} players={players} onAdd={handleAddMatch} editMatch={editingMatch || undefined} />}
+        {isAddMatchOpen && <AddMatchModal onClose={() => { setIsAddMatchOpen(false); setEditingMatch(null); setPrefillTeams(null); }} players={players} onAdd={handleAddMatch} editMatch={editingMatch || undefined} prefillTeams={prefillTeams || undefined} />}
         {isPlayerSelectOpen && (
           <PlayerSelectModal 
             side={isPlayerSelectOpen.side} onClose={() => setIsPlayerSelectOpen(null)} players={players} 

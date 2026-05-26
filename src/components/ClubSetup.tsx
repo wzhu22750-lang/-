@@ -140,7 +140,7 @@ export function ClubSetup({ onComplete }: { onComplete: (club: Club) => void }) 
         )}
 
         {mode === 'create' && (
-          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className={`backdrop-blur-md p-8 rounded-[40px] border ${clubMode === 'tournament' ? 'bg-amber-500/20 border-amber-300/30' : 'bg-white/10 border-white/20'}`}>
+          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className={`backdrop-blur-md p-8 rounded-[32px] border ${clubMode === 'tournament' ? 'bg-amber-500/20 border-amber-300/30' : 'bg-white/10 border-white/20'}`}>
             <div className="space-y-5">
               <div className="space-y-1">
                 <label className="text-[10px] font-black text-red-200 uppercase text-left block pl-2">{clubMode === 'tournament' ? '比赛名称' : '俱乐部名称'}</label>
@@ -162,7 +162,7 @@ export function ClubSetup({ onComplete }: { onComplete: (club: Club) => void }) 
         )}
 
         {mode === 'join' && (
-          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-white/10 backdrop-blur-md p-8 rounded-[40px] border border-white/20">
+          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-white/10 backdrop-blur-md p-8 rounded-[32px] border border-white/20">
             <div className="space-y-5">
               <div className="space-y-1">
                 <label className="text-[10px] font-black text-red-200 uppercase text-center block">输入6位邀请码</label>
