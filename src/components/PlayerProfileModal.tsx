@@ -53,17 +53,22 @@ export function PlayerProfileModal({ player, matches = [], players = [], onClose
       <motion.div 
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         className="bg-[#f5f5f5] w-full max-w-lg min-h-screen sm:min-h-0 sm:rounded-[40px] overflow-hidden relative shadow-2xl flex flex-col"
+        style={{ paddingTop: 'max(env(safe-area-inset-top), 8px)' }}
       >
-        {/* 1. 顶部 Header */}
-        <div className="bg-[#2d2d2e] pt-12 pb-8 px-6 relative shrink-0">
+        {/* 安全区顶部关闭按钮 */}
+        <div className="absolute top-0 left-0 right-0 z-50 flex items-center px-4" style={{ height: 'max(env(safe-area-inset-top), 28px)' }}>
           <button
             onClick={onClose}
-            className="absolute left-6 top-12 -translate-y-1/2 flex items-center gap-1 text-white/40 hover:text-white transition-colors z-30 font-black text-[10px] uppercase tracking-[0.2em]"
+            className="flex items-center gap-1 text-white/50 hover:text-white transition-colors font-black text-[10px] uppercase tracking-[0.2em]"
           >
-            <ChevronLeft size={18} /> 返回
+            <ChevronLeft size={14} /> 退出
           </button>
+        </div>
 
-          <div className="flex items-center gap-5 relative z-10 mt-4">
+        {/* 1. 顶部 Header */}
+        <div className="bg-[#2d2d2e] pt-6 pb-8 px-6 relative shrink-0">
+
+          <div className="flex items-center gap-5 relative z-10">
             <div className="w-20 h-20 rounded-full border-[4px] border-white/10 overflow-hidden bg-[#3d3d3f] shadow-xl shrink-0">
               {player.avatar ? <img src={player.avatar} className="w-full h-full object-cover" /> :
                <div className="w-full h-full flex items-center justify-center text-2xl font-black text-white/20">{player.initials}</div>}
