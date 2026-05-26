@@ -11,14 +11,13 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 /**
  * 创建俱乐部并生成管理员令牌
  */
-export async function createClub(name: string): Promise<Club | null> {
+export async function createClub(name: string, mode: 'club' | 'tournament' = 'club'): Promise<Club | null> {
   const invite_code = Math.random().toString(36).substring(2, 8).toUpperCase();
-  // 生成随机的管理令牌 (隐形钥匙)
   const manager_token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
   const { data, error } = await supabase
     .from('clubs')
-    .insert([{ name, invite_code, manager_token }])
+    .insert([{ name, invite_code, manager_token, mode }])
     .select('*')
     .single();
   

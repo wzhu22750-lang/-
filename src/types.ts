@@ -4,7 +4,8 @@ export interface Club {
   id: string;
   name: string;
   invite_code: string;
-  manager_token?: string; // 新增：用于识别管理员身份的隐形令牌
+  manager_token?: string;
+  mode?: 'club' | 'tournament';
 }
 
 export interface Player {

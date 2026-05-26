@@ -81,7 +81,7 @@ export default function App() {
             getPlayers(club.id),
             getMatches(club.id)
           ]);
-          const finalizedPlayers = recalculateAllElo(p, m);
+          const finalizedPlayers = recalculateAllElo(p, m, club.mode);
           setPlayers(finalizedPlayers);
           setMatches(m);
           localStorage.setItem(`cache_players_${club.id}`, JSON.stringify(finalizedPlayers));
@@ -131,7 +131,7 @@ export default function App() {
     if (!club) return;
     const matchWithClub = { ...newMatch, club_id: club.id };
     const newMatches = [matchWithClub, ...matches];
-    const updatedPlayers = recalculateAllElo(players, newMatches);
+    const updatedPlayers = recalculateAllElo(players, newMatches, club.mode);
     const oldScore = players.find(p => p.id === newMatch.team1[0])?.elo_rating || 1500;
     const newScore = updatedPlayers.find(p => p.id === newMatch.team1[0])?.elo_rating || 1500;
     setLastMatchResult({ change: newScore - oldScore, newRating: newScore });
@@ -150,7 +150,7 @@ export default function App() {
     if (!isAdmin) return alert('权限不足：只有管理员可以删除战绩！');
     if (!confirm('确定删除这场战绩吗？积分将全量重算。')) return;
     const newMatches = matches.filter(m => m.id !== id);
-    const updatedPlayers = recalculateAllElo(players, newMatches);
+    const updatedPlayers = recalculateAllElo(players, newMatches, club.mode);
     setMatches(newMatches);
     setPlayers(updatedPlayers);
     await deleteMatchFromCloud(id);
@@ -162,7 +162,7 @@ export default function App() {
     if (!confirm('警告：移除球员会导致历史数据同步失效。确定吗？')) return;
     await deletePlayerFromCloud(id);
     const newPlayers = players.filter(p => p.id !== id);
-    const updatedPlayers = recalculateAllElo(newPlayers, matches);
+    const updatedPlayers = recalculateAllElo(newPlayers, matches, club.mode);
     setPlayers(updatedPlayers);
     for (const p of updatedPlayers) await savePlayerToCloud(p);
   };
@@ -172,12 +172,15 @@ export default function App() {
   return (
     <div className="min-h-screen bg-neutral-50 pb-24 font-sans text-neutral-900 overflow-x-hidden">
       {/* Header */}
-      <div className="bg-red-600 text-white sticky top-0 z-50 shadow-lg">
+      <div className={`text-white sticky top-0 z-50 shadow-lg ${club.mode === 'tournament' ? 'bg-amber-600' : 'bg-red-600'}`}>
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            <button onClick={() => { if(confirm('退出俱乐部？')) { localStorage.removeItem('h2h_club'); setClub(null); }}} className="p-2 hover:bg-white/10 rounded-full transition-colors"><LogOut size={20} /></button>
+            <button onClick={() => { if(confirm(club.mode === 'tournament' ? '退出比赛？' : '退出俱乐部？')) { localStorage.removeItem('h2h_club'); setClub(null); }}} className="p-2 hover:bg-white/10 rounded-full transition-colors"><LogOut size={20} /></button>
             <div>
-              <h1 className="text-lg font-black leading-none italic">{club.name}</h1>
+              <h1 className="text-lg font-black leading-none italic">
+                {club.name}
+                {club.mode === 'tournament' && <span className="ml-2 text-[10px] bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded align-middle">比赛</span>}
+              </h1>
               <p className="text-[10px] opacity-70 font-mono tracking-widest leading-none mt-1">CODE: {club.invite_code}</p>
             </div>
           </div>
@@ -229,7 +232,7 @@ export default function App() {
       </main>
 
       {/* FAB */}
-      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setIsAddMatchOpen(true)} className="fixed bottom-8 right-6 w-14 h-14 bg-red-600 text-white rounded-full shadow-2xl flex items-center justify-center z-40 border-4 border-white"><Plus size={28} /></motion.button>
+      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setIsAddMatchOpen(true)} className={`fixed bottom-8 right-6 w-14 h-14 text-white rounded-full shadow-2xl flex items-center justify-center z-40 border-4 border-white ${club.mode === 'tournament' ? 'bg-amber-600' : 'bg-red-600'}`}><Plus size={28} /></motion.button>
 
       {/* Modals */}
       <AnimatePresence>

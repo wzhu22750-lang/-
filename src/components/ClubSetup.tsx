@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Trophy, Users, ArrowRight, ShieldCheck, AlertCircle, ChevronRight, History } from 'lucide-react';
+import { Trophy, Users, ArrowRight, ShieldCheck, AlertCircle, ChevronRight, History, Swords } from 'lucide-react';
 import { createClub, joinClub } from '../lib/storage';
 import { Club } from '../types';
 
@@ -9,6 +9,7 @@ const ADMIN_CREATE_KEY = "888888";
 
 export function ClubSetup({ onComplete }: { onComplete: (club: Club) => void }) {
   const [mode, setMode] = useState<'root' | 'create' | 'join'>('root');
+  const [clubMode, setClubMode] = useState<'club' | 'tournament'>('club');
   const [name, setName] = useState('');
   const [key, setKey] = useState('');
   const [inviteCode, setInviteCode] = useState('');
@@ -32,12 +33,13 @@ export function ClubSetup({ onComplete }: { onComplete: (club: Club) => void }) 
   };
 
   const handleCreate = async () => {
-    if (!name) return setError('请输入俱乐部名称');
-    if (key !== ADMIN_CREATE_KEY) return setError('管理密钥错误，你没有权限创建俱乐部');
-    
+    const label = clubMode === 'tournament' ? '比赛' : '俱乐部';
+    if (!name) return setError(`请输入${label}名称`);
+    if (key !== ADMIN_CREATE_KEY) return setError('管理密钥错误，你没有权限创建');
+
     setIsLoading(true);
-    const club = await createClub(name);
-    
+    const club = await createClub(name, clubMode);
+
     if (club && club.manager_token) {
       // 【关键】：如果是创建者，立即把这把“钥匙”存入本地
       saveManagerToken(club.id, club.manager_token);
@@ -84,14 +86,25 @@ export function ClubSetup({ onComplete }: { onComplete: (club: Club) => void }) 
                 </p>
                 <div className="space-y-2">
                   {clubHistory.map(club => (
-                    <button 
+                    <button
                       key={club.id}
                       onClick={() => onComplete(club)}
                       className="w-full bg-white/10 hover:bg-white/20 p-4 rounded-2xl flex items-center justify-between transition-all group border border-transparent hover:border-white/20"
                     >
-                      <div className="text-left">
-                        <p className="font-black text-sm">{club.name}</p>
-                        <p className="text-[10px] font-mono opacity-50">CODE: {club.invite_code}</p>
+                      <div className="flex items-center gap-3">
+                        {club.mode === 'tournament'
+                          ? <Swords size={20} className="text-amber-300" />
+                          : <Users size={20} className="text-red-200" />
+                        }
+                        <div className="text-left">
+                          <div className="flex items-center gap-2">
+                            <p className="font-black text-sm">{club.name}</p>
+                            {club.mode === 'tournament' && (
+                              <span className="text-[9px] font-black bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded">比赛</span>
+                            )}
+                          </div>
+                          <p className="text-[10px] font-mono opacity-50">CODE: {club.invite_code}</p>
+                        </div>
                       </div>
                       <ChevronRight size={18} className="text-red-300 group-hover:translate-x-1 transition-transform" />
                     </button>
@@ -100,29 +113,38 @@ export function ClubSetup({ onComplete }: { onComplete: (club: Club) => void }) 
               </div>
             )}
 
-            <div className="grid grid-cols-1 gap-3">
-              <button 
-                onClick={() => setMode('join')} 
-                className="w-full py-4 bg-white text-red-600 rounded-2xl font-black shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all"
+            <button
+              onClick={() => setMode('join')}
+              className="w-full py-4 bg-white text-red-600 rounded-2xl font-black shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all"
+            >
+              加入现有俱乐部 <Users size={20} />
+            </button>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => { setClubMode('club'); setMode('create'); }}
+                className="py-4 bg-red-500 text-white border-2 border-red-400 rounded-2xl font-black text-sm active:scale-95 transition-all flex flex-col items-center gap-1"
               >
-                加入现有俱乐部 <Users size={20} />
+                <Users size={20} />
+                创建俱乐部
               </button>
-              <button 
-                onClick={() => setMode('create')} 
-                className="w-full py-4 bg-red-500 text-white border-2 border-red-400 rounded-2xl font-black text-sm active:scale-95 transition-all"
+              <button
+                onClick={() => { setClubMode('tournament'); setMode('create'); }}
+                className="py-4 bg-amber-500 text-white border-2 border-amber-400 rounded-2xl font-black text-sm active:scale-95 transition-all flex flex-col items-center gap-1"
               >
-                创建新俱乐部 (仅限管理)
+                <Swords size={20} />
+                创建比赛
               </button>
             </div>
           </div>
         )}
 
         {mode === 'create' && (
-          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-white/10 backdrop-blur-md p-8 rounded-[40px] border border-white/20">
+          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className={`backdrop-blur-md p-8 rounded-[40px] border ${clubMode === 'tournament' ? 'bg-amber-500/20 border-amber-300/30' : 'bg-white/10 border-white/20'}`}>
             <div className="space-y-5">
               <div className="space-y-1">
-                <label className="text-[10px] font-black text-red-200 uppercase text-left block pl-2">俱乐部名称</label>
-                <input className="w-full bg-white text-neutral-900 px-6 py-4 rounded-2xl outline-none font-black text-lg shadow-inner" placeholder="例如：世纪馆羽球社" value={name} onChange={(e) => setName(e.target.value)} />
+                <label className="text-[10px] font-black text-red-200 uppercase text-left block pl-2">{clubMode === 'tournament' ? '比赛名称' : '俱乐部名称'}</label>
+                <input className="w-full bg-white text-neutral-900 px-6 py-4 rounded-2xl outline-none font-black text-lg shadow-inner" placeholder={clubMode === 'tournament' ? '例如：2026春季选拔赛' : '例如：世纪馆羽球社'} value={name} onChange={(e) => setName(e.target.value)} />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-black text-red-200 uppercase text-left block pl-2">管理创建密钥</label>
@@ -131,8 +153,8 @@ export function ClubSetup({ onComplete }: { onComplete: (club: Club) => void }) 
                   <input type="password" className="w-full bg-white text-neutral-900 pl-12 pr-6 py-4 rounded-2xl outline-none font-black text-lg shadow-inner" placeholder="输入创建权限码" value={key} onChange={(e) => setKey(e.target.value)} />
                 </div>
               </div>
-              <button onClick={handleCreate} disabled={isLoading} className="w-full py-4 bg-white text-red-600 rounded-2xl font-black shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95 transition-all">
-                {isLoading ? '正在建立连接...' : '立即开启俱乐部'} <ArrowRight size={20} />
+              <button onClick={handleCreate} disabled={isLoading} className={`w-full py-4 rounded-2xl font-black shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95 transition-all ${clubMode === 'tournament' ? 'bg-amber-400 text-white' : 'bg-white text-red-600'}`}>
+                {isLoading ? '正在建立连接...' : (clubMode === 'tournament' ? '立即创建比赛' : '立即开启俱乐部')} <ArrowRight size={20} />
               </button>
             </div>
             <button onClick={() => { setMode('root'); setError(''); }} className="mt-6 text-xs text-red-200 opacity-60 font-bold uppercase tracking-widest">返回主菜单</button>

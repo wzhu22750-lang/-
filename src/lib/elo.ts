@@ -1,25 +1,32 @@
 import { Player, Match } from '../types';
 
 export const INITIAL_ELO = 1500;
-const K_FACTOR = 32; // 单场比赛最大积分变动
+const K_FACTOR = 32;
+
+function getScoreMarginFactor(scores: { team1: number; team2: number }[]): number {
+  if (scores.length === 0) return 1.0;
+  const avgMargin = scores.reduce((sum, s) => sum + Math.abs(s.team1 - s.team2), 0) / scores.length;
+  if (avgMargin <= 2) return 0.6;
+  if (avgMargin <= 6) return 0.8;
+  if (avgMargin <= 12) return 1.0;
+  return 1.3;
+}
 
 /**
  * 1. 计算单场 ELO 变动
  */
-export function calculateEloChange(team1Avg: number, team2Avg: number, team1Won: boolean) {
+export function calculateEloChange(team1Avg: number, team2Avg: number, team1Won: boolean, k: number = K_FACTOR) {
   const expectedScore1 = 1 / (1 + Math.pow(10, (team2Avg - team1Avg) / 400));
   const actualScore1 = team1Won ? 1 : 0;
-  return Math.round(K_FACTOR * (actualScore1 - expectedScore1));
+  return Math.round(k * (actualScore1 - expectedScore1));
 }
 
 /**
  * 2. 全量重算所有球员积分 (核心：解决删除记录积分不退回的问题)
  */
-export function recalculateAllElo(allPlayers: Player[], allMatches: Match[]): Player[] {
-  // 初始化：所有人回到 1500 分
+export function recalculateAllElo(allPlayers: Player[], allMatches: Match[], mode: 'club' | 'tournament' = 'club'): Player[] {
   const updatedPlayers = allPlayers.map(p => ({ ...p, elo_rating: 1500 }));
 
-  // 排序：必须按时间从旧到新计算，模拟历史演进
   const sortedMatches = [...allMatches].sort((a, b) => a.date - b.date);
 
   sortedMatches.forEach(match => {
@@ -30,20 +37,22 @@ export function recalculateAllElo(allPlayers: Player[], allMatches: Match[]): Pl
     const t2Players = updatedPlayers.filter(p => team2Ids.includes(p.id));
 
     if (t1Players.length > 0 && t2Players.length > 0) {
-      // 计算两队当时的平均分
       const t1Avg = t1Players.reduce((sum, p) => sum + (p.elo_rating || 1500), 0) / t1Players.length;
       const t2Avg = t2Players.reduce((sum, p) => sum + (p.elo_rating || 1500), 0) / t2Players.length;
 
-      // 计算胜负
       let t1Games = 0; let t2Games = 0;
-      match.scores.forEach(s => { 
-        if (s.team1 > s.team2) t1Games++; 
-        else if (s.team2 > s.team1) t2Games++; 
+      match.scores.forEach(s => {
+        if (s.team1 > s.team2) t1Games++;
+        else if (s.team2 > s.team1) t2Games++;
       });
-      
-      const change = calculateEloChange(t1Avg, t2Avg, t1Games > t2Games);
 
-      // 将变动应用到 updatedPlayers 数组中
+      let k = K_FACTOR;
+      if (mode === 'tournament') {
+        k = Math.round(K_FACTOR * getScoreMarginFactor(match.scores));
+      }
+
+      const change = calculateEloChange(t1Avg, t2Avg, t1Games > t2Games, k);
+
       updatedPlayers.forEach(p => {
         if (team1Ids.includes(p.id)) p.elo_rating = (p.elo_rating || 1500) + change;
         if (team2Ids.includes(p.id)) p.elo_rating = (p.elo_rating || 1500) - change;
