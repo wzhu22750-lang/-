@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { X, Trophy, Calendar, Plus, Minus, Video, Loader2, Film } from 'lucide-react';
+import { X, Trophy, Calendar, Plus, Minus, Clock } from 'lucide-react';
 import { Player, Match, GameScore } from '../types';
 
 interface AddMatchModalProps {
@@ -26,6 +26,20 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
   const [tournament, setTournament] = useState(editMatch?.tournament || '');
   const [date, setDate] = useState(() => editMatch?.date ? tsToDateStr(editMatch.date) : new Date().toISOString().split('T')[0]);
   const [isChoosingPlayers, setIsChoosingPlayers] = useState<'team1' | 'team2' | null>(null);
+
+  // 实时时钟
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 30000);
+    return () => clearInterval(timer);
+  }, []);
+  const timeLabel = useMemo(() => {
+    const h = now.getHours();
+    const m = now.getMinutes().toString().padStart(2, '0');
+    const period = h >= 5 && h < 12 ? '上午' : h >= 12 && h < 18 ? '下午' : '晚上';
+    const displayH = h % 12 || 12;
+    return `${period}${displayH}:${m}`;
+  }, [now]);
 
   const handleSubmit = () => {
     if (team1.length === 0 || team2.length === 0) return;
@@ -130,8 +144,12 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
                 <input type="text" placeholder="赛事/场地 (例: 世纪馆-5号场)" value={tournament} onChange={(e) => setTournament(e.target.value)} className="flex-1 outline-none text-sm font-black" />
              </div>
              <div className="flex items-center gap-4 bg-white p-5 rounded-2xl border border-neutral-100 shadow-sm">
-                <Calendar size={18} className="text-blue-500" />
-                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="flex-1 outline-none text-sm font-black" />
+                <Calendar size={18} className="text-blue-500 shrink-0" />
+                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="flex-1 outline-none text-sm font-black min-w-0" />
+                <div className="flex items-center gap-1.5 text-xs font-black text-neutral-400 bg-neutral-50 px-2.5 py-1.5 rounded-xl shrink-0">
+                  <Clock size={12} />
+                  <span>{timeLabel}</span>
+                </div>
              </div>
           </div>
         </div>
