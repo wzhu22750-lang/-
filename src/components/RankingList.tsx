@@ -87,7 +87,7 @@ export function RankingList({ players, matches, onViewProfile }: RankingListProp
               }`} />
             )}
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
               {/* 排名显示 */}
               <div className="w-8 flex justify-center italic font-black text-xl shrink-0">
                 {index === 0 ? <Trophy className="text-yellow-500 drop-shadow-sm" size={26} /> : 
@@ -107,53 +107,51 @@ export function RankingList({ players, matches, onViewProfile }: RankingListProp
                 )}
               </div>
               
-              {/* 球员姓名与勋章 */}
-              <div className="flex flex-col">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-black text-neutral-800 text-lg leading-tight">
-                    {player.name}
-                  </span>
-
+              {/* 球员姓名与勋章 — 双行布局 */}
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="font-black text-neutral-800 text-base leading-tight truncate">
+                  {player.name}
+                </span>
+                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                   {/* 段位徽章 */}
-                  <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${tier.bg} ${tier.color}`}>
+                  <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md shrink-0 ${tier.bg} ${tier.color}`}>
                     {tier.label}
                   </span>
 
-                  {/* 连胜火苗显示逻辑 */}
+                  {/* 连胜火苗 */}
                   {streak >= 3 && (
                     <motion.div
                       animate={{ scale: [1, 1.1, 1] }}
                       transition={{ repeat: Infinity, duration: 1.5 }}
-                      className="flex items-center gap-0.5 px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded-full border border-orange-200"
+                      className="flex items-center gap-0.5 px-1 py-0.5 bg-orange-100 text-orange-600 rounded-full border border-orange-200 shrink-0"
                     >
-                      <Flame size={10} fill="currentColor" />
-                      <span className="text-[9px] italic font-black">{streak}连胜</span>
+                      <Flame size={9} fill="currentColor" />
+                      <span className="text-[8px] italic font-black">{streak}连胜</span>
                     </motion.div>
                   )}
-                </div>
-                <span className="text-[8px] font-bold text-neutral-300 uppercase tracking-tighter flex items-center gap-1">
-                  {tier.rank} · {index === 0 ? '本周第一' : `#${index + 1}`}
+
+                  {/* 不活跃提示 */}
                   {isInactive && (
-                    <span className="inline-flex items-center gap-0.5 text-amber-500" title="超过30天未参赛">
+                    <span className="inline-flex items-center text-amber-500 shrink-0" title="超过30天未参赛">
                       <Clock size={10} />
                     </span>
                   )}
-                </span>
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 shrink-0">
               <div className="text-right">
-                <div className="flex items-center gap-1 text-red-600 font-black text-2xl italic leading-none">
-                  <Star size={14} fill="currentColor" />
+                <div className="flex items-center gap-0.5 text-red-600 font-black text-xl italic leading-none">
+                  <Star size={12} fill="currentColor" />
                   <span>{player.elo_rating || 1500}</span>
                 </div>
-                <p className="text-[9px] text-neutral-400 font-black uppercase tracking-tighter mt-1">
-                  Rating Points
+                <p className="text-[8px] text-neutral-400 font-black uppercase tracking-tighter mt-0.5">
+                  ELO
                 </p>
               </div>
-              
-              <ChevronRight size={16} className="text-neutral-200 group-hover:text-red-300 transition-colors" />
+
+              <ChevronRight size={14} className="text-neutral-200 group-hover:text-red-300 transition-colors shrink-0" />
             </div>
           </motion.div>
         );
