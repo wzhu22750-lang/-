@@ -57,9 +57,9 @@ export function AddMatchModal({ onClose, players, onAdd }: AddMatchModalProps) {
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         className="bg-[#f5f5f5] w-full max-w-lg rounded-t-[40px] sm:rounded-3xl overflow-hidden flex flex-col max-h-[95vh] text-neutral-900 shadow-2xl"
       >
-        <div className="bg-[#2d2d2e] p-6 text-white text-center relative shrink-0">
+        <div className="bg-[#2d2d2e] pt-8 pb-5 px-6 text-white text-center relative shrink-0" style={{ paddingTop: 'max(env(safe-area-inset-top), 32px)' }}>
           <h2 className="text-xl font-black italic uppercase tracking-widest">Record Battle</h2>
-          <button onClick={onClose} className="absolute right-6 top-6 p-2 text-white/30 hover:text-white transition-colors">
+          <button onClick={onClose} className="absolute right-6 top-6 p-2 text-white/30 hover:text-white transition-colors" style={{ top: 'max(env(safe-area-inset-top), 24px)' }}>
             <X size={24} />
           </button>
         </div>
@@ -129,7 +129,7 @@ export function AddMatchModal({ onClose, players, onAdd }: AddMatchModalProps) {
 
         {isChoosingPlayers && (
           <div className="absolute inset-0 bg-white z-[180] flex flex-col">
-             <div className="bg-[#2d2d2e] p-6 text-white flex items-center justify-between shadow-lg">
+             <div className="bg-[#2d2d2e] pt-8 pb-5 px-6 text-white flex items-center justify-between shadow-lg" style={{ paddingTop: 'max(env(safe-area-inset-top), 32px)' }}>
                 <button onClick={() => setIsChoosingPlayers(null)}><X size={24}/></button>
                 <span className="font-black italic uppercase tracking-widest">Select Players</span>
                 <button onClick={() => setIsChoosingPlayers(null)} className="font-black text-red-500 uppercase">Done</button>

@@ -54,12 +54,12 @@ export function PlayerProfileModal({ player, matches = [], players = [], onClose
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         className="bg-[#f5f5f5] w-full max-w-lg min-h-screen sm:min-h-0 sm:rounded-[40px] overflow-hidden relative shadow-2xl flex flex-col"
       >
-        {/* 1. 顶部 Header - pt 从 20 修改为 50 */}
-        <div className="bg-[#2d2d2e] pb-14 px-8 relative shrink-0" style={{ paddingTop: 'max(env(safe-area-inset-top), 12px)' }}>
+        {/* 1. 顶部 Header */}
+        <div className="bg-[#2d2d2e] pb-14 px-8 relative shrink-0" style={{ paddingTop: 'max(env(safe-area-inset-top), 20px)' }}>
           
           <button 
             onClick={onClose} 
-            className="absolute left-6 flex items-center gap-1 text-white/40 hover:text-white transition-colors z-30 font-black text-[10px] uppercase tracking-[0.2em]" style={{ top: 'max(env(safe-area-inset-top), 12px)' }}
+            className="absolute left-6 flex items-center gap-1 text-white/40 hover:text-white transition-colors z-30 font-black text-[10px] uppercase tracking-[0.2em]" style={{ top: 'max(env(safe-area-inset-top), 20px)' }}
           >
             <ChevronLeft size={18} /> Exit
           </button>
