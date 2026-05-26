@@ -96,18 +96,22 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
              <label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest pl-1">Match Scores</label>
              <div className="space-y-3">
                {scores.map((score, idx) => (
-                 <div key={idx} className="flex items-center gap-3 bg-white p-4 rounded-2xl border border-neutral-100 shadow-sm relative group">
-                   <div className="text-xs font-black text-neutral-200 w-4">#{idx+1}</div>
-                   <div className="flex items-center gap-3 flex-1 justify-center">
-                      <button onClick={() => updateScore(idx, 'team1', score.team1-1)} className="min-w-[44px] min-h-[44px] flex items-center justify-center text-neutral-300 hover:text-red-500 active:bg-red-50 rounded-xl transition-colors"><Minus size={20}/></button>
+                 <div key={idx} className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-neutral-100 shadow-sm relative group">
+                   <div className="text-xs font-black text-neutral-200 w-4 shrink-0">#{idx+1}</div>
+                   <div className="flex items-center gap-2 flex-1 justify-center">
                       <input type="number" value={score.team1 === 0 ? '' : score.team1} placeholder="0" onChange={(e) => updateScore(idx, 'team1', parseInt(e.target.value) || 0)} className="w-14 text-center text-2xl font-black outline-none italic" />
-                      <button onClick={() => updateScore(idx, 'team1', score.team1+1)} className="min-w-[44px] min-h-[44px] flex items-center justify-center text-neutral-300 hover:text-red-500 active:bg-red-50 rounded-xl transition-colors"><Plus size={20}/></button>
+                      <div className="flex flex-col gap-0.5 shrink-0">
+                        <button onClick={() => updateScore(idx, 'team1', score.team1+1)} className="w-[36px] h-[36px] flex items-center justify-center text-neutral-300 hover:text-red-500 active:bg-red-50 rounded-lg transition-colors"><Plus size={18}/></button>
+                        <button onClick={() => updateScore(idx, 'team1', score.team1-1)} className="w-[36px] h-[36px] flex items-center justify-center text-neutral-300 hover:text-red-500 active:bg-red-50 rounded-lg transition-colors"><Minus size={18}/></button>
+                      </div>
                    </div>
-                   <div className="h-10 w-px bg-neutral-100" />
-                   <div className="flex items-center gap-3 flex-1 justify-center">
-                      <button onClick={() => updateScore(idx, 'team2', score.team2-1)} className="min-w-[44px] min-h-[44px] flex items-center justify-center text-neutral-300 hover:text-red-500 active:bg-red-50 rounded-xl transition-colors"><Minus size={20}/></button>
+                   <div className="h-10 w-px bg-neutral-100 shrink-0" />
+                   <div className="flex items-center gap-2 flex-1 justify-center">
                       <input type="number" value={score.team2 === 0 ? '' : score.team2} placeholder="0" onChange={(e) => updateScore(idx, 'team2', parseInt(e.target.value) || 0)} className="w-14 text-center text-2xl font-black outline-none italic" />
-                      <button onClick={() => updateScore(idx, 'team2', score.team2+1)} className="min-w-[44px] min-h-[44px] flex items-center justify-center text-neutral-300 hover:text-red-500 active:bg-red-50 rounded-xl transition-colors"><Plus size={20}/></button>
+                      <div className="flex flex-col gap-0.5 shrink-0">
+                        <button onClick={() => updateScore(idx, 'team2', score.team2+1)} className="w-[36px] h-[36px] flex items-center justify-center text-neutral-300 hover:text-red-500 active:bg-red-50 rounded-lg transition-colors"><Plus size={18}/></button>
+                        <button onClick={() => updateScore(idx, 'team2', score.team2-1)} className="w-[36px] h-[36px] flex items-center justify-center text-neutral-300 hover:text-red-500 active:bg-red-50 rounded-lg transition-colors"><Minus size={18}/></button>
+                      </div>
                    </div>
                    {scores.length > 1 && (
                      <button onClick={() => setScores(scores.filter((_, sIdx) => sIdx !== idx))} className="absolute -right-2 top-1/2 -translate-y-1/2 w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X size={12} /></button>
