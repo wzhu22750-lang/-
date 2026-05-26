@@ -1,20 +1,42 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# 🏸 H2H 羽毛球战绩记录
 
-# Run and deploy your AI Studio app
+一个为羽毛球俱乐部设计的交手记录追踪工具，支持单/双打 ELO 积分、胜率统计及历史战绩回顾。
 
-This contains everything you need to run your app locally.
+## 功能
 
-View your app in AI Studio: https://ai.studio/apps/e149814e-0d28-4df1-92e6-e1304d8f579c
+- **俱乐部模式** — 日常约球记录，标准 ELO 积分
+- **比赛模式** — 积分选拔赛，局分差加权 K 因子（险胜小幅涨跌、碾压大幅涨跌）
+- **双打支持** — 不固定搭档，ELO 全量重算
+- **H2H 分析** — 任意球员/组合对阵记录和胜率
+- **战力排行** — 实时 ELO 段位榜单
 
-## Run Locally
+## 技术栈
 
-**Prerequisites:**  Node.js
+- React 19 + TypeScript + Vite
+- Tailwind CSS 4
+- Supabase (数据库)
+- Vercel (部署)
 
+## 本地运行
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+```bash
+npm install
+npm run dev
+```
+
+## 环境变量
+
+复制 `.env.example` 为 `.env.local` 并填入 Supabase 配置：
+
+```
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+## 数据库
+
+在 Supabase SQL Editor 中执行：
+
+```sql
+ALTER TABLE clubs ADD COLUMN IF NOT EXISTS mode TEXT DEFAULT 'club';
+```
