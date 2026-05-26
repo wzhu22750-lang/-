@@ -9,6 +9,7 @@
   body {
     -webkit-tap-highlight-color: transparent;
     font-feature-settings: "cv11", "ss01";
+    padding-top: env(safe-area-inset-top);
   }
 
   /* Hide scrollbars for a cleaner mobile feel */
