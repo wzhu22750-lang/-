@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toPng } from 'html-to-image';
-import { X, Loader2, Info } from 'lucide-react';
+import { X, Loader2, Info, Trophy } from 'lucide-react';
 import { Match, Player } from '../types';
 
 interface ShareMatchModalProps {
@@ -26,17 +26,11 @@ export function ShareMatchModal({ match, players, clubName, inviteCode, onClose 
     const generate = async () => {
       if (cardRef.current) {
         try {
-          // Wait for remote avatar images to finish loading
-          await new Promise(resolve => setTimeout(resolve, 800));
-
+          await new Promise(resolve => setTimeout(resolve, 600));
           const dataUrl = await toPng(cardRef.current, {
             cacheBust: true,
             pixelRatio: 2,
-            backgroundColor: '#0b0b10',
-            style: {
-              opacity: '1',
-              transform: 'scale(1)',
-            },
+            backgroundColor: '#dc2626',
           });
           setFinalImage(dataUrl);
           setStatus('ready');
@@ -49,298 +43,136 @@ export function ShareMatchModal({ match, players, clubName, inviteCode, onClose 
     generate();
   }, [match]);
 
+  const TeamCard = ({ ids, won, wins }: { ids: string[]; won: boolean; wins: number }) => (
+    <div className={`rounded-2xl p-4 ${won ? 'bg-white/15 backdrop-blur-sm border border-white/20' : 'bg-black/10 border border-white/5'}`}>
+      <div className="flex items-center gap-3">
+        {/* Avatars */}
+        <div className="flex -space-x-2 shrink-0">
+          {ids.map(id => {
+            const p = getPlayer(id);
+            return (
+              <div key={id} className={`w-12 h-12 rounded-full border-2 overflow-hidden ${won ? 'border-yellow-400 shadow-lg shadow-yellow-400/30' : 'border-white/20'}`}>
+                {p?.avatar
+                  ? <img src={p.avatar} className="w-full h-full object-cover" alt="" />
+                  : <div className="w-full h-full bg-white/10 flex items-center justify-center text-white/60 font-black text-sm">{p?.initials ?? '?'}</div>}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Names */}
+        <div className="flex-1 min-w-0">
+          <p className={`text-sm font-black truncate ${won ? 'text-white' : 'text-white/40'}`}>
+            {ids.map(id => getPlayer(id)?.name ?? '?').join(' / ')}
+          </p>
+        </div>
+
+        {/* Set wins */}
+        <div className={`text-3xl font-black italic ${won ? 'text-yellow-400' : 'text-white/20'}`}>
+          {wins}
+        </div>
+      </div>
+
+      {won && (
+        <div className="flex items-center gap-1 mt-2 pt-2 border-t border-white/10">
+          <Trophy size={12} className="text-yellow-400" />
+          <span className="text-[9px] font-black text-yellow-400 uppercase tracking-[0.2em]">胜者</span>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black/95 z-[150] flex flex-col items-center overflow-y-auto pt-12 pb-12 px-6"
     >
-      {/* Close button */}
+      {/* Close */}
       <div className="fixed top-6 right-6 z-[160]">
-        <button
-          onClick={onClose}
-          className="bg-white/20 backdrop-blur-md p-3 rounded-full text-white shadow-lg active:scale-90 transition-transform"
-        >
+        <button onClick={onClose} className="bg-white/20 backdrop-blur-md p-3 rounded-full text-white shadow-lg active:scale-90">
           <X size={24} />
         </button>
       </div>
 
-      {/* Loading state */}
+      {/* Loading */}
       <AnimatePresence>
         {status === 'rendering' && (
           <motion.div exit={{ opacity: 0 }} className="flex flex-col items-center gap-3 py-20">
-            <Loader2 className="text-amber-500 animate-spin" size={40} />
+            <Loader2 className="text-red-400 animate-spin" size={40} />
             <p className="text-white/60 font-bold text-sm">正在生成战报...</p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Hidden render source */}
-      <div className="fixed top-0 left-0 -z-50 opacity-0 pointer-events-none h-0 overflow-hidden">
-        <div
-          ref={cardRef}
-          className="w-[360px] bg-[#0b0b10] relative flex flex-col overflow-hidden"
-          style={{ fontFamily: 'system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif' }}
-        >
-          {/* Subtle diagonal glow in top-right corner */}
-          <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-amber-500/[0.06] blur-3xl" />
-          {/* Subtle glow in bottom-left corner */}
-          <div className="absolute -bottom-12 -left-12 w-40 h-40 rounded-full bg-amber-500/[0.04] blur-3xl" />
+      {/* Hidden render card — use opacity-0, NO h-0 so html-to-image works */}
+      <div className="fixed top-0 left-0 opacity-0 pointer-events-none" style={{ zIndex: -999 }}>
+        <div ref={cardRef} className="w-[360px] bg-[#dc2626] p-6 flex flex-col gap-5">
+          {/* Subtle ring decoration */}
+          <div className="absolute -right-16 -top-16 w-48 h-48 rounded-full border-[20px] border-white/5 pointer-events-none" />
+          <div className="absolute -left-12 -bottom-12 w-32 h-32 rounded-full border-[14px] border-white/5 pointer-events-none" />
 
-          {/* Geometric lines for depth */}
-          <div className="absolute top-0 right-0 w-20 h-[1px] bg-gradient-to-l from-amber-500/50 to-transparent rotate-45 origin-top-right translate-x-2 translate-y-6" />
-          <div className="absolute top-0 right-0 w-14 h-[1px] bg-gradient-to-l from-amber-500/30 to-transparent rotate-45 origin-top-right translate-x-2 translate-y-11" />
-          <div className="absolute bottom-0 left-0 w-16 h-[1px] bg-gradient-to-r from-amber-500/30 to-transparent -rotate-45 origin-bottom-left -translate-x-2 -translate-y-6" />
-
-          {/* Content wrapper */}
-          <div className="relative z-10 px-6 pt-6 pb-5 flex flex-col gap-5">
-            {/* ── Header ── */}
+          <div className="relative z-10 flex flex-col gap-5">
+            {/* Header */}
             <div className="text-center">
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2.5 mb-3">
-                <div className="h-px w-7 bg-gradient-to-r from-transparent to-amber-500/50" />
-                <span className="text-[10px] font-black tracking-[0.3em] text-amber-500 uppercase">
-                  战报
-                </span>
-                <div className="h-px w-7 bg-gradient-to-l from-transparent to-amber-500/50" />
-              </div>
-
-              {/* Tournament name */}
-              <h2 className="text-lg font-black text-white tracking-wider leading-snug px-2">
+              <span className="inline-block px-4 py-1 bg-white/10 rounded-full text-[10px] font-black text-white/80 tracking-[0.2em] mb-3">
+                战报 · BATTLE REPORT
+              </span>
+              <h2 className="text-xl font-black text-white leading-tight px-2">
                 {match.tournament || '练习赛'}
               </h2>
-
-              {/* Date */}
-              <p className="text-[11px] text-white/35 font-semibold mt-1.5 tracking-wide">
-                {new Date(match.date).toLocaleDateString('zh-CN', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
+              <p className="text-[11px] text-white/50 font-bold mt-1">
+                {new Date(match.date).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}
               </p>
             </div>
 
-            {/* ── Player Matchup ── */}
-            <div className="flex flex-col gap-2.5">
-              {/* Team 1 */}
-              <div
-                className={`relative rounded-xl overflow-hidden ${
-                  t1Won
-                    ? 'bg-gradient-to-r from-amber-500/[0.10] via-amber-500/[0.06] to-transparent border border-amber-500/20'
-                    : 'bg-white/[0.03] border border-white/[0.05] opacity-45'
-                }`}
-              >
-                {/* Winner left accent stripe */}
-                {t1Won && (
-                  <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-amber-400 via-amber-500 to-orange-500 rounded-r-sm" />
-                )}
-                {/* Winner badge */}
-                {t1Won && (
-                  <div className="absolute -top-2.5 right-3 bg-gradient-to-r from-amber-400 to-orange-500 text-[#0b0b10] text-[9px] font-black px-3 py-[3px] rounded-full tracking-widest shadow-lg shadow-amber-500/30">
-                    胜者
-                  </div>
-                )}
-
-                <div className="flex items-center gap-3 py-3 px-3.5">
-                  {/* Avatars */}
-                  <div className="flex -space-x-2.5 shrink-0">
-                    {match.team1.map(id => {
-                      const player = getPlayer(id);
-                      return (
-                        <div
-                          key={id}
-                          className={`w-11 h-11 rounded-full border-2 bg-[#1a1a24] overflow-hidden ${
-                            t1Won
-                              ? 'border-amber-500/60 shadow-lg shadow-amber-500/20'
-                              : 'border-white/15'
-                          }`}
-                        >
-                          {player?.avatar ? (
-                            <img
-                              src={player.avatar}
-                              className="w-full h-full object-cover"
-                              crossOrigin="anonymous"
-                              alt=""
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-amber-500 font-black text-sm">
-                              {player?.initials ?? '?'}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Names */}
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className={`text-[15px] font-black truncate leading-tight ${
-                        t1Won ? 'text-white' : 'text-white/50'
-                      }`}
-                    >
-                      {match.team1.map(id => getPlayer(id)?.name ?? '?').join(' / ')}
-                    </p>
-                  </div>
-
-                  {/* Set-win count */}
-                  <div
-                    className={`text-3xl font-black italic tracking-tighter tabular-nums shrink-0 ${
-                      t1Won ? 'text-amber-500' : 'text-white/25'
-                    }`}
-                  >
-                    {t1Wins}
-                  </div>
-                </div>
+            {/* Teams */}
+            <div className="flex flex-col gap-2">
+              <TeamCard ids={match.team1} won={t1Won} wins={t1Wins} />
+              <div className="flex items-center justify-center">
+                <span className="text-[10px] font-black text-white/15 tracking-[0.3em]">VS</span>
               </div>
-
-              {/* VS Divider */}
-              <div className="flex items-center gap-3 px-2">
-                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
-                <span className="text-[10px] font-black text-white/15 italic tracking-[0.3em]">
-                  VS
-                </span>
-                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
-              </div>
-
-              {/* Team 2 */}
-              <div
-                className={`relative rounded-xl overflow-hidden ${
-                  !t1Won
-                    ? 'bg-gradient-to-r from-amber-500/[0.10] via-amber-500/[0.06] to-transparent border border-amber-500/20'
-                    : 'bg-white/[0.03] border border-white/[0.05] opacity-45'
-                }`}
-              >
-                {/* Winner left accent stripe */}
-                {!t1Won && (
-                  <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-amber-400 via-amber-500 to-orange-500 rounded-r-sm" />
-                )}
-                {/* Winner badge */}
-                {!t1Won && (
-                  <div className="absolute -top-2.5 right-3 bg-gradient-to-r from-amber-400 to-orange-500 text-[#0b0b10] text-[9px] font-black px-3 py-[3px] rounded-full tracking-widest shadow-lg shadow-amber-500/30">
-                    胜者
-                  </div>
-                )}
-
-                <div className="flex items-center gap-3 py-3 px-3.5">
-                  {/* Avatars */}
-                  <div className="flex -space-x-2.5 shrink-0">
-                    {match.team2.map(id => {
-                      const player = getPlayer(id);
-                      return (
-                        <div
-                          key={id}
-                          className={`w-11 h-11 rounded-full border-2 bg-[#1a1a24] overflow-hidden ${
-                            !t1Won
-                              ? 'border-amber-500/60 shadow-lg shadow-amber-500/20'
-                              : 'border-white/15'
-                          }`}
-                        >
-                          {player?.avatar ? (
-                            <img
-                              src={player.avatar}
-                              className="w-full h-full object-cover"
-                              crossOrigin="anonymous"
-                              alt=""
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-amber-500 font-black text-sm">
-                              {player?.initials ?? '?'}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Names */}
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className={`text-[15px] font-black truncate leading-tight ${
-                        !t1Won ? 'text-white' : 'text-white/50'
-                      }`}
-                    >
-                      {match.team2.map(id => getPlayer(id)?.name ?? '?').join(' / ')}
-                    </p>
-                  </div>
-
-                  {/* Set-win count */}
-                  <div
-                    className={`text-3xl font-black italic tracking-tighter tabular-nums shrink-0 ${
-                      !t1Won ? 'text-amber-500' : 'text-white/25'
-                    }`}
-                  >
-                    {t2Wins}
-                  </div>
-                </div>
-              </div>
+              <TeamCard ids={match.team2} won={!t1Won} wins={t2Wins} />
             </div>
 
-            {/* ── Score Detail ── */}
-            <div>
-              <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${match.scores.length}, 1fr)` }}>
+            {/* Scores grid */}
+            <div className="bg-white/10 rounded-2xl p-4">
+              <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${match.scores.length}, 1fr)` }}>
                 {match.scores.map((s, i) => (
-                  <div
-                    key={i}
-                    className="bg-white/[0.04] rounded-lg py-2.5 px-1 border border-white/[0.05]"
-                  >
-                    <div className="text-center">
-                      {/* Score numbers */}
-                      <div className="text-[22px] font-black tracking-tight leading-none tabular-nums">
-                        <span className={s.team1 > s.team2 ? 'text-amber-500' : 'text-white/55'}>
-                          {s.team1}
-                        </span>
-                        <span className="text-white/15 mx-[2px]">:</span>
-                        <span className={s.team2 > s.team1 ? 'text-amber-500' : 'text-white/55'}>
-                          {s.team2}
-                        </span>
-                      </div>
-                      {/* Set label */}
-                      <div className="text-[10px] font-bold text-white/20 mt-1 tracking-widest">
-                        第{i + 1}局
-                      </div>
-                    </div>
+                  <div key={i} className="text-center">
+                    <p className="text-[10px] font-black text-white/40 mb-1">第{i + 1}局</p>
+                    <p className="text-xl font-black text-white tabular-nums">
+                      <span className={s.team1 > s.team2 ? 'text-yellow-400' : ''}>{s.team1}</span>
+                      <span className="text-white/20 mx-0.5">:</span>
+                      <span className={s.team2 > s.team1 ? 'text-yellow-400' : ''}>{s.team2}</span>
+                    </p>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* ── Footer ── */}
-            <div className="flex items-end justify-between pt-4 border-t border-white/[0.07]">
+            {/* Footer */}
+            <div className="flex items-end justify-between pt-3 border-t border-white/10">
               <div>
-                <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.2em] mb-0.5">
-                  俱乐部
-                </p>
-                <p className="font-bold text-xs text-white/60">{clubName}</p>
+                <p className="text-[9px] font-bold text-white/30 uppercase mb-0.5">俱乐部</p>
+                <p className="font-bold text-xs text-white/70">{clubName}</p>
               </div>
-              {inviteCode && (
+              {inviteCode ? (
                 <div className="text-right">
-                  <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.2em] mb-0.5">
-                    邀请码
-                  </p>
-                  <p className="font-mono font-bold text-xs text-amber-500/70 tracking-wider">
-                    {inviteCode}
-                  </p>
+                  <p className="text-[9px] font-bold text-white/30 uppercase mb-0.5">邀请码</p>
+                  <p className="font-mono font-bold text-xs text-white/50 tracking-wider">{inviteCode}</p>
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Final rendered image */}
+      {/* Final image */}
       {finalImage && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="flex flex-col items-center"
-        >
-          <img
-            src={finalImage}
-            className="w-full max-w-[360px] rounded-3xl shadow-2xl ring-1 ring-white/10"
-            alt="战报"
-          />
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center">
+          <img src={finalImage} className="w-full max-w-[360px] rounded-3xl shadow-2xl ring-1 ring-white/10" alt="战报" />
           <div className="mt-8 flex flex-col items-center gap-3">
-            <div className="flex items-center gap-2 text-amber-400 font-bold bg-amber-400/10 px-4 py-2 rounded-full">
+            <div className="flex items-center gap-2 text-yellow-400 font-bold bg-yellow-400/10 px-4 py-2 rounded-full">
               <Info size={16} />
               <span>长按上方图片保存到相册</span>
             </div>
