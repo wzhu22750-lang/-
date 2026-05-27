@@ -30,7 +30,7 @@ export function ShareMatchModal({ match, players, clubName, inviteCode, onClose 
           const dataUrl = await toPng(cardRef.current, {
             cacheBust: true,
             pixelRatio: 2,
-            backgroundColor: '#dc2626',
+            backgroundColor: '#c41230',
           });
           setFinalImage(dataUrl);
           setStatus('ready');
@@ -104,9 +104,9 @@ export function ShareMatchModal({ match, players, clubName, inviteCode, onClose 
         )}
       </AnimatePresence>
 
-      {/* Hidden render card — use opacity-0, NO h-0 so html-to-image works */}
-      <div className="fixed top-0 left-0 opacity-0 pointer-events-none" style={{ zIndex: -999 }}>
-        <div ref={cardRef} className="w-[360px] bg-[#dc2626] p-6 flex flex-col gap-5">
+      {/* Hidden render card — positioned off-screen for full rendering */}
+      <div className="fixed pointer-events-none" style={{ left: -9999, top: 0 }}>
+        <div ref={cardRef} className="w-[360px] bg-[#c41230] p-6 flex flex-col gap-5">
           {/* Subtle ring decoration */}
           <div className="absolute -right-16 -top-16 w-48 h-48 rounded-full border-[20px] border-white/5 pointer-events-none" />
           <div className="absolute -left-12 -bottom-12 w-32 h-32 rounded-full border-[14px] border-white/5 pointer-events-none" />
