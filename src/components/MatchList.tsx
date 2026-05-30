@@ -64,7 +64,7 @@ export function MatchList({ matches, team1Ids, players, onDeleteMatch, onEditMat
                 <div className="w-8 h-8 rounded bg-neutral-100 flex items-center justify-center">
                   <Trophy size={16} className="text-red-500" />
                 </div>
-                <span className="text-sm font-black text-neutral-800 italic uppercase tracking-tighter">{match.tournament || '练习赛'}</span>
+                <span className="text-sm font-bold text-neutral-800 uppercase tracking-tighter">{match.tournament || '练习赛'}</span>
                 {match.category_id && getCategoryName(match.category_id) && (
                   <span className="text-[10px] font-bold bg-red-50 text-red-500 px-2 py-0.5 rounded-lg border border-red-100">
                     {getCategoryName(match.category_id)}
@@ -73,7 +73,7 @@ export function MatchList({ matches, team1Ids, players, onDeleteMatch, onEditMat
               </div>
               <div className="flex items-center gap-1">
                 {/* 使用具体时间显示 */}
-                <span className="text-[10px] font-bold text-neutral-400 mr-2 uppercase">{formatDateWithTime(match.date)}</span>
+                <span className="text-[10px] font-semibold text-neutral-400 mr-2 uppercase">{formatDateWithTime(match.date)}</span>
                 
                 <button onClick={() => setSharingMatch(match)} className="p-2 text-neutral-400 hover:text-red-600 transition-colors"><Share2 size={16} /></button>
                 {onEditMatch && <button onClick={() => onEditMatch(match)} className="p-2 text-neutral-400 hover:text-blue-600 opacity-60 hover:opacity-100 transition-opacity"><Pencil size={15} /></button>}

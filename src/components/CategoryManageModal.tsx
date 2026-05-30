@@ -153,7 +153,7 @@ export function CategoryManageModal({ onClose, categories, clubId, onSave, onDel
           <button
             onClick={() => { setIsAdding(true); setEditingId(null); setFormName(''); setFormMultiplier('1.0'); }}
             disabled={isEditing}
-            className="w-full py-4 border-2 border-dashed border-neutral-200 rounded-2xl text-neutral-400 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-neutral-50 transition-colors disabled:opacity-30"
+            className="w-full py-4 border-2 border-neutral-200 rounded-2xl text-neutral-400 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-neutral-100 transition-colors disabled:opacity-30"
           >
             <Plus size={16} /> 新增类别
           </button>

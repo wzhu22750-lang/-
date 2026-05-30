@@ -197,7 +197,7 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
               ))}
               <button
                 onClick={() => setScores([...scores, { team1: 0, team2: 0 }])}
-                className="w-full py-3.5 border-2 border-dashed border-neutral-300 rounded-2xl text-neutral-400 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-neutral-100 hover:border-neutral-400 transition-colors"
+                className="w-full py-3.5 border-2 border-neutral-200 rounded-2xl text-neutral-400 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-neutral-100 hover:border-neutral-400 transition-colors"
               >
                 <Plus size={16} /> Add Next Set
               </button>
@@ -237,7 +237,7 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
                     <button
                       key={cat.id}
                       onClick={() => setSelectedCategoryId(cat.id)}
-                      className={`shrink-0 px-3.5 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
+                      className={`shrink-0 px-3.5 py-3 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
                         selectedCategoryId === cat.id
                           ? 'bg-[#e11d48] text-white shadow-md shadow-red-200'
                           : 'bg-neutral-100 text-neutral-500 hover:bg-neutral-200'

@@ -51,7 +51,7 @@ export function RecentActivity({ matches, players, onViewProfile, onQuickRematch
   return (
     <div className="space-y-4 pb-10">
       <div className="flex items-center justify-between mb-2 px-2">
-        <h3 className="font-black text-neutral-400 text-[10px] uppercase tracking-[0.2em] flex items-center gap-2">
+        <h3 className="font-bold text-neutral-400 text-[10px] uppercase tracking-[0.2em] flex items-center gap-2">
           <Zap size={12} className="fill-current text-yellow-500" /> Live Feed
         </h3>
         <span className="bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded italic uppercase tracking-widest shadow-sm shadow-red-200">
@@ -95,10 +95,10 @@ export function RecentActivity({ matches, players, onViewProfile, onQuickRematch
             className="bg-white rounded-[32px] p-5 shadow-sm border border-neutral-100 relative overflow-hidden"
           >
             <div className="flex items-center justify-between mb-5 px-1">
-               <span className="text-[10px] font-black text-neutral-300 flex items-center gap-1 uppercase tracking-tighter">
+               <span className="text-[10px] font-semibold text-neutral-400 flex items-center gap-1 uppercase tracking-tighter">
                  <Calendar size={12} /> {formatDateWithTime(match.date)}
                </span>
-               <span className="text-[10px] font-black text-red-600 bg-red-50 px-2 py-1 rounded-lg italic uppercase tracking-tighter border border-red-100">
+               <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-1 rounded-lg border border-red-100">
                  {match.tournament || 'Daily Session'}
                </span>
                {match.category_id && getCategoryName(match.category_id) && (
@@ -112,7 +112,7 @@ export function RecentActivity({ matches, players, onViewProfile, onQuickRematch
               <div className="flex justify-end mb-3">
                 <button
                   onClick={(e) => { e.stopPropagation(); onQuickRematch(match); }}
-                  className="flex items-center gap-1 text-[10px] font-black text-neutral-400 hover:text-red-600 bg-neutral-50 hover:bg-red-50 px-2.5 py-1.5 rounded-xl transition-colors"
+                  className="flex items-center gap-1 text-[10px] font-bold text-neutral-400 hover:text-red-600 bg-neutral-50 hover:bg-red-50 px-2.5 py-1.5 rounded-xl transition-colors"
                 >
                   <RotateCcw size={12} /> 再来一局
                 </button>
