@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { X, Trophy, Calendar, Plus, Minus, Clock, Tag } from 'lucide-react';
+import { X, Trophy, Calendar, Plus, Minus, Clock, Tag, AlertCircle, Zap } from 'lucide-react';
 import { Player, Match, GameScore, MatchCategory } from '../types';
 
 interface AddMatchModalProps {
@@ -28,6 +28,22 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
   const [date, setDate] = useState(() => editMatch?.date ? tsToDateStr(editMatch.date) : new Date().toISOString().split('T')[0]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>(editMatch?.category_id || categories[0]?.id);
   const [isChoosingPlayers, setIsChoosingPlayers] = useState<'team1' | 'team2' | null>(null);
+  const [submitError, setSubmitError] = useState('');
+
+  // ELO 对比 & 挑战赛判定
+  const selectedCategory = useMemo(() => categories.find(c => c.id === selectedCategoryId), [categories, selectedCategoryId]);
+  const isChallenge = (selectedCategory?.k_multiplier ?? 1) > 1.0;
+
+  const teamElo = useMemo(() => {
+    const avg = (ids: string[]) => {
+      const rated = ids.map(id => players.find(p => p.id === id)?.elo_rating ?? 1500);
+      return rated.length ? Math.round(rated.reduce((s, r) => s + r, 0) / rated.length) : 1500;
+    };
+    return { team1: avg(team1), team2: avg(team2) };
+  }, [players, team1, team2]);
+
+  const eloGap = Math.abs(teamElo.team1 - teamElo.team2);
+  const ELO_GAP_MIN = 30;
 
   // 实时时钟
   const [now, setNow] = useState(new Date());
@@ -45,6 +61,12 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
 
   const handleSubmit = () => {
     if (team1.length === 0 || team2.length === 0) return;
+
+    // 挑战赛验证：双方必须有实力差距
+    if (isChallenge && eloGap < ELO_GAP_MIN) {
+      setSubmitError(`「${selectedCategory?.name}」需要双方存在实力差距（至少 ${ELO_GAP_MIN} 分），当前差距仅 ${eloGap} 分`);
+      return;
+    }
 
     const now = new Date();
     const selectedDate = new Date(date);
@@ -67,6 +89,9 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
   };
 
   const getPlayerName = (id: string) => players.find(p => p.id === id)?.name || id;
+
+  // 切换队伍或类别时清除错误
+  useEffect(() => { setSubmitError(''); }, [team1, team2, selectedCategoryId]);
 
   const updateScore = (idx: number, side: 'team1' | 'team2', value: number) => {
     const newScores = [...scores];
@@ -167,6 +192,22 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
             </div>
           )}
 
+          {isChallenge && team1.length > 0 && team2.length > 0 && (
+            <div className={`p-4 rounded-2xl border text-sm font-bold flex items-center gap-3 ${eloGap >= ELO_GAP_MIN ? 'bg-green-50 border-green-200 text-green-700' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
+              <Zap size={16} className="shrink-0" />
+              <div>
+                <p className="text-xs font-black">
+                  Team A <span className="text-base">{teamElo.team1}</span> vs <span className="text-base">{teamElo.team2}</span> Team B
+                </p>
+                <p className="text-[10px] font-bold opacity-70">
+                  {eloGap >= ELO_GAP_MIN
+                    ? `实力差距 ${eloGap} 分 ✓ 满足「弱者挑战强者」`
+                    : `差距仅 ${eloGap} 分，需 ≥ ${ELO_GAP_MIN} 分才能使用「${selectedCategory?.name}」`}
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-4">
              <div className="flex items-center gap-4 bg-white p-5 rounded-2xl border border-neutral-100 shadow-sm">
                 <Trophy size={18} className="text-red-500" />
@@ -183,7 +224,13 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
           </div>
         </div>
 
-        <div className="p-8 bg-white border-t border-neutral-100 shrink-0">
+        <div className="p-8 bg-white border-t border-neutral-100 shrink-0 space-y-3">
+          {submitError && (
+            <div className="flex items-center gap-2 p-3 bg-red-50 text-red-600 rounded-xl text-xs font-bold">
+              <AlertCircle size={14} className="shrink-0" />
+              {submitError}
+            </div>
+          )}
           <button onClick={handleSubmit} disabled={team1.length === 0 || team2.length === 0} className="w-full py-5 bg-[#e11d48] text-white rounded-2xl font-black uppercase tracking-[0.2em] shadow-xl shadow-red-100 transition-all active:scale-[0.98] disabled:opacity-50">
             {isEditing ? 'Update Match' : 'Publish Match'}
           </button>
