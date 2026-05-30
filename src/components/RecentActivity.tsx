@@ -102,7 +102,7 @@ export function RecentActivity({ matches, players, onViewProfile, onQuickRematch
                  {match.tournament || 'Daily Session'}
                </span>
                {match.category_id && getCategoryName(match.category_id) && (
-                 <span className="text-[10px] font-black bg-amber-50 text-amber-600 px-2 py-1 rounded-lg uppercase tracking-tighter border border-amber-100">
+                 <span className="text-[10px] font-black bg-red-50 text-red-500 px-2 py-1 rounded-lg border border-red-100">
                    {getCategoryName(match.category_id)}
                  </span>
                )}
@@ -151,12 +151,12 @@ export function RecentActivity({ matches, players, onViewProfile, onQuickRematch
               {/* 比分展示 */}
               <div className="flex flex-col items-center justify-center">
                 <div className="text-3xl font-black italic tracking-tighter flex items-center gap-2">
-                   <span className={t1Games > t2Games ? 'text-red-600' : 'text-neutral-200'}>{t1Games}</span>
+                   <span className={t1Games > t2Games ? 'text-red-600' : 'text-neutral-400'}>{t1Games}</span>
                    <span className="text-neutral-100 opacity-50">:</span>
-                   <span className={t2Games > t1Games ? 'text-red-600' : 'text-neutral-200'}>{t2Games}</span>
+                   <span className={t2Games > t1Games ? 'text-red-600' : 'text-neutral-400'}>{t2Games}</span>
                 </div>
                 <div className="flex gap-1.5 mt-2 bg-neutral-50 px-2 py-0.5 rounded-full border border-neutral-100">
-                   {(match.scores || []).map((s, i) => <span key={i} className="text-[9px] font-black text-neutral-300 tracking-tighter">{s.team1}:{s.team2}</span>)}
+                   {(match.scores || []).map((s, i) => <span key={i} className="text-[11px] font-bold text-neutral-400">{s.team1}:{s.team2}</span>)}
                 </div>
               </div>
 

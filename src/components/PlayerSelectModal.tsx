@@ -42,26 +42,22 @@ export function PlayerSelectModal({
     >
       <motion.div
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-        className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl overflow-hidden p-6 max-h-[90vh] flex flex-col"
+        className="bg-[#f5f5f5] w-full max-w-lg rounded-t-[32px] sm:rounded-2xl overflow-hidden max-h-[90vh] flex flex-col shadow-2xl"
       >
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold">选择 {side === 'team1' ? 'A' : 'B'} 队球员</h2>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setIsAddingPlayer({ edit: false })} className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors">
-              <UserPlus size={20} />
-            </button>
-            <button onClick={onClose} className="p-2 text-neutral-400">
-              <X size={24} />
-            </button>
-          </div>
+        <div className="bg-[#2d2d2e] pt-6 pb-4 px-6 text-white flex items-center justify-between shrink-0 border-b border-white/10" style={{ paddingTop: 'max(env(safe-area-inset-top), 28px)' }}>
+          <button onClick={onClose} className="p-1 text-white/60 hover:text-white transition-colors"><X size={22} /></button>
+          <span className="font-black uppercase tracking-[0.15em] text-sm">选择 {side === 'team1' ? 'A' : 'B'} 队</span>
+          <button onClick={() => setIsAddingPlayer({ edit: false })} className="p-1 text-red-400 hover:text-red-300 transition-colors"><UserPlus size={20} /></button>
         </div>
+
+        <div className="p-5 flex-1 flex flex-col overflow-hidden">
 
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} />
           <input
             type="text" placeholder="搜索球员..." value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-neutral-100 rounded-xl outline-none focus:ring-2 focus:ring-red-500 transition-all"
+            className="w-full pl-10 pr-4 py-3 bg-white rounded-xl outline-none border border-neutral-200 focus:border-red-500 transition-all text-sm font-bold"
           />
         </div>
 
@@ -71,7 +67,7 @@ export function PlayerSelectModal({
             return (
               <div
                 key={p.id}
-                className={`group w-full flex items-center gap-4 p-4 rounded-xl transition-all ${isSelected ? 'bg-red-50' : 'bg-neutral-50'}`}
+                className={`group w-full flex items-center gap-4 p-4 rounded-xl transition-all border-l-[3px] ${isSelected ? 'bg-red-100 border-l-red-500' : 'bg-white border-l-transparent'}`}
               >
                 <div className="flex-1 flex items-center gap-4 cursor-pointer">
                   <div
@@ -88,7 +84,7 @@ export function PlayerSelectModal({
                   {isSelected && <CheckCircle2 className="text-red-500" size={24} />}
                 </div>
 
-                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity">
                   <button onClick={(e) => { e.stopPropagation(); setIsAddingPlayer({ edit: true, player: p }); }} className="p-2 text-neutral-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
                     <Edit2 size={16} />
                   </button>
@@ -122,6 +118,7 @@ export function PlayerSelectModal({
             />
           )}
         </AnimatePresence>
+        </div>
       </motion.div>
     </motion.div>
   );

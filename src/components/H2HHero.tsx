@@ -11,13 +11,15 @@ interface H2HHeroProps {
   onViewProfile: (p: Player) => void;
   team1Empty: boolean;
   team2Empty: boolean;
-  team1Players: Player[]; // 改为数组
-  team2Players: Player[]; // 改为数组
+  team1Players: Player[];
+  team2Players: Player[];
+  mode?: 'club' | 'tournament';
 }
 
-export function H2HHero({ 
-  stats, team1Names, team2Names, onSelectTeam1, onSelectTeam2, onViewProfile, team1Empty, team2Empty, team1Players, team2Players 
+export function H2HHero({
+  stats, team1Names, team2Names, onSelectTeam1, onSelectTeam2, onViewProfile, team1Empty, team2Empty, team1Players, team2Players, mode
 }: H2HHeroProps) {
+  const bgColor = mode === 'tournament' ? 'bg-amber-600' : 'bg-red-600';
   
   const renderAvatars = (players: Player[], side: 'left' | 'right') => {
     if (players.length === 0) return <div className="w-16 h-16 rounded-full bg-neutral-50 flex items-center justify-center text-neutral-200"><User size={32} /></div>;
@@ -42,8 +44,8 @@ export function H2HHero({
   };
 
   return (
-    <div className="bg-red-600 pt-8 pb-12 rounded-b-[40px] text-white overflow-hidden relative">
-      <div className="absolute inset-0 opacity-10 pointer-events-none">
+    <div className={`${bgColor} pt-8 pb-12 rounded-b-[40px] text-white overflow-hidden relative`}>
+      <div className="absolute inset-0 opacity-5 pointer-events-none">
         <div className="absolute -right-20 -top-20 w-80 h-80 rounded-full border-[40px] border-white" />
         <div className="absolute -left-20 bottom-10 w-40 h-40 rounded-full border-[20px] border-white" />
       </div>
@@ -51,7 +53,7 @@ export function H2HHero({
       <div className="relative z-10 px-6">
         <div className="flex items-center justify-center gap-8 mb-10">
           <motion.div key={`t1-${stats.t1Wins}`} animate={{ scale: [0.8, 1] }} className="text-8xl font-black tracking-tighter italic">{stats.t1Wins}</motion.div>
-          <div className="w-12 h-12 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center text-xs font-black border border-white/20 italic">VS</div>
+          <div className="w-12 h-12 rounded-full bg-black/30 flex items-center justify-center text-xs font-black border border-white/20 italic">VS</div>
           <motion.div key={`t2-${stats.t2Wins}`} animate={{ scale: [0.8, 1] }} className="text-8xl font-black tracking-tighter italic">{stats.t2Wins}</motion.div>
         </div>
 

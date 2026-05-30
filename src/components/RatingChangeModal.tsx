@@ -74,7 +74,7 @@ export function RatingChangeModal({ changes, winner, onClose }: RatingChangeModa
         ))}
 
         {/* Header */}
-        <div className={`pt-8 pb-6 ${t1Won ? 'bg-green-500' : 'bg-red-500'} text-white relative overflow-hidden`}>
+        <div className={`pt-8 pb-6 ${t1Won ? 'bg-emerald-600' : 'bg-red-600'} text-white relative overflow-hidden`}>
           <button onClick={onClose} className="absolute top-4 right-4 text-white/50 hover:text-white z-20"><X size={20} /></button>
 
           <motion.div

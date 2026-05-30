@@ -63,7 +63,7 @@ export function ClubSetup({ onComplete }: { onComplete: (club: Club) => void }) 
   };
 
   return (
-    <div className="min-h-screen bg-red-600 flex items-center justify-center p-6 text-white text-center">
+    <div className="min-h-screen bg-gradient-to-b from-red-600 to-red-700 flex items-center justify-center p-6 text-white text-center">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-md w-full">
         <Trophy size={64} className="mx-auto mb-6 text-red-200" />
         <h1 className="text-3xl font-black mb-2 italic">世纪馆 H2H</h1>
@@ -140,7 +140,7 @@ export function ClubSetup({ onComplete }: { onComplete: (club: Club) => void }) 
         )}
 
         {mode === 'create' && (
-          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className={`backdrop-blur-md p-8 rounded-[32px] border ${clubMode === 'tournament' ? 'bg-amber-500/20 border-amber-300/30' : 'bg-white/10 border-white/20'}`}>
+          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className={`p-8 rounded-[32px] border ${clubMode === 'tournament' ? 'bg-amber-500/20 border-amber-300/30' : 'bg-white/10 border-white/20'}`}>
             <div className="space-y-5">
               <div className="space-y-1">
                 <label className="text-[10px] font-black text-red-200 uppercase text-left block pl-2">{clubMode === 'tournament' ? '比赛名称' : '俱乐部名称'}</label>
@@ -162,7 +162,7 @@ export function ClubSetup({ onComplete }: { onComplete: (club: Club) => void }) 
         )}
 
         {mode === 'join' && (
-          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-white/10 backdrop-blur-md p-8 rounded-[32px] border border-white/20">
+          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-white/10 p-8 rounded-[32px] border border-white/20">
             <div className="space-y-5">
               <div className="space-y-1">
                 <label className="text-[10px] font-black text-red-200 uppercase text-center block">输入6位邀请码</label>

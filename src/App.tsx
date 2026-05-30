@@ -264,17 +264,17 @@ export default function App() {
               <Tag size={16} className="text-white/60" />
             </button>
             {isAdmin && (
-              <div className="flex items-center gap-1.5 bg-white/20 px-3 py-1 rounded-full border border-white/20">
+              <div className="flex items-center gap-1.5 bg-white/30 px-3 py-1 rounded-full border border-white/20">
                  <ShieldCheck size={12} className="text-yellow-300" />
-                 <span className="text-[10px] font-black uppercase tracking-widest">Admin</span>
+                 <span className="text-[11px] font-black uppercase tracking-widest">Admin</span>
               </div>
             )}
           </div>
         </div>
         <div className="flex px-4 gap-6 text-sm font-bold border-t border-white/10 overflow-x-auto no-scrollbar bg-black/5">
-          <button onClick={() => setActiveTab('recent')} className={`flex items-center gap-2 py-3 border-b-2 shrink-0 transition-all ${activeTab === 'recent' ? 'border-white text-white' : 'border-transparent text-white/50'}`}><Zap size={16} /> 最近动态</button>
-          <button onClick={() => setActiveTab('h2h')} className={`flex items-center gap-2 py-3 border-b-2 shrink-0 transition-all ${activeTab === 'h2h' ? 'border-white text-white' : 'border-transparent text-white/50'}`}><BarChart3 size={16} /> 交手分析</button>
-          <button onClick={() => setActiveTab('ranking')} className={`flex items-center gap-2 py-3 border-b-2 shrink-0 transition-all ${activeTab === 'ranking' ? 'border-white text-white' : 'border-transparent text-white/50'}`}><Award size={16} /> 战力排行</button>
+          <button onClick={() => setActiveTab('recent')} className={`flex items-center gap-2 py-3 border-b-2 shrink-0 transition-all ${activeTab === 'recent' ? 'border-white text-white' : 'border-transparent text-white/35'}`}><Zap size={16} /> 最近动态</button>
+          <button onClick={() => setActiveTab('h2h')} className={`flex items-center gap-2 py-3 border-b-2 shrink-0 transition-all ${activeTab === 'h2h' ? 'border-white text-white' : 'border-transparent text-white/35'}`}><BarChart3 size={16} /> 交手分析</button>
+          <button onClick={() => setActiveTab('ranking')} className={`flex items-center gap-2 py-3 border-b-2 shrink-0 transition-all ${activeTab === 'ranking' ? 'border-white text-white' : 'border-transparent text-white/35'}`}><Award size={16} /> 战力排行</button>
         </div>
       </div>
 
@@ -296,6 +296,7 @@ export default function App() {
               team2Empty={selectedTeam2.length === 0} 
               team1Players={players.filter(p => selectedTeam1.includes(p.id))}
               team2Players={players.filter(p => selectedTeam2.includes(p.id))}
+              mode={club.mode}
             />
             {selectedTeam1.length > 0 && selectedTeam2.length > 0 && (
               <H2HTrend matches={h2hMatches} team1Ids={selectedTeam1} />
@@ -317,7 +318,7 @@ export default function App() {
       </main>
 
       {/* FAB */}
-      <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={() => { setEditingMatch(null); setPrefillTeams(null); setIsAddMatchOpen(true); }} className={`fixed bottom-8 right-6 text-white rounded-full shadow-2xl flex items-center justify-center gap-2 z-40 border-[3px] border-white px-5 py-3.5 font-black text-sm tracking-wide ${club.mode === 'tournament' ? 'bg-amber-600' : 'bg-red-600'}`}><Plus size={22} /> 录比赛</motion.button>
+      <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={() => { setEditingMatch(null); setPrefillTeams(null); setIsAddMatchOpen(true); }} className={`fixed bottom-8 right-6 text-white rounded-full shadow-2xl flex items-center justify-center gap-2 z-40 border-[3px] border-white/40 px-5 py-3.5 font-black text-sm tracking-wide ${club.mode === 'tournament' ? 'bg-amber-600' : 'bg-red-600'}`}><Plus size={22} /> 录比赛</motion.button>
 
       {/* Modals */}
       <AnimatePresence>

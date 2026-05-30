@@ -66,7 +66,7 @@ export function MatchList({ matches, team1Ids, players, onDeleteMatch, onEditMat
                 </div>
                 <span className="text-sm font-black text-neutral-800 italic uppercase tracking-tighter">{match.tournament || '练习赛'}</span>
                 {match.category_id && getCategoryName(match.category_id) && (
-                  <span className="text-[10px] font-black bg-red-50 text-red-500 px-2 py-0.5 rounded-lg uppercase tracking-tighter border border-red-100">
+                  <span className="text-[10px] font-bold bg-red-50 text-red-500 px-2 py-0.5 rounded-lg border border-red-100">
                     {getCategoryName(match.category_id)}
                   </span>
                 )}
@@ -76,8 +76,8 @@ export function MatchList({ matches, team1Ids, players, onDeleteMatch, onEditMat
                 <span className="text-[10px] font-bold text-neutral-400 mr-2 uppercase">{formatDateWithTime(match.date)}</span>
                 
                 <button onClick={() => setSharingMatch(match)} className="p-2 text-neutral-400 hover:text-red-600 transition-colors"><Share2 size={16} /></button>
-                {onEditMatch && <button onClick={() => onEditMatch(match)} className="p-2 text-neutral-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"><Pencil size={15} /></button>}
-                <button onClick={() => onDeleteMatch(match.id)} className="p-2 text-neutral-300 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16} /></button>
+                {onEditMatch && <button onClick={() => onEditMatch(match)} className="p-2 text-neutral-400 hover:text-blue-600 opacity-60 hover:opacity-100 transition-opacity"><Pencil size={15} /></button>}
+                <button onClick={() => onDeleteMatch(match.id)} className="p-2 text-neutral-300 hover:text-red-600 opacity-60 hover:opacity-100 transition-opacity"><Trash2 size={16} /></button>
               </div>
             </div>
 

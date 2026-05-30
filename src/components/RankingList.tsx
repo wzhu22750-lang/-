@@ -42,19 +42,19 @@ export function RankingList({ players, matches, onViewProfile }: RankingListProp
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-white rounded-2xl p-3 text-center shadow-sm border border-neutral-50">
             <p className="text-xl font-black text-red-500 italic leading-none">{weeklyMatches.length}</p>
-            <p className="text-[8px] font-bold text-neutral-400 uppercase tracking-tight mt-1">本周比赛</p>
+            <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-tight mt-1">本周比赛</p>
           </div>
           <div className="bg-white rounded-2xl p-3 text-center shadow-sm border border-neutral-50">
             <p className="text-xl font-black text-blue-500 italic leading-none truncate px-1">
               {mostActivePlayer ? mostActivePlayer.name : '—'}
             </p>
-            <p className="text-[8px] font-bold text-neutral-400 uppercase tracking-tight mt-1">
+            <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-tight mt-1">
               {mostActiveEntry ? `${mostActiveEntry[1]}场 · 最活跃` : '暂无数据'}
             </p>
           </div>
           <div className="bg-white rounded-2xl p-3 text-center shadow-sm border border-neutral-50">
             <p className="text-xl font-black text-green-500 italic leading-none">{players.length}</p>
-            <p className="text-[8px] font-bold text-neutral-400 uppercase tracking-tight mt-1">俱乐部人数</p>
+            <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-tight mt-1">俱乐部人数</p>
           </div>
         </div>
       </div>
@@ -78,8 +78,7 @@ export function RankingList({ players, matches, onViewProfile }: RankingListProp
     opacity: { duration: 0.2 }
   }}
   onClick={() => onViewProfile(player)}
-  className={`bg-white p-4 rounded-[28px] shadow-sm flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all border border-transparent hover:border-red-100 group relative overflow-hidden ${isInactive ? 'opacity-50' : ''}`}
->
+  className="bg-white p-4 rounded-[28px] shadow-sm flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all border border-transparent hover:border-red-100 group relative overflow-hidden">
             {/* 背景装饰：前三名有特殊背景 */}
             {index < 3 && (
               <div className={`absolute left-0 top-0 bottom-0 w-1 ${
@@ -97,7 +96,7 @@ export function RankingList({ players, matches, onViewProfile }: RankingListProp
               </div>
               
               {/* 球员头像 */}
-              <div className="w-12 h-12 rounded-full bg-neutral-100 overflow-hidden border-2 border-neutral-50 shadow-inner shrink-0 group-hover:border-red-100 transition-colors">
+              <div className={`w-12 h-12 rounded-full bg-neutral-100 overflow-hidden border-2 border-neutral-50 shadow-inner shrink-0 group-hover:border-red-100 transition-colors ${isInactive ? 'opacity-40' : ''}`}>
                 {player.avatar ? (
                   <img src={player.avatar} alt={player.name} className="w-full h-full object-cover" />
                 ) : (
@@ -114,7 +113,7 @@ export function RankingList({ players, matches, onViewProfile }: RankingListProp
                 </span>
                 <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                   {/* 段位徽章 */}
-                  <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md shrink-0 ${tier.bg} ${tier.color}`}>
+                  <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md shrink-0 ${tier.bg} ${tier.color}`}>
                     {tier.label}
                   </span>
 
@@ -126,7 +125,7 @@ export function RankingList({ players, matches, onViewProfile }: RankingListProp
                       className="flex items-center gap-0.5 px-1 py-0.5 bg-orange-100 text-orange-600 rounded-full border border-orange-200 shrink-0"
                     >
                       <Flame size={9} fill="currentColor" />
-                      <span className="text-[8px] italic font-black">{streak}连胜</span>
+                      <span className="text-[10px] italic font-black">{streak}连胜</span>
                     </motion.div>
                   )}
 
@@ -146,7 +145,7 @@ export function RankingList({ players, matches, onViewProfile }: RankingListProp
                   <Star size={12} fill="currentColor" />
                   <span>{player.elo_rating || 1500}</span>
                 </div>
-                <p className="text-[8px] text-neutral-400 font-black uppercase tracking-tighter mt-0.5">
+                <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-tighter mt-0.5">
                   ELO
                 </p>
               </div>
