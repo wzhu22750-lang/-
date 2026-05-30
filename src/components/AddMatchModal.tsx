@@ -31,7 +31,6 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
   const [isChoosingPlayers, setIsChoosingPlayers] = useState<'team1' | 'team2' | null>(null);
   const [submitError, setSubmitError] = useState('');
 
-  // ELO 对比 & 挑战赛判定
   const selectedCategory = useMemo(() => categories.find(c => c.id === selectedCategoryId), [categories, selectedCategoryId]);
   const requireEloGap = selectedCategory?.require_elo_gap === true;
 
@@ -46,7 +45,6 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
   const eloGap = Math.abs(teamElo.team1 - teamElo.team2);
   const ELO_GAP_MIN = 30;
 
-  // 实时时钟
   const [now, setNow] = useState(new Date());
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 30000);
@@ -63,7 +61,6 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
   const handleSubmit = () => {
     if (team1.length === 0 || team2.length === 0) return;
 
-    // 挑战赛验证：双方必须有实力差距
     if (requireEloGap && eloGap < ELO_GAP_MIN) {
       setSubmitError(`「${selectedCategory?.name}」需要双方存在实力差距（至少 ${ELO_GAP_MIN} 分），当前差距仅 ${eloGap} 分`);
       return;
@@ -92,7 +89,6 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
 
   const getPlayerName = (id: string) => players.find(p => p.id === id)?.name || id;
 
-  // 切换队伍或类别时清除错误
   useEffect(() => { setSubmitError(''); }, [team1, team2, selectedCategoryId]);
 
   const updateScore = (idx: number, side: 'team1' | 'team2', value: number) => {
@@ -108,184 +104,262 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
     >
       <motion.div
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-        className="bg-[#f5f5f5] w-full max-w-lg rounded-t-[40px] sm:rounded-2xl overflow-hidden flex flex-col max-h-[95vh] text-neutral-900 shadow-2xl"
+        className="bg-[#f5f5f5] w-full max-w-lg rounded-t-[32px] sm:rounded-2xl overflow-hidden flex flex-col max-h-[95vh] text-neutral-900 shadow-2xl"
       >
-        <div className="bg-[#2d2d2e] pt-8 pb-5 px-6 text-white text-center relative shrink-0" style={{ paddingTop: 'max(env(safe-area-inset-top), 32px)' }}>
-          <h2 className="text-xl font-black italic uppercase tracking-widest">
+        {/* Header */}
+        <div
+          className="bg-[#2d2d2e] pt-6 pb-4 px-6 text-white text-center relative shrink-0 border-b border-white/10"
+          style={{ paddingTop: 'max(env(safe-area-inset-top), 28px)' }}
+        >
+          <h2 className="text-lg font-black uppercase tracking-[0.15em]">
             {isEditing ? 'Edit Battle' : 'Record Battle'}
           </h2>
-          <button onClick={onClose} className="absolute right-6 top-6 p-2 text-white/30 hover:text-white transition-colors" style={{ top: 'max(env(safe-area-inset-top), 24px)' }}>
-            <X size={24} />
+          <button
+            onClick={onClose}
+            className="absolute right-6 p-2 text-white/60 hover:text-white transition-colors"
+            style={{ top: 'max(env(safe-area-inset-top), 20px)' }}
+          >
+            <X size={22} />
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto space-y-8 flex-1 no-scrollbar">
-          <div className="grid grid-cols-[1fr,40px,1fr] gap-4 items-center">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest pl-1">Team A</label>
-              <button onClick={() => setIsChoosingPlayers('team1')} className="w-full min-h-[70px] bg-white rounded-2xl border border-neutral-100 flex flex-col items-center justify-center p-3 text-sm font-black shadow-sm active:scale-95 transition-all">
-                {team1.length > 0 ? team1.map(getPlayerName).join(' / ') : <Plus className="text-neutral-200" />}
+        {/* Body */}
+        <div className="p-5 overflow-y-auto space-y-5 flex-1 no-scrollbar">
+
+          {/* ---- 队伍选择 ---- */}
+          <div className="grid grid-cols-[1fr,36px,1fr] gap-3 items-center">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-[0.08em] pl-1">Team A</label>
+              <button
+                onClick={() => setIsChoosingPlayers('team1')}
+                className="w-full min-h-[64px] bg-white rounded-2xl border border-neutral-200 flex flex-col items-center justify-center p-3 text-sm font-black shadow-sm active:scale-[0.97] transition-all border-l-[3px] border-l-red-500"
+              >
+                {team1.length > 0 ? team1.map(getPlayerName).join(' / ') : <Plus size={20} className="text-neutral-300" />}
               </button>
             </div>
-            <div className="flex justify-center pt-6"><div className="text-xs font-black text-neutral-200 italic">VS</div></div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest pl-1">Team B</label>
-              <button onClick={() => setIsChoosingPlayers('team2')} className="w-full min-h-[70px] bg-white rounded-2xl border border-neutral-100 flex flex-col items-center justify-center p-3 text-sm font-black shadow-sm active:scale-95 transition-all">
-                {team2.length > 0 ? team2.map(getPlayerName).join(' / ') : <Plus className="text-neutral-200" />}
+            <div className="flex justify-center pt-5">
+              <div className="w-9 h-9 rounded-full bg-neutral-200 text-neutral-500 flex items-center justify-center text-[11px] font-black">VS</div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-[0.08em] pl-1">Team B</label>
+              <button
+                onClick={() => setIsChoosingPlayers('team2')}
+                className="w-full min-h-[64px] bg-white rounded-2xl border border-neutral-200 flex flex-col items-center justify-center p-3 text-sm font-black shadow-sm active:scale-[0.97] transition-all border-l-[3px] border-l-blue-500"
+              >
+                {team2.length > 0 ? team2.map(getPlayerName).join(' / ') : <Plus size={20} className="text-neutral-300" />}
               </button>
             </div>
           </div>
 
-          <div className="space-y-4">
-             <label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest pl-1">Match Scores</label>
-             <div className="space-y-3">
-               {scores.map((score, idx) => (
-                 <div key={idx} className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-neutral-100 shadow-sm relative group">
-                   <div className="text-xs font-black text-neutral-200 w-4 shrink-0">#{idx+1}</div>
-                   <div className="flex items-center gap-2 flex-1 justify-center">
-                      <input type="number" value={score.team1 === 0 ? '' : score.team1} placeholder="0" onChange={(e) => updateScore(idx, 'team1', parseInt(e.target.value) || 0)} className="w-14 text-center text-2xl font-black outline-none italic" />
-                      <div className="flex flex-col gap-0.5 shrink-0">
-                        <button onClick={() => updateScore(idx, 'team1', score.team1+1)} className="w-[36px] h-[36px] flex items-center justify-center text-neutral-300 hover:text-red-500 active:bg-red-50 rounded-lg transition-colors"><Plus size={18}/></button>
-                        <button onClick={() => updateScore(idx, 'team1', score.team1-1)} className="w-[36px] h-[36px] flex items-center justify-center text-neutral-300 hover:text-red-500 active:bg-red-50 rounded-lg transition-colors"><Minus size={18}/></button>
-                      </div>
-                   </div>
-                   <div className="h-10 w-px bg-neutral-100 shrink-0" />
-                   <div className="flex items-center gap-2 flex-1 justify-center">
-                      <input type="number" value={score.team2 === 0 ? '' : score.team2} placeholder="0" onChange={(e) => updateScore(idx, 'team2', parseInt(e.target.value) || 0)} className="w-14 text-center text-2xl font-black outline-none italic" />
-                      <div className="flex flex-col gap-0.5 shrink-0">
-                        <button onClick={() => updateScore(idx, 'team2', score.team2+1)} className="w-[36px] h-[36px] flex items-center justify-center text-neutral-300 hover:text-red-500 active:bg-red-50 rounded-lg transition-colors"><Plus size={18}/></button>
-                        <button onClick={() => updateScore(idx, 'team2', score.team2-1)} className="w-[36px] h-[36px] flex items-center justify-center text-neutral-300 hover:text-red-500 active:bg-red-50 rounded-lg transition-colors"><Minus size={18}/></button>
-                      </div>
-                   </div>
-                   {scores.length > 1 && (
-                     <button onClick={() => setScores(scores.filter((_, sIdx) => sIdx !== idx))} className="absolute -right-2 top-1/2 -translate-y-1/2 w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X size={12} /></button>
-                   )}
-                 </div>
-               ))}
-               <button onClick={() => setScores([...scores, { team1: 0, team2: 0 }])} className="w-full py-4 border-2 border-dashed border-neutral-200 rounded-2xl text-neutral-400 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-neutral-100 transition-colors">
-                 <Plus size={16} /> Add Next Set
-               </button>
-             </div>
-          </div>
-
+          {/* ---- 比分 ---- */}
           <div className="space-y-3">
-            <label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest pl-1">BO Format</label>
-            <div className="flex gap-2">
-              {(['BO1', 'BO3', 'BO5'] as const).map(fmt => (
-                <button
-                  key={fmt}
-                  onClick={() => setBoFormat(fmt)}
-                  className={`flex-1 py-2.5 rounded-2xl text-xs font-black transition-all ${
-                    boFormat === fmt
-                      ? 'bg-neutral-800 text-white shadow-lg'
-                      : 'bg-white text-neutral-400 border border-neutral-200'
-                  }`}
-                >
-                  {fmt === 'BO1' ? '一局定胜负' : fmt === 'BO3' ? '三局两胜' : '五局三胜'}
-                </button>
+            <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-[0.08em] pl-1">Match Scores</label>
+            <div className="space-y-2.5">
+              {scores.map((score, idx) => (
+                <div key={idx} className="flex items-center gap-3 bg-white p-3.5 rounded-2xl border border-neutral-200 shadow-sm relative group">
+                  <div className="text-[11px] font-bold text-neutral-400 w-5 shrink-0 text-center">#{idx + 1}</div>
+                  <div className="flex items-center gap-2 flex-1 justify-center">
+                    <input
+                      type="number"
+                      value={score.team1 === 0 ? '' : score.team1}
+                      placeholder="0"
+                      onChange={(e) => updateScore(idx, 'team1', parseInt(e.target.value) || 0)}
+                      className="w-12 text-center text-xl font-black outline-none bg-neutral-50 rounded-xl py-1"
+                    />
+                    <div className="flex flex-col gap-0.5 shrink-0">
+                      <button onClick={() => updateScore(idx, 'team1', score.team1 + 1)} className="w-[44px] h-[44px] flex items-center justify-center text-neutral-500 hover:text-red-500 hover:bg-red-50 active:scale-90 rounded-xl transition-all"><Plus size={20} /></button>
+                      <button onClick={() => updateScore(idx, 'team1', score.team1 - 1)} className="w-[44px] h-[44px] flex items-center justify-center text-neutral-500 hover:text-red-500 hover:bg-red-50 active:scale-90 rounded-xl transition-all"><Minus size={20} /></button>
+                    </div>
+                  </div>
+                  <div className="h-10 w-px bg-neutral-200 shrink-0" />
+                  <div className="flex items-center gap-2 flex-1 justify-center">
+                    <input
+                      type="number"
+                      value={score.team2 === 0 ? '' : score.team2}
+                      placeholder="0"
+                      onChange={(e) => updateScore(idx, 'team2', parseInt(e.target.value) || 0)}
+                      className="w-12 text-center text-xl font-black outline-none bg-neutral-50 rounded-xl py-1"
+                    />
+                    <div className="flex flex-col gap-0.5 shrink-0">
+                      <button onClick={() => updateScore(idx, 'team2', score.team2 + 1)} className="w-[44px] h-[44px] flex items-center justify-center text-neutral-500 hover:text-red-500 hover:bg-red-50 active:scale-90 rounded-xl transition-all"><Plus size={20} /></button>
+                      <button onClick={() => updateScore(idx, 'team2', score.team2 - 1)} className="w-[44px] h-[44px] flex items-center justify-center text-neutral-500 hover:text-red-500 hover:bg-red-50 active:scale-90 rounded-xl transition-all"><Minus size={20} /></button>
+                    </div>
+                  </div>
+                  {scores.length > 1 && (
+                    <button
+                      onClick={() => setScores(scores.filter((_, sIdx) => sIdx !== idx))}
+                      className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 bg-red-100 text-red-500 rounded-full flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
               ))}
+              <button
+                onClick={() => setScores([...scores, { team1: 0, team2: 0 }])}
+                className="w-full py-3.5 border-2 border-dashed border-neutral-300 rounded-2xl text-neutral-400 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-neutral-100 hover:border-neutral-400 transition-colors"
+              >
+                <Plus size={16} /> Add Next Set
+              </button>
             </div>
           </div>
 
-          {categories.length > 0 && (
-            <div className="space-y-3">
-              <label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest pl-1 flex items-center gap-1.5">
-                <Tag size={12} /> 比赛类别
-              </label>
-              <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                {categories.map(cat => (
+          {/* ---- 赛制 + 类别（合并卡片）---- */}
+          <div className="bg-white rounded-2xl border border-neutral-200 p-4 space-y-4 shadow-sm">
+            <div className="space-y-2.5">
+              <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-[0.08em] pl-1">BO Format</label>
+              <div className="flex gap-0">
+                {(['BO1', 'BO3', 'BO5'] as const).map((fmt, i) => (
                   <button
-                    key={cat.id}
-                    onClick={() => setSelectedCategoryId(cat.id)}
-                    className={`shrink-0 px-4 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-1.5 ${
-                      selectedCategoryId === cat.id
-                        ? 'bg-red-600 text-white shadow-lg shadow-red-200'
-                        : 'bg-white text-neutral-500 border border-neutral-200 hover:border-red-300'
-                    }`}
+                    key={fmt}
+                    onClick={() => setBoFormat(fmt)}
+                    className={`flex-1 py-3 text-xs font-black transition-all border ${
+                      i > 0 ? 'border-l-0' : ''
+                    } ${
+                      boFormat === fmt
+                        ? 'bg-[#e11d48] text-white border-[#e11d48] shadow-md'
+                        : 'bg-white text-neutral-500 border-neutral-200 hover:bg-neutral-50'
+                    } ${i === 0 ? 'rounded-l-xl' : ''} ${i === 2 ? 'rounded-r-xl' : ''}`}
                   >
-                    {cat.name}
-                    <span className={`text-[10px] font-bold ${selectedCategoryId === cat.id ? 'text-red-200' : 'text-neutral-400'}`}>
-                      ×{cat.k_multiplier}
-                    </span>
+                    {fmt === 'BO1' ? '一局胜负' : fmt === 'BO3' ? '三局两胜' : '五局三胜'}
                   </button>
                 ))}
               </div>
             </div>
-          )}
 
+            {categories.length > 0 && (
+              <div className="space-y-2.5">
+                <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-[0.08em] pl-1 flex items-center gap-1.5">
+                  <Tag size={13} /> 比赛类别
+                </label>
+                <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                  {categories.map(cat => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setSelectedCategoryId(cat.id)}
+                      className={`shrink-0 px-3.5 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
+                        selectedCategoryId === cat.id
+                          ? 'bg-[#e11d48] text-white shadow-md shadow-red-200'
+                          : 'bg-neutral-100 text-neutral-500 hover:bg-neutral-200'
+                      }`}
+                    >
+                      {cat.name}
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                        selectedCategoryId === cat.id ? 'bg-white/20 text-white' : 'bg-white text-neutral-400'
+                      }`}>
+                        ×{cat.k_multiplier}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ---- ELO 差距提示 ---- */}
           {requireEloGap && team1.length > 0 && team2.length > 0 && (
-            <div className={`p-4 rounded-2xl border text-sm font-bold flex items-center gap-3 ${eloGap >= ELO_GAP_MIN ? 'bg-green-50 border-green-200 text-green-700' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
-              <Zap size={16} className="shrink-0" />
-              <div>
-                <p className="text-xs font-black">
-                  Team A <span className="text-base">{teamElo.team1}</span> vs <span className="text-base">{teamElo.team2}</span> Team B
-                </p>
-                <p className="text-[10px] font-bold opacity-70">
-                  {eloGap >= ELO_GAP_MIN
-                    ? `实力差距 ${eloGap} 分 ✓ 满足「弱者挑战强者」`
-                    : `差距仅 ${eloGap} 分，需 ≥ ${ELO_GAP_MIN} 分才能使用「${selectedCategory?.name}」`}
-                </p>
+            <div className={`p-3.5 rounded-xl border text-xs font-bold flex items-center gap-3 ${
+              eloGap >= ELO_GAP_MIN ? 'bg-green-100 border-green-200 text-green-700' : 'bg-amber-100 border-amber-200 text-amber-700'
+            }`}>
+              <Zap size={14} className="shrink-0" />
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="bg-white/60 px-2 py-0.5 rounded-lg font-black">{teamElo.team1}</span>
+                <span className="text-[10px] opacity-60">vs</span>
+                <span className="bg-white/60 px-2 py-0.5 rounded-lg font-black">{teamElo.team2}</span>
+                <span className="ml-1">
+                  {eloGap >= ELO_GAP_MIN ? `差距 ${eloGap} 分 ✓` : `仅差 ${eloGap} 分，需 ≥ ${ELO_GAP_MIN}`}
+                </span>
               </div>
             </div>
           )}
 
-          <div className="space-y-4">
-             <div className="flex items-center gap-4 bg-white p-5 rounded-2xl border border-neutral-100 shadow-sm">
-                <Trophy size={18} className="text-red-500" />
-                <input type="text" placeholder="赛事/场地 (例: 世纪馆-5号场)" value={tournament} onChange={(e) => setTournament(e.target.value)} className="flex-1 outline-none text-sm font-black" />
-             </div>
-             <div className="flex items-center gap-4 bg-white p-5 rounded-2xl border border-neutral-100 shadow-sm">
-                <Calendar size={18} className="text-blue-500 shrink-0" />
-                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="flex-1 outline-none text-sm font-black min-w-0" />
-                <div className="flex items-center gap-1.5 text-xs font-black text-neutral-400 bg-neutral-50 px-2.5 py-1.5 rounded-xl shrink-0">
-                  <Clock size={12} />
-                  <span>{timeLabel}</span>
-                </div>
-             </div>
+          {/* ---- 赛事/场地 + 日期 ---- */}
+          <div className="space-y-3">
+            <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-[0.08em] pl-1">When & Where</label>
+            <div className="flex items-center gap-3 bg-white rounded-2xl border border-neutral-200 px-4 shadow-sm">
+              <Trophy size={18} className="text-neutral-400 shrink-0" />
+              <input
+                type="text"
+                placeholder="赛事/场地"
+                value={tournament}
+                onChange={(e) => setTournament(e.target.value)}
+                className="flex-1 py-4 outline-none text-sm font-black placeholder:text-neutral-300"
+              />
+            </div>
+            <div className="flex items-center gap-3 bg-white rounded-2xl border border-neutral-200 px-4 shadow-sm">
+              <Calendar size={18} className="text-neutral-400 shrink-0" />
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="flex-1 py-4 outline-none text-sm font-black min-w-0"
+              />
+              <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-400 bg-neutral-100 px-2.5 py-1.5 rounded-xl shrink-0">
+                <Clock size={12} />
+                <span>{timeLabel}</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="p-8 bg-white border-t border-neutral-100 shrink-0 space-y-3">
+        {/* Footer */}
+        <div className="px-5 py-4 bg-white border-t border-neutral-100 shrink-0 space-y-3">
           {submitError && (
             <div className="flex items-center gap-2 p-3 bg-red-50 text-red-600 rounded-xl text-xs font-bold">
               <AlertCircle size={14} className="shrink-0" />
               {submitError}
             </div>
           )}
-          <button onClick={handleSubmit} disabled={team1.length === 0 || team2.length === 0} className="w-full py-5 bg-[#e11d48] text-white rounded-2xl font-black uppercase tracking-[0.2em] shadow-xl shadow-red-100 transition-all active:scale-[0.98] disabled:opacity-50">
+          <button
+            onClick={handleSubmit}
+            disabled={team1.length === 0 || team2.length === 0}
+            className="w-full py-4 bg-gradient-to-r from-[#e11d48] to-[#be123c] text-white rounded-2xl font-black uppercase tracking-[0.1em] shadow-xl shadow-red-100 transition-all active:scale-[0.98] disabled:opacity-50"
+          >
             {isEditing ? 'Update Match' : 'Publish Match'}
           </button>
         </div>
 
+        {/* Player Selection Overlay */}
         {isChoosingPlayers && (
           <div className="absolute inset-0 bg-white z-[180] flex flex-col">
-             <div className="bg-[#2d2d2e] pt-8 pb-5 px-6 text-white flex items-center justify-between shadow-lg" style={{ paddingTop: 'max(env(safe-area-inset-top), 32px)' }}>
-                <button onClick={() => setIsChoosingPlayers(null)}><X size={24}/></button>
-                <span className="font-black italic uppercase tracking-widest">Select Players</span>
-                <button onClick={() => setIsChoosingPlayers(null)} className="font-black text-red-500 uppercase">Done</button>
-             </div>
-             <div className="flex-1 overflow-y-auto p-4 space-y-2 no-scrollbar">
-                {players.map((p) => {
-                  const isSelected = (isChoosingPlayers === 'team1' ? team1 : team2).includes(p.id);
-                  return (
-                    <button key={p.id} onClick={() => {
-                        const current = isChoosingPlayers === 'team1' ? team1 : team2;
-                        const next = isSelected ? current.filter(id => id !== p.id) : [...current, p.id].slice(0, 2);
-                        if (isChoosingPlayers === 'team1') setTeam1(next); else setTeam2(next);
-                      }}
-                      className={`w-full flex items-center justify-between p-5 rounded-2xl border transition-all ${isSelected ? 'bg-red-50 border-red-200' : 'bg-neutral-50 border-transparent'}`}
-                    >
-                      <div className="flex items-center gap-4">
-                         <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center font-black text-red-600 italic border border-neutral-100 overflow-hidden">
-                            {p.avatar ? <img src={p.avatar} className="w-full h-full object-cover" /> : p.initials}
-                         </div>
-                         <span className="font-black text-neutral-800">{p.name}</span>
+            <div
+              className="bg-[#2d2d2e] pt-6 pb-4 px-6 text-white flex items-center justify-between shadow-lg"
+              style={{ paddingTop: 'max(env(safe-area-inset-top), 28px)' }}
+            >
+              <button onClick={() => setIsChoosingPlayers(null)}><X size={22} /></button>
+              <span className="font-black uppercase tracking-[0.15em]">Select Players</span>
+              <button onClick={() => setIsChoosingPlayers(null)} className="font-black text-red-500 uppercase">Done</button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-2 no-scrollbar">
+              {players.map((p) => {
+                const isSelected = (isChoosingPlayers === 'team1' ? team1 : team2).includes(p.id);
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => {
+                      const current = isChoosingPlayers === 'team1' ? team1 : team2;
+                      const next = isSelected ? current.filter(id => id !== p.id) : [...current, p.id].slice(0, 2);
+                      if (isChoosingPlayers === 'team1') setTeam1(next); else setTeam2(next);
+                    }}
+                    className={`w-full flex items-center justify-between p-5 rounded-2xl border transition-all ${
+                      isSelected ? 'bg-red-50 border-red-200' : 'bg-neutral-50 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center font-black text-red-600 italic border border-neutral-100 overflow-hidden">
+                        {p.avatar ? <img src={p.avatar} className="w-full h-full object-cover" /> : p.initials}
                       </div>
-                      {isSelected && <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center text-white"><X size={14} className="rotate-45" /></div>}
-                    </button>
-                  );
-                })}
-             </div>
+                      <span className="font-black text-neutral-800">{p.name}</span>
+                    </div>
+                    {isSelected && (
+                      <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center text-white">
+                        <X size={14} className="rotate-45" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
       </motion.div>
