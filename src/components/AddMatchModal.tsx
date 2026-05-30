@@ -27,6 +27,7 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
   const [tournament, setTournament] = useState(editMatch?.tournament || '');
   const [date, setDate] = useState(() => editMatch?.date ? tsToDateStr(editMatch.date) : new Date().toISOString().split('T')[0]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>(editMatch?.category_id || categories[0]?.id);
+  const [boFormat, setBoFormat] = useState<'BO1' | 'BO3' | 'BO5'>(editMatch?.bo_format || 'BO1');
   const [isChoosingPlayers, setIsChoosingPlayers] = useState<'team1' | 'team2' | null>(null);
   const [submitError, setSubmitError] = useState('');
 
@@ -84,6 +85,7 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
       tournament: tournament || '练习赛',
       club_id: editMatch?.club_id || '',
       category_id: selectedCategoryId,
+      bo_format: boFormat,
     };
     onAdd(newMatch);
   };
@@ -164,6 +166,25 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
                  <Plus size={16} /> Add Next Set
                </button>
              </div>
+          </div>
+
+          <div className="space-y-3">
+            <label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest pl-1">BO Format</label>
+            <div className="flex gap-2">
+              {(['BO1', 'BO3', 'BO5'] as const).map(fmt => (
+                <button
+                  key={fmt}
+                  onClick={() => setBoFormat(fmt)}
+                  className={`flex-1 py-2.5 rounded-2xl text-xs font-black transition-all ${
+                    boFormat === fmt
+                      ? 'bg-neutral-800 text-white shadow-lg'
+                      : 'bg-white text-neutral-400 border border-neutral-200'
+                  }`}
+                >
+                  {fmt === 'BO1' ? '一局定胜负' : fmt === 'BO3' ? '三局两胜' : '五局三胜'}
+                </button>
+              ))}
+            </div>
           </div>
 
           {categories.length > 0 && (

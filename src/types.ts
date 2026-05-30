@@ -42,5 +42,6 @@ export interface Match {
   tournament?: string;
   club_id: string;
   category_id?: string;
+  bo_format?: 'BO1' | 'BO3' | 'BO5';
   video_url?: string; // 预留视频录像字段
 }

@@ -23,6 +23,26 @@ export function getProvisionalK(matchCount: number, mode: 'club' | 'tournament' 
 }
 
 /**
+ * BO赛制统治力系数：赢得越干脆/越激烈，加成越多
+ */
+export function getBOFactor(boFormat: string | undefined, winnerGames: number, loserGames: number): number {
+  if (!boFormat || boFormat === 'BO1') return 1.0;
+
+  if (boFormat === 'BO3') {
+    if (winnerGames === 2 && loserGames === 0) return 1.3;  // 横扫
+    if (winnerGames === 2 && loserGames === 1) return 1.2;  // 激战三局
+  }
+
+  if (boFormat === 'BO5') {
+    if (winnerGames === 3 && loserGames === 0) return 1.4;  // 碾压
+    if (winnerGames === 3 && loserGames === 1) return 1.3;  // 强势
+    if (winnerGames === 3 && loserGames === 2) return 1.2;  // 五局史诗大战
+  }
+
+  return 1.0;
+}
+
+/**
  * 1. 计算单场 ELO 变动
  */
 export function calculateEloChange(team1Avg: number, team2Avg: number, team1Won: boolean, k: number = K_FACTOR) {
@@ -83,6 +103,11 @@ export function recalculateAllElo(allPlayers: Player[], allMatches: Match[], mod
       // 叠加比赛类别系数
       const catMultiplier = match.category_id ? (categoryMultipliers.get(match.category_id) ?? 1.0) : 1.0;
       k = Math.round(k * catMultiplier);
+
+      // 叠加BO赛制系数
+      const winnerGames = t1Games > t2Games ? t1Games : t2Games;
+      const loserGames = t1Games > t2Games ? t2Games : t1Games;
+      k = Math.round(k * getBOFactor(match.bo_format, winnerGames, loserGames));
 
       const change = calculateEloChange(t1Avg, t2Avg, t1Games > t2Games, k);
 
