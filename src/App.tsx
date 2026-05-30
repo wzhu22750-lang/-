@@ -260,11 +260,9 @@ export default function App() {
             <button onClick={() => setIsExportOpen(true)} className="p-2 hover:bg-white/10 rounded-full transition-colors" title="数据导出">
               <Download size={16} className="text-white/60" />
             </button>
-            {isAdmin && (
-              <button onClick={() => setIsCategoryManageOpen(true)} className="p-2 hover:bg-white/10 rounded-full transition-colors" title="比赛类别管理">
-                <Tag size={16} className="text-white/60" />
-              </button>
-            )}
+            <button onClick={() => setIsCategoryManageOpen(true)} className="p-2 hover:bg-white/10 rounded-full transition-colors" title="比赛类别管理">
+              <Tag size={16} className="text-white/60" />
+            </button>
             {isAdmin && (
               <div className="flex items-center gap-1.5 bg-white/20 px-3 py-1 rounded-full border border-white/20">
                  <ShieldCheck size={12} className="text-yellow-300" />
