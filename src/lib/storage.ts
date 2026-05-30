@@ -35,7 +35,8 @@ export async function createClub(name: string, mode: 'club' | 'tournament' = 'cl
   const { error: catErr } = await supabase.from('match_categories').insert(defaultCategories);
   if (catErr) console.error('创建默认类别失败:', catErr.message);
 
-  return { ...data, categories: defaultCategories };
+  const { manager_token: _, ...safeClub } = data;
+  return { ...safeClub, categories: defaultCategories } as Club;
 }
 
 /**
@@ -44,10 +45,10 @@ export async function createClub(name: string, mode: 'club' | 'tournament' = 'cl
 export async function joinClub(inviteCode: string): Promise<Club | null> {
   const { data, error } = await supabase
     .from('clubs')
-    .select('*')
+    .select('id, name, invite_code, mode')
     .eq('invite_code', inviteCode.toUpperCase())
     .single();
-  
+
   if (error) {
     console.error('加入俱乐部失败:', error.message);
     return null;

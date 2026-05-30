@@ -14,7 +14,7 @@ interface PlayerChange {
 
 interface RatingChangeModalProps {
   changes: PlayerChange[];
-  winner: 'team1' | 'team2';
+  winner: 'team1' | 'team2' | 'tie';
   onClose: () => void;
 }
 
@@ -47,8 +47,9 @@ function CountUp({ from, to }: { from: number; to: number }) {
 export function RatingChangeModal({ changes, winner, onClose }: RatingChangeModalProps) {
   const team1Changes = changes.filter((_, i) => i < changes.length / 2);
   const team2Changes = changes.filter((_, i) => i >= changes.length / 2);
+  const isTie = winner === 'tie';
   const team1Won = winner === 'team1';
-  const t1Won = team1Changes.some(c => c.change > 0) || team1Won;
+  const t1Won = isTie ? false : (team1Changes.some(c => c.change > 0) || team1Won);
 
   return (
     <motion.div
@@ -74,7 +75,7 @@ export function RatingChangeModal({ changes, winner, onClose }: RatingChangeModa
         ))}
 
         {/* Header */}
-        <div className={`pt-8 pb-6 ${t1Won ? 'bg-emerald-600' : 'bg-red-600'} text-white relative overflow-hidden`}>
+        <div className={`pt-8 pb-6 ${isTie ? 'bg-neutral-600' : t1Won ? 'bg-emerald-600' : 'bg-red-600'} text-white relative overflow-hidden`}>
           <button onClick={onClose} className="absolute top-4 right-4 text-white/50 hover:text-white z-20"><X size={20} /></button>
 
           <motion.div
@@ -86,10 +87,13 @@ export function RatingChangeModal({ changes, winner, onClose }: RatingChangeModa
           </motion.div>
 
           <h2 className="text-xl font-black italic tracking-widest">
-            {t1Won ? 'VICTORY' : 'DEFEAT'}
+            {isTie ? 'DRAW' : t1Won ? 'VICTORY' : 'DEFEAT'}
           </h2>
-          {!t1Won && (
+          {!t1Won && !isTie && (
             <p className="text-[10px] text-white/60 mt-1 font-bold">再接再厉，下次必胜</p>
+          )}
+          {isTie && (
+            <p className="text-[10px] text-white/60 mt-1 font-bold">平局，积分不变</p>
           )}
         </div>
 
@@ -98,7 +102,7 @@ export function RatingChangeModal({ changes, winner, onClose }: RatingChangeModa
           {/* Team 1 */}
           <div className="space-y-2">
             <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest text-left pl-1">
-              {team1Won ? '胜方' : '负方'} · A 队
+              {isTie ? '平局' : team1Won ? '胜方' : '负方'} · A 队
             </p>
             {team1Changes.map(pc => (
               <PlayerRatingRow key={pc.playerId} data={pc} />
@@ -110,7 +114,7 @@ export function RatingChangeModal({ changes, winner, onClose }: RatingChangeModa
           {/* Team 2 */}
           <div className="space-y-2">
             <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest text-left pl-1">
-              {!team1Won ? '胜方' : '负方'} · B 队
+              {isTie ? '平局' : !team1Won ? '胜方' : '负方'} · B 队
             </p>
             {team2Changes.map(pc => (
               <PlayerRatingRow key={pc.playerId} data={pc} />

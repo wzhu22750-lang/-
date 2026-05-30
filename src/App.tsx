@@ -64,6 +64,7 @@ export default function App() {
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [categories, setCategories] = useState<MatchCategory[]>([]);
   const [isCategoryManageOpen, setIsCategoryManageOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // --- 2. 权限与跳转逻辑 ---
   const isAdmin = useMemo(() => {
@@ -158,7 +159,9 @@ export default function App() {
 
   // --- 5. 核心交互函数 ---
   const handleAddMatch = async (newMatch: Match) => {
-    if (!club) return;
+    if (!club || isSubmitting) return;
+    setIsSubmitting(true);
+    try {
     const matchWithClub = { ...newMatch, club_id: club.id };
     const isEdit = matches.some(m => m.id === newMatch.id);
     const newMatches = isEdit
@@ -189,7 +192,8 @@ export default function App() {
       else if (s.team2 > s.team1) t2Games++;
     });
 
-    setLastMatchResult({ changes, winner: t1Games > t2Games ? 'team1' : 'team2' });
+    const isTie = t1Games === t2Games;
+    setLastMatchResult({ changes, winner: isTie ? 'tie' : (t1Games > t2Games ? 'team1' : 'team2') });
     setMatches(newMatches);
     setPlayers(updatedPlayers);
     await saveMatchToCloud(matchWithClub);
@@ -200,6 +204,12 @@ export default function App() {
     }
     setIsAddMatchOpen(false);
     setEditingMatch(null);
+    // 更新缓存
+    localStorage.setItem(`cache_players_${club.id}`, JSON.stringify(updatedPlayers));
+    localStorage.setItem(`cache_matches_${club.id}`, JSON.stringify(newMatches));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDeleteMatch = async (id: string) => {
