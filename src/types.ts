@@ -6,6 +6,7 @@ export interface MatchCategory {
   name: string;
   k_multiplier: number;
   sort_order: number;
+  require_elo_gap?: boolean;
 }
 
 export interface Club {

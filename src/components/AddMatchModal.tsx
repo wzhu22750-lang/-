@@ -32,7 +32,7 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
 
   // ELO 对比 & 挑战赛判定
   const selectedCategory = useMemo(() => categories.find(c => c.id === selectedCategoryId), [categories, selectedCategoryId]);
-  const isChallenge = (selectedCategory?.k_multiplier ?? 1) > 1.0;
+  const requireEloGap = selectedCategory?.require_elo_gap === true;
 
   const teamElo = useMemo(() => {
     const avg = (ids: string[]) => {
@@ -63,7 +63,7 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
     if (team1.length === 0 || team2.length === 0) return;
 
     // 挑战赛验证：双方必须有实力差距
-    if (isChallenge && eloGap < ELO_GAP_MIN) {
+    if (requireEloGap && eloGap < ELO_GAP_MIN) {
       setSubmitError(`「${selectedCategory?.name}」需要双方存在实力差距（至少 ${ELO_GAP_MIN} 分），当前差距仅 ${eloGap} 分`);
       return;
     }
@@ -192,7 +192,7 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
             </div>
           )}
 
-          {isChallenge && team1.length > 0 && team2.length > 0 && (
+          {requireEloGap && team1.length > 0 && team2.length > 0 && (
             <div className={`p-4 rounded-2xl border text-sm font-bold flex items-center gap-3 ${eloGap >= ELO_GAP_MIN ? 'bg-green-50 border-green-200 text-green-700' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
               <Zap size={16} className="shrink-0" />
               <div>

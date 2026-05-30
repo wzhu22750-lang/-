@@ -16,12 +16,14 @@ export function CategoryManageModal({ onClose, categories, clubId, onSave, onDel
   const [isAdding, setIsAdding] = useState(false);
   const [formName, setFormName] = useState('');
   const [formMultiplier, setFormMultiplier] = useState('1.0');
+  const [formRequireGap, setFormRequireGap] = useState(false);
 
   const resetForm = () => {
     setEditingId(null);
     setIsAdding(false);
     setFormName('');
     setFormMultiplier('1.0');
+    setFormRequireGap(false);
   };
 
   const handleSave = () => {
@@ -34,6 +36,7 @@ export function CategoryManageModal({ onClose, categories, clubId, onSave, onDel
       club_id: clubId,
       name,
       k_multiplier: mult,
+      require_elo_gap: formRequireGap,
       sort_order: editingId
         ? (categories.find(c => c.id === editingId)?.sort_order ?? categories.length)
         : categories.length,
@@ -47,6 +50,7 @@ export function CategoryManageModal({ onClose, categories, clubId, onSave, onDel
     setIsAdding(false);
     setFormName(cat.name);
     setFormMultiplier(String(cat.k_multiplier));
+    setFormRequireGap(cat.require_elo_gap === true);
   };
 
   const handleDelete = (id: string) => {
@@ -123,6 +127,17 @@ export function CategoryManageModal({ onClose, categories, clubId, onSave, onDel
                 className="flex-1 px-4 py-3 rounded-2xl border border-neutral-200 outline-none text-sm font-black"
               />
             </div>
+            <label className="flex items-center gap-3 px-1 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formRequireGap}
+                onChange={e => setFormRequireGap(e.target.checked)}
+                className="w-5 h-5 rounded-md accent-red-600"
+              />
+              <span className="text-xs font-bold text-neutral-600">
+                需要实力差距验证（弱者挑战强者，≥30分）
+              </span>
+            </label>
             <div className="flex gap-3">
               <button onClick={resetForm} className="flex-1 py-3 rounded-2xl font-black text-sm text-neutral-500 bg-neutral-100">
                 取消

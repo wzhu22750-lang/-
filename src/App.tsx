@@ -104,7 +104,7 @@ export default function App() {
           if (cats.length === 0) {
             const defaults: MatchCategory[] = [
               { id: Math.random().toString(36).substr(2, 9), club_id: club.id, name: '常规赛', k_multiplier: 1.0, sort_order: 0 },
-              { id: Math.random().toString(36).substr(2, 9), club_id: club.id, name: '挑战赛', k_multiplier: 1.5, sort_order: 1 },
+              { id: Math.random().toString(36).substr(2, 9), club_id: club.id, name: '挑战赛', k_multiplier: 1.5, sort_order: 1, require_elo_gap: true },
               { id: Math.random().toString(36).substr(2, 9), club_id: club.id, name: '白羽惜别羽毛球赛', k_multiplier: 2.0, sort_order: 2 },
             ];
             await Promise.all(defaults.map(c => saveMatchCategory(c)));
