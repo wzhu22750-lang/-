@@ -1,15 +1,18 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Player, Match, Club } from './types';
-import { 
-  getPlayers, 
-  getMatches, 
-  savePlayerToCloud, 
-  saveMatchToCloud, 
-  deletePlayerFromCloud, 
-  deleteMatchFromCloud 
+import { Player, Match, Club, MatchCategory } from './types';
+import {
+  getPlayers,
+  getMatches,
+  savePlayerToCloud,
+  saveMatchToCloud,
+  deletePlayerFromCloud,
+  deleteMatchFromCloud,
+  getMatchCategories,
+  saveMatchCategory,
+  deleteMatchCategory,
 } from './lib/storage';
 import { calculateEloChange, recalculateAllElo } from './lib/elo';
-import { 
+import {
   Plus,
   Users,
   LogOut,
@@ -17,7 +20,8 @@ import {
   BarChart3,
   Zap,
   ShieldCheck,
-  Download
+  Download,
+  Tag,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -33,6 +37,7 @@ import { DataExportModal } from './components/DataExportModal';
 import { RankingList } from './components/RankingList';
 import { RecentActivity } from './components/RecentActivity';
 import { RatingChangeModal } from './components/RatingChangeModal';
+import { CategoryManageModal } from './components/CategoryManageModal';
 
 export default function App() {
   // --- 1. 核心状态 ---
@@ -57,6 +62,8 @@ export default function App() {
   const [editingMatch, setEditingMatch] = useState<Match | null>(null);
   const [prefillTeams, setPrefillTeams] = useState<{ team1: string[]; team2: string[] } | null>(null);
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [categories, setCategories] = useState<MatchCategory[]>([]);
+  const [isCategoryManageOpen, setIsCategoryManageOpen] = useState(false);
 
   // --- 2. 权限与跳转逻辑 ---
   const isAdmin = useMemo(() => {
@@ -86,11 +93,13 @@ export default function App() {
 
       const initData = async () => {
         try {
-          const [p, m] = await Promise.all([
+          const [p, m, cats] = await Promise.all([
             getPlayers(club.id),
-            getMatches(club.id)
+            getMatches(club.id),
+            getMatchCategories(club.id),
           ]);
-          const finalizedPlayers = recalculateAllElo(p, m, club.mode);
+          setCategories(cats);
+          const finalizedPlayers = recalculateAllElo(p, m, club.mode, cats);
           setPlayers(finalizedPlayers);
           setMatches(m);
           localStorage.setItem(`cache_players_${club.id}`, JSON.stringify(finalizedPlayers));
@@ -143,7 +152,7 @@ export default function App() {
     const newMatches = isEdit
       ? matches.map(m => m.id === newMatch.id ? matchWithClub : m)
       : [matchWithClub, ...matches];
-    const updatedPlayers = recalculateAllElo(players, newMatches, club.mode);
+    const updatedPlayers = recalculateAllElo(players, newMatches, club.mode, categories);
 
     // 计算所有参赛球员的 ELO 变化
     const allIds = [...newMatch.team1, ...newMatch.team2];
@@ -184,7 +193,7 @@ export default function App() {
   const handleDeleteMatch = async (id: string) => {
     if (!confirm('确定删除这场战绩吗？积分将全量重算。')) return;
     const newMatches = matches.filter(m => m.id !== id);
-    const updatedPlayers = recalculateAllElo(players, newMatches, club.mode);
+    const updatedPlayers = recalculateAllElo(players, newMatches, club.mode, categories);
     setMatches(newMatches);
     setPlayers(updatedPlayers);
     await deleteMatchFromCloud(id);
@@ -196,7 +205,24 @@ export default function App() {
     if (!confirm('警告：移除球员会导致历史数据同步失效。确定吗？')) return;
     await deletePlayerFromCloud(id);
     const newPlayers = players.filter(p => p.id !== id);
-    const updatedPlayers = recalculateAllElo(newPlayers, matches, club.mode);
+    const updatedPlayers = recalculateAllElo(newPlayers, matches, club.mode, categories);
+    setPlayers(updatedPlayers);
+    for (const p of updatedPlayers) await savePlayerToCloud(p);
+  };
+
+  const handleSaveCategory = async (category: MatchCategory) => {
+    const updated = categories.some(c => c.id === category.id)
+      ? categories.map(c => c.id === category.id ? category : c)
+      : [...categories, category];
+    setCategories(updated);
+    await saveMatchCategory(category);
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    setCategories(categories.filter(c => c.id !== id));
+    await deleteMatchCategory(id);
+    // 重算所有比赛（移除已删除类别的引用）
+    const updatedPlayers = recalculateAllElo(players, matches, club!.mode, categories.filter(c => c.id !== id));
     setPlayers(updatedPlayers);
     for (const p of updatedPlayers) await savePlayerToCloud(p);
   };
@@ -223,6 +249,11 @@ export default function App() {
               <Download size={16} className="text-white/60" />
             </button>
             {isAdmin && (
+              <button onClick={() => setIsCategoryManageOpen(true)} className="p-2 hover:bg-white/10 rounded-full transition-colors" title="比赛类别管理">
+                <Tag size={16} className="text-white/60" />
+              </button>
+            )}
+            {isAdmin && (
               <div className="flex items-center gap-1.5 bg-white/20 px-3 py-1 rounded-full border border-white/20">
                  <ShieldCheck size={12} className="text-yellow-300" />
                  <span className="text-[10px] font-black uppercase tracking-widest">Admin</span>
@@ -240,7 +271,7 @@ export default function App() {
       {/* Main Content */}
       <main className="px-4 mt-6">
         {activeTab === 'recent' && (
-          <RecentActivity matches={matches} players={players} onViewProfile={setViewingPlayer} onQuickRematch={(m) => { setPrefillTeams({ team1: m.team1, team2: m.team2 }); setIsAddMatchOpen(true); }} />
+          <RecentActivity matches={matches} players={players} onViewProfile={setViewingPlayer} onQuickRematch={(m) => { setPrefillTeams({ team1: m.team1, team2: m.team2 }); setIsAddMatchOpen(true); }} categories={categories} />
         )}
         {activeTab === 'h2h' && (
           <div className="space-y-6">
@@ -265,6 +296,7 @@ export default function App() {
                 onDeleteMatch={handleDeleteMatch}
                 onEditMatch={(m) => { setEditingMatch(m); setIsAddMatchOpen(true); }}
                 clubName={club.name} inviteCode={club.invite_code}
+                categories={categories}
               />
             ) : (
               <div className="text-center py-20 text-neutral-400 font-bold leading-relaxed"><Users size={48} className="mx-auto mb-4 opacity-10" /><p>选择球员开始深度对战分析</p></div>
@@ -279,7 +311,7 @@ export default function App() {
 
       {/* Modals */}
       <AnimatePresence>
-        {isAddMatchOpen && <AddMatchModal onClose={() => { setIsAddMatchOpen(false); setEditingMatch(null); setPrefillTeams(null); }} players={players} onAdd={handleAddMatch} editMatch={editingMatch || undefined} prefillTeams={prefillTeams || undefined} />}
+        {isAddMatchOpen && <AddMatchModal onClose={() => { setIsAddMatchOpen(false); setEditingMatch(null); setPrefillTeams(null); }} players={players} onAdd={handleAddMatch} editMatch={editingMatch || undefined} prefillTeams={prefillTeams || undefined} categories={categories} />}
         {isPlayerSelectOpen && (
           <PlayerSelectModal 
             side={isPlayerSelectOpen.side} onClose={() => setIsPlayerSelectOpen(null)} players={players} 
@@ -302,6 +334,15 @@ export default function App() {
         )}
         {isExportOpen && (
           <DataExportModal players={players} matches={matches} onClose={() => setIsExportOpen(false)} />
+        )}
+        {isCategoryManageOpen && (
+          <CategoryManageModal
+            categories={categories}
+            clubId={club.id}
+            onSave={handleSaveCategory}
+            onDelete={handleDeleteCategory}
+            onClose={() => setIsCategoryManageOpen(false)}
+          />
         )}
       </AnimatePresence>
     </div>

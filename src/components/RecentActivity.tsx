@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Match, MatchType, Player } from '../types';
+import { Match, MatchType, Player, MatchCategory } from '../types';
 import { Calendar, Trophy, Zap, Flame, RotateCcw } from 'lucide-react';
 import { calculateStreak } from '../lib/elo';
 
@@ -9,6 +9,7 @@ interface RecentActivityProps {
   players: Player[];
   onViewProfile: (p: Player) => void;
   onQuickRematch?: (match: Match) => void;
+  categories: MatchCategory[];
 }
 
 // 智能时间格式化工具
@@ -27,9 +28,10 @@ const formatDateWithTime = (timestamp: number) => {
   return `${dateStr} ${period}${displayHours}:${minutes}`;
 };
 
-export function RecentActivity({ matches, players, onViewProfile, onQuickRematch }: RecentActivityProps) {
+export function RecentActivity({ matches, players, onViewProfile, onQuickRematch, categories }: RecentActivityProps) {
   const [filter, setFilter] = useState<'all' | MatchType>('all');
   const getPlayer = (id: string) => players.find(p => p.id === id);
+  const getCategoryName = (id?: string) => categories.find(c => c.id === id)?.name;
   const filteredMatches = filter === 'all' ? matches : matches.filter(m => m.type === filter);
 
   if (matches.length === 0) {
@@ -99,6 +101,11 @@ export function RecentActivity({ matches, players, onViewProfile, onQuickRematch
                <span className="text-[10px] font-black text-red-600 bg-red-50 px-2 py-1 rounded-lg italic uppercase tracking-tighter border border-red-100">
                  {match.tournament || 'Daily Session'}
                </span>
+               {match.category_id && getCategoryName(match.category_id) && (
+                 <span className="text-[10px] font-black bg-amber-50 text-amber-600 px-2 py-1 rounded-lg uppercase tracking-tighter border border-amber-100">
+                   {getCategoryName(match.category_id)}
+                 </span>
+               )}
             </div>
 
             {onQuickRematch && (

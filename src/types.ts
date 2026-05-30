@@ -1,11 +1,20 @@
 export type MatchType = 'Singles' | 'Doubles';
 
+export interface MatchCategory {
+  id: string;
+  club_id: string;
+  name: string;
+  k_multiplier: number;
+  sort_order: number;
+}
+
 export interface Club {
   id: string;
   name: string;
   invite_code: string;
   manager_token?: string;
   mode?: 'club' | 'tournament';
+  categories?: MatchCategory[];
 }
 
 export interface Player {
@@ -31,5 +40,6 @@ export interface Match {
   scores: GameScore[];
   tournament?: string;
   club_id: string;
+  category_id?: string;
   video_url?: string; // 预留视频录像字段
 }

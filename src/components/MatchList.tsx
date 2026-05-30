@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Match, Player } from '../types';
+import { Match, Player, MatchCategory } from '../types';
 import { PlayCircle, Trophy, Trash2, Share2, Pencil } from 'lucide-react';
 import { ShareMatchModal } from './ShareMatchModal';
 
@@ -12,6 +12,7 @@ interface MatchListProps {
   onEditMatch?: (match: Match) => void;
   clubName: string;
   inviteCode: string;
+  categories: MatchCategory[];
 }
 
 // 智能时间格式化工具
@@ -30,9 +31,10 @@ const formatDateWithTime = (timestamp: number) => {
   return `${dateStr} ${period}${displayHours}:${minutes}`;
 };
 
-export function MatchList({ matches, team1Ids, players, onDeleteMatch, onEditMatch, clubName, inviteCode }: MatchListProps) {
+export function MatchList({ matches, team1Ids, players, onDeleteMatch, onEditMatch, clubName, inviteCode, categories }: MatchListProps) {
   const [sharingMatch, setSharingMatch] = useState<Match | null>(null);
   const getPlayerName = (id: string) => players.find(p => p.id === id)?.name || '未知';
+  const getCategoryName = (id?: string) => categories.find(c => c.id === id)?.name;
 
   return (
     <div className="space-y-8 pb-10">
@@ -63,6 +65,11 @@ export function MatchList({ matches, team1Ids, players, onDeleteMatch, onEditMat
                   <Trophy size={16} className="text-red-500" />
                 </div>
                 <span className="text-sm font-black text-neutral-800 italic uppercase tracking-tighter">{match.tournament || '练习赛'}</span>
+                {match.category_id && getCategoryName(match.category_id) && (
+                  <span className="text-[10px] font-black bg-red-50 text-red-500 px-2 py-0.5 rounded-lg uppercase tracking-tighter border border-red-100">
+                    {getCategoryName(match.category_id)}
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-1">
                 {/* 使用具体时间显示 */}

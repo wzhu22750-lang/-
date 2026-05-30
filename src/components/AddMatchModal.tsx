@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { X, Trophy, Calendar, Plus, Minus, Clock } from 'lucide-react';
-import { Player, Match, GameScore } from '../types';
+import { X, Trophy, Calendar, Plus, Minus, Clock, Tag } from 'lucide-react';
+import { Player, Match, GameScore, MatchCategory } from '../types';
 
 interface AddMatchModalProps {
   onClose: () => void;
@@ -9,13 +9,14 @@ interface AddMatchModalProps {
   onAdd: (match: Match) => void;
   editMatch?: Match;
   prefillTeams?: { team1: string[]; team2: string[] };
+  categories: MatchCategory[];
 }
 
 function tsToDateStr(ts: number): string {
   return new Date(ts).toISOString().split('T')[0];
 }
 
-export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams }: AddMatchModalProps) {
+export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams, categories }: AddMatchModalProps) {
   const isEditing = !!editMatch;
   const initTeam1 = editMatch?.team1 || prefillTeams?.team1 || [];
   const initTeam2 = editMatch?.team2 || prefillTeams?.team2 || [];
@@ -25,6 +26,7 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
   const [scores, setScores] = useState<GameScore[]>(editMatch?.scores?.length ? editMatch.scores : [{ team1: 0, team2: 0 }]);
   const [tournament, setTournament] = useState(editMatch?.tournament || '');
   const [date, setDate] = useState(() => editMatch?.date ? tsToDateStr(editMatch.date) : new Date().toISOString().split('T')[0]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>(editMatch?.category_id || categories[0]?.id);
   const [isChoosingPlayers, setIsChoosingPlayers] = useState<'team1' | 'team2' | null>(null);
 
   // 实时时钟
@@ -59,6 +61,7 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
       scores: scores.filter(s => s.team1 > 0 || s.team2 > 0),
       tournament: tournament || '练习赛',
       club_id: editMatch?.club_id || '',
+      category_id: selectedCategoryId,
     };
     onAdd(newMatch);
   };
@@ -137,6 +140,32 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
                </button>
              </div>
           </div>
+
+          {categories.length > 0 && (
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest pl-1 flex items-center gap-1.5">
+                <Tag size={12} /> 比赛类别
+              </label>
+              <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                {categories.map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategoryId(cat.id)}
+                    className={`shrink-0 px-4 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-1.5 ${
+                      selectedCategoryId === cat.id
+                        ? 'bg-red-600 text-white shadow-lg shadow-red-200'
+                        : 'bg-white text-neutral-500 border border-neutral-200 hover:border-red-300'
+                    }`}
+                  >
+                    {cat.name}
+                    <span className={`text-[10px] font-bold ${selectedCategoryId === cat.id ? 'text-red-200' : 'text-neutral-400'}`}>
+                      ×{cat.k_multiplier}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-4">
              <div className="flex items-center gap-4 bg-white p-5 rounded-2xl border border-neutral-100 shadow-sm">

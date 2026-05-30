@@ -1,4 +1,4 @@
-import { Player, Match } from '../types';
+import { Player, Match, MatchCategory } from '../types';
 
 export const INITIAL_ELO = 1500;
 const K_FACTOR = 32;
@@ -34,9 +34,12 @@ export function calculateEloChange(team1Avg: number, team2Avg: number, team1Won:
 /**
  * 2. 全量重算所有球员积分 (按时间顺序重放比赛，支持临时 K 因子)
  */
-export function recalculateAllElo(allPlayers: Player[], allMatches: Match[], mode: 'club' | 'tournament' = 'club'): Player[] {
+export function recalculateAllElo(allPlayers: Player[], allMatches: Match[], mode: 'club' | 'tournament' = 'club', categories: MatchCategory[] = []): Player[] {
   const updatedPlayers = allPlayers.map(p => ({ ...p, elo_rating: 1500 }));
   const playerMatchCounts = new Map<string, number>();
+
+  const categoryMultipliers = new Map<string, number>();
+  categories.forEach(c => categoryMultipliers.set(c.id, c.k_multiplier));
 
   const sortedMatches = [...allMatches].sort((a, b) => a.date - b.date);
 
@@ -76,6 +79,10 @@ export function recalculateAllElo(allPlayers: Player[], allMatches: Match[], mod
         const avgCount = allCounts.reduce((s, c) => s + c, 0) / allCounts.length;
         k = getProvisionalK(Math.floor(avgCount), mode);
       }
+
+      // 叠加比赛类别系数
+      const catMultiplier = match.category_id ? (categoryMultipliers.get(match.category_id) ?? 1.0) : 1.0;
+      k = Math.round(k * catMultiplier);
 
       const change = calculateEloChange(t1Avg, t2Avg, t1Games > t2Games, k);
 
