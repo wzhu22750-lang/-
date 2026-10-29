@@ -5,26 +5,11 @@
   --font-display: "Outfit", "Plus Jakarta Sans", "PingFang SC", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  /* Court Editorial Design System Tokens */
-  --color-court-canvas: #f5f6f3;
-  --color-court-surface: #ffffff;
-  --color-court-subtle: #edf0eb;
-  --color-court-border: #dde2dc;
-  --color-court-ink: #111814;
-  --color-court-muted: #5b665f;
-
-  /* BWF Turf Emerald & Competitive Accents */
-  --color-court-deep: #0c261e;
-  --color-court-forest: #0f382b;
-  --color-court-primary: #0b6e4f;
-  --color-court-emerald: #109868;
-  --color-court-lime: #d9f99d;
-
-  /* Team Polarity & Tournament Accents */
+  /* Original Crimson Red & Charcoal Design Tokens */
   --color-app-primary: #e11d48;
   --color-app-primary-dark: #be123c;
-  --color-app-header: #0c261e;
-  --color-app-surface: #f5f6f3;
+  --color-app-header: #2d2d2e;
+  --color-app-surface: #f5f5f5;
   --color-app-tournament: #d97706;
 }
 
@@ -33,20 +18,20 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    background-color: #f5f6f3;
-    color: #111814;
+    background-color: #f5f5f5;
+    color: #171717;
   }
 
   body {
     -webkit-tap-highlight-color: transparent;
     font-feature-settings: "cv11", "ss01";
     padding-top: env(safe-area-inset-top);
-    background-color: #f5f6f3;
-    color: #111814;
+    background-color: #f5f5f5;
+    color: #171717;
   }
 
   img {
-    outline: 1px solid rgba(17, 24, 20, 0.08);
+    outline: 1px solid rgba(0, 0, 0, 0.08);
     outline-offset: -1px;
   }
 
@@ -66,26 +51,19 @@
 
 .court-grid-pattern {
   background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
   background-size: 28px 28px;
-}
-
-.court-light-grid {
-  background-image:
-    linear-gradient(to right, rgba(15, 56, 43, 0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(15, 56, 43, 0.035) 1px, transparent 1px);
-  background-size: 24px 24px;
 }
 
 .court-card-shadow {
   box-shadow:
-    0 1px 2px rgba(12, 38, 30, 0.04),
-    0 8px 24px -6px rgba(12, 38, 30, 0.06);
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 8px 24px -6px rgba(0, 0, 0, 0.06);
 }
 
 .court-elevated-shadow {
   box-shadow:
-    0 2px 4px rgba(12, 38, 30, 0.04),
-    0 16px 36px -8px rgba(12, 38, 30, 0.12);
+    0 2px 4px rgba(0, 0, 0, 0.05),
+    0 16px 36px -8px rgba(220, 38, 38, 0.16);
 }

@@ -291,13 +291,13 @@ export default function App() {
   const isTournament = club.mode === 'tournament';
 
   return (
-    <div className="min-h-screen bg-[#f5f6f3] court-light-grid pb-28 font-sans text-[#111814] overflow-x-hidden">
-      {/* Top Broadcast Masthead */}
+    <div className="min-h-screen bg-[#f5f5f5] pb-28 font-sans text-neutral-900 overflow-x-hidden">
+      {/* Top Header (Preserving Original Red / Tournament Amber Color Identity) */}
       <header
         className={`text-white sticky top-0 z-50 border-b ${
           isTournament
-            ? 'bg-[#26190a] border-amber-500/20'
-            : 'bg-[#0c261e] border-emerald-500/15'
+            ? 'bg-amber-600 border-amber-500/30'
+            : 'bg-red-600 border-red-500/30'
         } court-grid-pattern shadow-md`}
       >
         <div className="max-w-2xl mx-auto">
@@ -306,16 +306,16 @@ export default function App() {
             <div className="flex items-center gap-2.5 min-w-0">
               <button
                 onClick={() => {
-                  if (confirm(isTournament ? '切换或退出当前赛事？' : '切换或退出当前俱乐部？')) {
+                  if (confirm(isTournament ? '退出当前比赛？' : '退出当前俱乐部？')) {
                     localStorage.removeItem('h2h_club');
                     setClub(null);
                   }
                 }}
-                className="w-10 h-10 rounded-xl bg-white/8 hover:bg-white/15 border border-white/10 flex items-center justify-center transition-colors shrink-0"
+                className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center transition-colors shrink-0"
                 title="切换球馆"
                 aria-label="切换球馆"
               >
-                <LogOut size={17} className="text-white/80" />
+                <LogOut size={17} className="text-white" />
               </button>
 
               <div className="min-w-0">
@@ -326,27 +326,27 @@ export default function App() {
                   <span
                     className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
                       isTournament
-                        ? 'bg-amber-400 text-amber-950'
-                        : 'bg-emerald-400/20 text-emerald-300 border border-emerald-400/30'
+                        ? 'bg-amber-300 text-amber-950'
+                        : 'bg-white/20 text-white border border-white/25'
                     }`}
                   >
-                    {isTournament ? '锦标赛' : '俱乐部'}
+                    {isTournament ? '比赛' : '俱乐部'}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-2 mt-1">
                   <button
                     onClick={handleCopyCode}
-                    className="inline-flex items-center gap-1.5 text-[11px] font-mono text-white/70 hover:text-white transition-colors"
+                    className="inline-flex items-center gap-1.5 text-[11px] font-mono text-white/80 hover:text-white transition-colors"
                     title="点击复制邀请码"
                   >
                     <span>CODE: {club.invite_code}</span>
                     {codeCopied ? (
-                      <span className="inline-flex items-center gap-0.5 text-emerald-300 text-[10px] font-sans font-bold">
+                      <span className="inline-flex items-center gap-0.5 text-yellow-200 text-[10px] font-sans font-bold">
                         <Check size={11} /> 已复制
                       </span>
                     ) : (
-                      <Copy size={11} className="opacity-60" />
+                      <Copy size={11} className="opacity-70" />
                     )}
                   </button>
                 </div>
@@ -357,24 +357,24 @@ export default function App() {
             <div className="flex items-center gap-1.5 shrink-0">
               <button
                 onClick={() => setIsCategoryManageOpen(true)}
-                className="w-10 h-10 rounded-xl bg-white/8 hover:bg-white/15 border border-white/10 flex items-center justify-center transition-colors"
-                title="比赛类别与倍率"
+                className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center transition-colors"
+                title="比赛类别管理"
                 aria-label="比赛类别管理"
               >
-                <Tag size={16} className="text-white/80" />
+                <Tag size={16} className="text-white/90" />
               </button>
               <button
                 onClick={() => setIsExportOpen(true)}
-                className="w-10 h-10 rounded-xl bg-white/8 hover:bg-white/15 border border-white/10 flex items-center justify-center transition-colors"
-                title="导出备份数据"
+                className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center transition-colors"
+                title="数据导出"
                 aria-label="数据导出"
               >
-                <Download size={16} className="text-white/80" />
+                <Download size={16} className="text-white/90" />
               </button>
               {isAdmin && (
-                <div className="hidden sm:flex items-center gap-1 bg-amber-400/15 px-2.5 py-1.5 rounded-xl border border-amber-400/30 text-amber-300">
-                  <ShieldCheck size={13} />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">Admin</span>
+                <div className="hidden sm:flex items-center gap-1 bg-white/20 px-2.5 py-1.5 rounded-xl border border-white/25 text-white">
+                  <ShieldCheck size={13} className="text-yellow-300" />
+                  <span className="text-[10px] font-black uppercase tracking-wider">Admin</span>
                 </div>
               )}
             </div>
@@ -382,16 +382,16 @@ export default function App() {
 
           {/* Navigation Tabs */}
           <div className="px-4 pb-2.5 pt-1">
-            <nav className="grid grid-cols-3 gap-1.5 bg-black/25 p-1 rounded-2xl border border-white/10">
+            <nav className="grid grid-cols-3 gap-1.5 bg-black/15 p-1 rounded-2xl border border-white/15">
               {[
-                { key: 'recent' as const, label: '赛况动态', icon: Zap, badge: matches.length },
+                { key: 'recent' as const, label: '最近动态', icon: Zap, badge: matches.length },
                 {
                   key: 'h2h' as const,
                   label: '交手分析',
                   icon: BarChart3,
                   badge: selectedTeam1.length && selectedTeam2.length ? h2hMatches.length : null,
                 },
-                { key: 'ranking' as const, label: '战力天梯', icon: Award, badge: players.length },
+                { key: 'ranking' as const, label: '战力排行', icon: Award, badge: players.length },
               ].map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.key;
@@ -400,7 +400,7 @@ export default function App() {
                     key={tab.key}
                     onClick={() => setActiveTab(tab.key)}
                     className={`relative py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors duration-150 ${
-                      isActive ? 'text-[#111814]' : 'text-white/65 hover:text-white'
+                      isActive ? 'text-neutral-900' : 'text-white/75 hover:text-white'
                     }`}
                   >
                     {isActive && (
@@ -417,8 +417,8 @@ export default function App() {
                           isActive
                             ? isTournament
                               ? 'text-amber-600'
-                              : 'text-[#0b6e4f]'
-                            : 'opacity-75'
+                              : 'text-red-600'
+                            : 'opacity-80'
                         }
                       />
                       <span>{tab.label}</span>
@@ -426,8 +426,8 @@ export default function App() {
                         <span
                           className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-md tabular-nums ${
                             isActive
-                              ? 'bg-[#edf0eb] text-[#5b665f]'
-                              : 'bg-white/10 text-white/70'
+                              ? 'bg-red-50 text-red-600'
+                              : 'bg-white/15 text-white'
                           }`}
                         >
                           {tab.badge}
@@ -499,12 +499,12 @@ export default function App() {
                 categories={categories}
               />
             ) : (
-              <div className="bg-white rounded-[24px] border border-[#dde2dc] p-10 text-center court-card-shadow">
-                <div className="w-14 h-14 rounded-2xl bg-[#f5f6f3] border border-[#dde2dc] flex items-center justify-center mx-auto mb-3 text-[#0b6e4f]">
+              <div className="bg-white rounded-[24px] border border-neutral-200/80 p-10 text-center court-card-shadow">
+                <div className="w-14 h-14 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center mx-auto mb-3 text-red-600">
                   <Users size={26} />
                 </div>
-                <p className="font-bold text-base text-[#111814]">选择双方阵容开启交手分析</p>
-                <p className="text-xs text-[#5b665f] mt-1">
+                <p className="font-bold text-base text-neutral-900">选择双方阵容开启交手分析</p>
+                <p className="text-xs text-neutral-500 mt-1">
                   点击上方 A 队与 B 队卡片，支持单打 1v1 或双打 2v2 历史战绩对比
                 </p>
               </div>
@@ -527,14 +527,14 @@ export default function App() {
             setPrefillTeams(null);
             setIsAddMatchOpen(true);
           }}
-          className={`text-white rounded-2xl court-elevated-shadow flex items-center justify-center gap-2 px-5 py-3.5 font-bold text-sm tracking-wide border ${
+          className={`text-white rounded-full court-elevated-shadow flex items-center justify-center gap-2 px-5 py-3.5 font-black text-sm tracking-wide border-2 border-white/40 ${
             isTournament
-              ? 'bg-amber-600 hover:bg-amber-700 border-amber-400/40'
-              : 'bg-[#0b6e4f] hover:bg-[#095a40] border-emerald-400/30'
+              ? 'bg-amber-600 hover:bg-amber-700'
+              : 'bg-red-600 hover:bg-red-700'
           } transition-colors`}
         >
           <Plus size={20} strokeWidth={2.5} />
-          <span>记一局</span>
+          <span>录比赛</span>
         </motion.button>
       </div>
 

@@ -47,8 +47,8 @@ export function MatchList({
   return (
     <div className="space-y-3.5 pb-10">
       <div className="flex items-center justify-between px-1">
-        <h3 className="text-sm font-extrabold text-[#111814]">交锋明细记录 ({matches.length})</h3>
-        <span className="text-[11px] text-[#5b665f]">点击分享可生成战报海报</span>
+        <h3 className="text-sm font-extrabold text-neutral-900">交锋明细记录 ({matches.length})</h3>
+        <span className="text-[11px] text-neutral-500">点击分享可生成战报海报</span>
       </div>
 
       {matches.map((match, idx) => {
@@ -75,29 +75,29 @@ export function MatchList({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: Math.min(idx * 0.04, 0.25), duration: 0.2 }}
-            className="bg-white rounded-[22px] border border-[#dde2dc] court-card-shadow overflow-hidden"
+            className="bg-white rounded-[22px] border border-neutral-200/80 court-card-shadow overflow-hidden"
           >
             {/* Card Header */}
-            <div className="flex items-center justify-between gap-2 px-4 py-2.5 bg-[#f9faf8] border-b border-[#edf0eb]">
+            <div className="flex items-center justify-between gap-2 px-4 py-2.5 bg-neutral-50/80 border-b border-neutral-100">
               <div className="flex items-center gap-2 min-w-0">
-                <Trophy size={14} className="text-[#0b6e4f] shrink-0" />
-                <span className="text-xs font-extrabold text-[#111814] truncate">
+                <Trophy size={14} className="text-amber-500 shrink-0" />
+                <span className="text-xs font-extrabold text-neutral-900 truncate">
                   {match.tournament || '日常训练赛'}
                 </span>
                 {match.category_id && getCategoryName(match.category_id) && (
-                  <span className="text-[10px] font-bold bg-emerald-50 text-[#0b6e4f] px-2 py-0.5 rounded-md border border-emerald-200/80 shrink-0">
+                  <span className="text-[10px] font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md border border-amber-200/80 shrink-0">
                     {getCategoryName(match.category_id)}
                   </span>
                 )}
               </div>
 
               <div className="flex items-center gap-1 shrink-0">
-                <span className="text-[11px] font-medium text-[#5b665f] mr-1 tabular-nums">
+                <span className="text-[11px] font-medium text-neutral-500 mr-1 tabular-nums">
                   {formatDateWithTime(match.date)}
                 </span>
                 <button
                   onClick={() => setSharingMatch(match)}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[#5b665f] hover:text-[#0b6e4f] hover:bg-emerald-50 transition-colors"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                   title="生成战报海报"
                   aria-label="分享战报"
                 >
@@ -106,7 +106,7 @@ export function MatchList({
                 {onEditMatch && (
                   <button
                     onClick={() => onEditMatch(match)}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-[#5b665f] hover:text-sky-600 hover:bg-sky-50 transition-colors"
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                     title="编辑比赛"
                     aria-label="编辑比赛"
                   >
@@ -115,7 +115,7 @@ export function MatchList({
                 )}
                 <button
                   onClick={() => onDeleteMatch(match.id)}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[#5b665f] hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                   title="删除比赛"
                   aria-label="删除比赛"
                 >
@@ -127,43 +127,43 @@ export function MatchList({
             {/* BWF Table-Style Scoreboard Rows */}
             <div className="p-4 flex items-center justify-between gap-4">
               <div className="flex-1 min-w-0 space-y-2.5">
-                {/* Team A Row */}
+                {/* Team 1 Row */}
                 <div className="flex items-center gap-2.5">
                   <span
                     className={`w-2 h-2 rounded-full shrink-0 ${
-                      didWeWin ? 'bg-[#0b6e4f]' : 'bg-[#dde2dc]'
+                      didWeWin ? 'bg-red-500' : 'bg-neutral-300'
                     }`}
                   />
                   <span
                     className={`text-sm font-bold truncate ${
-                      didWeWin ? 'text-[#111814]' : 'text-[#5b665f]'
+                      didWeWin ? 'text-neutral-900' : 'text-neutral-500'
                     }`}
                   >
                     {(ourTeam || []).map(getPlayerName).join(' / ')}
                   </span>
                   {didWeWin && (
-                    <span className="text-[10px] font-bold text-[#0b6e4f] bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
+                    <span className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.2 rounded">
                       胜
                     </span>
                   )}
                 </div>
 
-                {/* Team B Row */}
+                {/* Team 2 Row */}
                 <div className="flex items-center gap-2.5">
                   <span
                     className={`w-2 h-2 rounded-full shrink-0 ${
-                      didOppWin ? 'bg-rose-500' : 'bg-[#dde2dc]'
+                      didOppWin ? 'bg-blue-500' : 'bg-neutral-300'
                     }`}
                   />
                   <span
                     className={`text-sm font-bold truncate ${
-                      didOppWin ? 'text-[#111814]' : 'text-[#5b665f]'
+                      didOppWin ? 'text-neutral-900' : 'text-neutral-500'
                     }`}
                   >
                     {(oppTeam || []).map(getPlayerName).join(' / ')}
                   </span>
                   {didOppWin && (
-                    <span className="text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-1.5 py-0.2 rounded">
+                    <span className="text-[10px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.2 rounded">
                       胜
                     </span>
                   )}
@@ -180,18 +180,18 @@ export function MatchList({
                   return (
                     <div
                       key={sIdx}
-                      className="flex flex-col items-center gap-1.5 bg-[#f5f6f3] p-1.5 rounded-xl border border-[#e3e8e2]"
+                      className="flex flex-col items-center gap-1.5 bg-neutral-50 p-1.5 rounded-xl border border-neutral-100"
                     >
                       <div
                         className={`w-8 h-7 rounded-lg flex items-center justify-center font-mono text-xs font-extrabold tabular-nums ${
-                          weWonSet ? 'bg-[#0c261e] text-white shadow-xs' : 'text-[#5b665f]'
+                          weWonSet ? 'bg-red-500 text-white shadow-xs' : 'text-neutral-400'
                         }`}
                       >
                         {ourScore}
                       </div>
                       <div
                         className={`w-8 h-7 rounded-lg flex items-center justify-center font-mono text-xs font-extrabold tabular-nums ${
-                          oppWonSet ? 'bg-rose-600 text-white shadow-xs' : 'text-[#5b665f]'
+                          oppWonSet ? 'bg-blue-500 text-white shadow-xs' : 'text-neutral-400'
                         }`}
                       >
                         {oppScore}

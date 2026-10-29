@@ -78,18 +78,18 @@ export function CategoryManageModal({
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 32, stiffness: 340 }}
-        className="bg-[#f5f6f3] w-full max-w-lg rounded-t-[28px] sm:rounded-[28px] overflow-hidden flex flex-col max-h-[90vh] court-elevated-shadow border border-[#dde2dc]"
+        className="bg-[#f5f5f5] w-full max-w-lg rounded-t-[28px] sm:rounded-[28px] overflow-hidden flex flex-col max-h-[90vh] court-elevated-shadow border border-neutral-200/80"
       >
         <div
-          className="bg-[#0c261e] court-grid-pattern pt-6 pb-4 px-6 text-white flex items-center justify-between shrink-0 border-b border-emerald-500/20"
+          className="bg-[#2d2d2e] pt-6 pb-4 px-6 text-white flex items-center justify-between shrink-0 border-b border-white/10"
           style={{ paddingTop: 'max(env(safe-area-inset-top), 24px)' }}
         >
           <div>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-300 block">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-red-400 block">
               K-FACTOR MULTIPLIERS
             </span>
             <h2 className="text-lg font-extrabold flex items-center gap-2">
-              <Tag size={18} className="text-emerald-300" />
+              <Tag size={18} className="text-amber-400" />
               <span>比赛类别与积分倍率</span>
             </h2>
           </div>
@@ -106,12 +106,12 @@ export function CategoryManageModal({
           {categories.map((cat) => (
             <div
               key={cat.id}
-              className="bg-white rounded-2xl p-4 border border-[#dde2dc] flex items-center justify-between court-card-shadow"
+              className="bg-white rounded-2xl p-4 border border-neutral-200/80 flex items-center justify-between court-card-shadow"
             >
               <div>
                 <div className="flex items-center gap-2">
-                  <p className="font-bold text-sm text-[#111814]">{cat.name}</p>
-                  <span className="text-[11px] font-mono font-bold bg-emerald-50 text-[#0b6e4f] px-2 py-0.5 rounded-md border border-emerald-200">
+                  <p className="font-bold text-sm text-neutral-900">{cat.name}</p>
+                  <span className="text-[11px] font-mono font-bold bg-red-50 text-red-600 px-2 py-0.5 rounded-md border border-red-200">
                     x{cat.k_multiplier}
                   </span>
                 </div>
@@ -124,14 +124,14 @@ export function CategoryManageModal({
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => startEdit(cat)}
-                  className="w-9 h-9 rounded-xl flex items-center justify-center text-[#5b665f] hover:text-sky-600 hover:bg-sky-50 transition-colors"
+                  className="w-9 h-9 rounded-xl flex items-center justify-center text-neutral-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                   aria-label="编辑类别"
                 >
                   <Pencil size={15} />
                 </button>
                 <button
                   onClick={() => handleDelete(cat.id)}
-                  className="w-9 h-9 rounded-xl flex items-center justify-center text-[#5b665f] hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                  className="w-9 h-9 rounded-xl flex items-center justify-center text-neutral-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                   aria-label="删除类别"
                 >
                   <Trash2 size={15} />
@@ -141,7 +141,7 @@ export function CategoryManageModal({
           ))}
 
           {categories.length === 0 && (
-            <div className="text-center py-10 text-[#5b665f]">
+            <div className="text-center py-10 text-neutral-400">
               <Tag size={28} className="mx-auto mb-2 opacity-30" />
               <p className="text-sm font-bold">暂无比赛类别，请点击下方新增</p>
             </div>
@@ -149,20 +149,20 @@ export function CategoryManageModal({
         </div>
 
         {isEditing && (
-          <div className="px-5 pb-4 pt-4 space-y-3.5 border-t border-[#dde2dc] bg-white">
+          <div className="px-5 pb-4 pt-4 space-y-3.5 border-t border-neutral-200/80 bg-white">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-[#111814] block">类别名称</label>
+              <label className="text-xs font-bold text-neutral-900 block">类别名称</label>
               <input
                 type="text"
                 placeholder="例如：月度擂台赛"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-[#f8faf7] border border-[#dde2dc] focus:border-[#0b6e4f] focus:bg-white outline-none text-sm font-bold text-[#111814]"
+                className="w-full px-4 py-3 rounded-xl bg-neutral-50 border border-neutral-200 focus:border-red-600 focus:bg-white outline-none text-sm font-bold text-neutral-900"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-[#111814] block">K 系数倍率 (0.1 - 5.0)</label>
+              <label className="text-xs font-bold text-neutral-900 block">K 系数倍率 (0.1 - 5.0)</label>
               <input
                 type="number"
                 step="0.1"
@@ -170,7 +170,7 @@ export function CategoryManageModal({
                 max="5.0"
                 value={formMultiplier}
                 onChange={(e) => setFormMultiplier(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-[#f8faf7] border border-[#dde2dc] focus:border-[#0b6e4f] focus:bg-white outline-none text-sm font-mono font-bold text-[#111814]"
+                className="w-full px-4 py-3 rounded-xl bg-neutral-50 border border-neutral-200 focus:border-red-600 focus:bg-white outline-none text-sm font-mono font-bold text-neutral-900"
               />
             </div>
 
@@ -179,9 +179,9 @@ export function CategoryManageModal({
                 type="checkbox"
                 checked={formRequireGap}
                 onChange={(e) => setFormRequireGap(e.target.checked)}
-                className="w-4 h-4 rounded accent-[#0b6e4f]"
+                className="w-4 h-4 rounded accent-red-600"
               />
-              <span className="text-xs font-bold text-[#111814]">
+              <span className="text-xs font-bold text-neutral-900">
                 启用挑战赛门槛（需双方 ELO 差距 ≥ 30 分）
               </span>
             </label>
@@ -189,13 +189,13 @@ export function CategoryManageModal({
             <div className="flex gap-2.5 pt-1">
               <button
                 onClick={resetForm}
-                className="flex-1 py-3 rounded-xl font-bold text-xs text-[#5b665f] bg-[#f5f6f3] hover:bg-[#e5e9e4] transition-colors"
+                className="flex-1 py-3 rounded-xl font-bold text-xs text-neutral-500 bg-neutral-100 hover:bg-neutral-200 transition-colors"
               >
                 取消
               </button>
               <button
                 onClick={handleSave}
-                className="flex-1 py-3 rounded-xl font-bold text-xs text-white bg-[#0b6e4f] hover:bg-[#095a40] transition-colors"
+                className="flex-1 py-3 rounded-xl font-bold text-xs text-white bg-red-600 hover:bg-red-700 transition-colors"
               >
                 {editingId ? '保存修改' : '确认添加'}
               </button>
@@ -203,7 +203,7 @@ export function CategoryManageModal({
           </div>
         )}
 
-        <div className="p-5 bg-white border-t border-[#dde2dc]">
+        <div className="p-5 bg-white border-t border-neutral-200/80">
           <button
             onClick={() => {
               setIsAdding(true);
@@ -212,7 +212,7 @@ export function CategoryManageModal({
               setFormMultiplier('1.0');
             }}
             disabled={isEditing}
-            className="w-full py-3.5 border border-dashed border-[#bfc8c0] rounded-xl text-[#5b665f] hover:text-[#0b6e4f] hover:border-[#0b6e4f] text-xs font-bold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-40"
+            className="w-full py-3.5 border border-dashed border-neutral-300 rounded-xl text-neutral-500 hover:text-red-600 hover:border-red-500 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-40"
           >
             <Plus size={15} /> 新增比赛类别
           </button>

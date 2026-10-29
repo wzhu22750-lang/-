@@ -78,11 +78,11 @@ export function AddMatchModal({
 
   const handleSubmit = () => {
     if (team1.length === 0 || team2.length === 0) {
-      setSubmitError('请先选择 A 队与 B 队参赛球友');
+      setSubmitError('请先选择队伍 1 与队伍 2 参赛球友');
       return;
     }
     if (isDuplicate) {
-      setSubmitError('同一位球友不能同时出现在 A 队和 B 队');
+      setSubmitError('同一位球友不能同时出现在队伍 1 和队伍 2');
       return;
     }
     if (requireEloGap && eloGap < ELO_GAP_MIN) {
@@ -143,15 +143,15 @@ export function AddMatchModal({
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 32, stiffness: 340 }}
-        className="bg-[#f5f6f3] w-full max-w-lg rounded-t-[28px] sm:rounded-[28px] overflow-hidden flex flex-col max-h-[94vh] text-[#111814] court-elevated-shadow border border-[#dde2dc]"
+        className="bg-[#f5f5f5] w-full max-w-lg rounded-t-[28px] sm:rounded-[28px] overflow-hidden flex flex-col max-h-[94vh] text-neutral-900 court-elevated-shadow border border-neutral-200/80"
       >
         {/* Header */}
         <div
-          className="bg-[#0c261e] court-grid-pattern pt-6 pb-4 px-6 text-white flex items-center justify-between relative shrink-0 border-b border-emerald-500/20"
+          className="bg-[#2d2d2e] pt-6 pb-4 px-6 text-white flex items-center justify-between relative shrink-0 border-b border-white/10"
           style={{ paddingTop: 'max(env(safe-area-inset-top), 24px)' }}
         >
           <div>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-300 block">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-red-400 block">
               MATCH SCORECARD
             </span>
             <h2 className="text-lg font-extrabold tracking-tight">
@@ -172,18 +172,18 @@ export function AddMatchModal({
           {/* Team Selection */}
           <div className="grid grid-cols-[1fr_36px_1fr] gap-2.5 items-center">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#0b6e4f] pl-1 block">A 队阵容</label>
+              <label className="text-xs font-bold text-red-600 pl-1 block">队伍 1 阵容</label>
               <button
                 type="button"
                 onClick={() => setIsChoosingPlayers('team1')}
-                className="w-full min-h-[68px] bg-white rounded-2xl border border-[#dde2dc] hover:border-[#0b6e4f] flex flex-col items-center justify-center p-3 text-sm font-bold court-card-shadow active:scale-[0.98] transition-[transform,border-color] border-t-4 border-t-[#0b6e4f]"
+                className="w-full min-h-[68px] bg-white rounded-2xl border border-neutral-200/80 hover:border-red-500 flex flex-col items-center justify-center p-3 text-sm font-bold court-card-shadow active:scale-[0.98] transition-[transform,border-color] border-t-4 border-t-red-500"
               >
                 {team1.length > 0 ? (
-                  <span className="text-[#111814] text-center leading-snug">
+                  <span className="text-neutral-900 text-center leading-snug">
                     {team1.map(getPlayerName).join(' / ')}
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 text-xs text-[#5b665f]">
+                  <span className="inline-flex items-center gap-1 text-xs text-neutral-400">
                     <Plus size={16} /> 选择球友
                   </span>
                 )}
@@ -191,24 +191,24 @@ export function AddMatchModal({
             </div>
 
             <div className="flex justify-center pt-5">
-              <div className="w-9 h-9 rounded-xl bg-[#e3e8e2] text-[#111814] flex items-center justify-center font-display text-xs font-black">
+              <div className="w-9 h-9 rounded-xl bg-neutral-200 text-neutral-700 flex items-center justify-center font-display text-xs font-black">
                 VS
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-rose-600 pl-1 block text-right pr-1">B 队阵容</label>
+              <label className="text-xs font-bold text-blue-600 pl-1 block text-right pr-1">队伍 2 阵容</label>
               <button
                 type="button"
                 onClick={() => setIsChoosingPlayers('team2')}
-                className="w-full min-h-[68px] bg-white rounded-2xl border border-[#dde2dc] hover:border-rose-500 flex flex-col items-center justify-center p-3 text-sm font-bold court-card-shadow active:scale-[0.98] transition-[transform,border-color] border-t-4 border-t-rose-500"
+                className="w-full min-h-[68px] bg-white rounded-2xl border border-neutral-200/80 hover:border-blue-500 flex flex-col items-center justify-center p-3 text-sm font-bold court-card-shadow active:scale-[0.98] transition-[transform,border-color] border-t-4 border-t-blue-500"
               >
                 {team2.length > 0 ? (
-                  <span className="text-[#111814] text-center leading-snug">
+                  <span className="text-neutral-900 text-center leading-snug">
                     {team2.map(getPlayerName).join(' / ')}
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 text-xs text-[#5b665f]">
+                  <span className="inline-flex items-center gap-1 text-xs text-neutral-400">
                     <Plus size={16} /> 选择球友
                   </span>
                 )}
@@ -219,25 +219,25 @@ export function AddMatchModal({
           {/* Scores Input */}
           <div className="space-y-2.5">
             <div className="flex items-center justify-between px-1">
-              <label className="text-xs font-bold text-[#111814]">各局小分</label>
-              <span className="text-[11px] text-[#5b665f]">点击 21 可快速填入标准局分</span>
+              <label className="text-xs font-bold text-neutral-900">各局小分</label>
+              <span className="text-[11px] text-neutral-500">点击 21 可快速填入标准局分</span>
             </div>
 
             <div className="space-y-2.5">
               {scores.map((score, idx) => (
                 <div
                   key={idx}
-                  className="bg-white p-3.5 rounded-2xl border border-[#dde2dc] court-card-shadow relative"
+                  className="bg-white p-3.5 rounded-2xl border border-neutral-200/80 court-card-shadow relative"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] font-mono font-bold text-[#5b665f] bg-[#f5f6f3] px-2 py-0.5 rounded-md">
+                    <span className="text-[11px] font-mono font-bold text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded-md">
                       第 {idx + 1} 局
                     </span>
                     {scores.length > 1 && (
                       <button
                         type="button"
                         onClick={() => setScores(scores.filter((_, sIdx) => sIdx !== idx))}
-                        className="text-[11px] font-bold text-rose-600 hover:bg-rose-50 px-2 py-0.5 rounded-md transition-colors"
+                        className="text-[11px] font-bold text-red-600 hover:bg-red-50 px-2 py-0.5 rounded-md transition-colors"
                       >
                         移除此局
                       </button>
@@ -246,12 +246,12 @@ export function AddMatchModal({
 
                   <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
                     {/* Team 1 Score Control */}
-                    <div className="flex items-center justify-between bg-[#f8faf7] p-1.5 rounded-xl border border-[#e3e8e2]">
+                    <div className="flex items-center justify-between bg-neutral-50 p-1.5 rounded-xl border border-neutral-200/70">
                       <button
                         type="button"
                         onClick={() => updateScore(idx, 'team1', score.team1 - 1)}
-                        className="w-9 h-9 flex items-center justify-center text-[#5b665f] hover:text-[#111814] bg-white rounded-lg border border-[#dde2dc] active:scale-95 transition-transform"
-                        aria-label="A队减1分"
+                        className="w-9 h-9 flex items-center justify-center text-neutral-500 hover:text-neutral-900 bg-white rounded-lg border border-neutral-200 active:scale-95 transition-transform"
+                        aria-label="1队减1分"
                       >
                         <Minus size={15} />
                       </button>
@@ -261,12 +261,12 @@ export function AddMatchModal({
                           value={score.team1 === 0 ? '' : score.team1}
                           placeholder="0"
                           onChange={(e) => updateScore(idx, 'team1', parseInt(e.target.value) || 0)}
-                          className="w-12 text-center font-display text-xl font-black text-[#111814] outline-none bg-transparent tabular-nums"
+                          className="w-12 text-center font-display text-xl font-black text-neutral-900 outline-none bg-transparent tabular-nums"
                         />
                         <button
                           type="button"
                           onClick={() => updateScore(idx, 'team1', 21)}
-                          className="text-[10px] font-mono font-bold text-[#0b6e4f] hover:underline"
+                          className="text-[10px] font-mono font-bold text-red-600 hover:underline"
                         >
                           设为21
                         </button>
@@ -274,22 +274,22 @@ export function AddMatchModal({
                       <button
                         type="button"
                         onClick={() => updateScore(idx, 'team1', score.team1 + 1)}
-                        className="w-9 h-9 flex items-center justify-center text-[#0b6e4f] bg-white rounded-lg border border-[#dde2dc] active:scale-95 transition-transform"
-                        aria-label="A队加1分"
+                        className="w-9 h-9 flex items-center justify-center text-red-600 bg-white rounded-lg border border-neutral-200 active:scale-95 transition-transform"
+                        aria-label="1队加1分"
                       >
                         <Plus size={15} />
                       </button>
                     </div>
 
-                    <span className="font-display font-black text-[#5b665f]">:</span>
+                    <span className="font-display font-black text-neutral-400">:</span>
 
                     {/* Team 2 Score Control */}
-                    <div className="flex items-center justify-between bg-[#f8faf7] p-1.5 rounded-xl border border-[#e3e8e2]">
+                    <div className="flex items-center justify-between bg-neutral-50 p-1.5 rounded-xl border border-neutral-200/70">
                       <button
                         type="button"
                         onClick={() => updateScore(idx, 'team2', score.team2 - 1)}
-                        className="w-9 h-9 flex items-center justify-center text-[#5b665f] hover:text-[#111814] bg-white rounded-lg border border-[#dde2dc] active:scale-95 transition-transform"
-                        aria-label="B队减1分"
+                        className="w-9 h-9 flex items-center justify-center text-neutral-500 hover:text-neutral-900 bg-white rounded-lg border border-neutral-200 active:scale-95 transition-transform"
+                        aria-label="2队减1分"
                       >
                         <Minus size={15} />
                       </button>
@@ -299,12 +299,12 @@ export function AddMatchModal({
                           value={score.team2 === 0 ? '' : score.team2}
                           placeholder="0"
                           onChange={(e) => updateScore(idx, 'team2', parseInt(e.target.value) || 0)}
-                          className="w-12 text-center font-display text-xl font-black text-[#111814] outline-none bg-transparent tabular-nums"
+                          className="w-12 text-center font-display text-xl font-black text-neutral-900 outline-none bg-transparent tabular-nums"
                         />
                         <button
                           type="button"
                           onClick={() => updateScore(idx, 'team2', 21)}
-                          className="text-[10px] font-mono font-bold text-rose-600 hover:underline"
+                          className="text-[10px] font-mono font-bold text-blue-600 hover:underline"
                         >
                           设为21
                         </button>
@@ -312,8 +312,8 @@ export function AddMatchModal({
                       <button
                         type="button"
                         onClick={() => updateScore(idx, 'team2', score.team2 + 1)}
-                        className="w-9 h-9 flex items-center justify-center text-rose-600 bg-white rounded-lg border border-[#dde2dc] active:scale-95 transition-transform"
-                        aria-label="B队加1分"
+                        className="w-9 h-9 flex items-center justify-center text-blue-600 bg-white rounded-lg border border-neutral-200 active:scale-95 transition-transform"
+                        aria-label="2队加1分"
                       >
                         <Plus size={15} />
                       </button>
@@ -325,7 +325,7 @@ export function AddMatchModal({
               <button
                 type="button"
                 onClick={() => setScores([...scores, { team1: 21, team2: 18 }])}
-                className="w-full py-3 bg-white border border-dashed border-[#bfc8c0] rounded-2xl text-[#5b665f] hover:text-[#0b6e4f] hover:border-[#0b6e4f] text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+                className="w-full py-3 bg-white border border-dashed border-neutral-300 rounded-2xl text-neutral-500 hover:text-red-600 hover:border-red-500 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
               >
                 <Plus size={15} /> 添加下一局比分
               </button>
@@ -333,9 +333,9 @@ export function AddMatchModal({
           </div>
 
           {/* BO Format + Category Card */}
-          <div className="bg-white rounded-2xl border border-[#dde2dc] p-4 space-y-4 court-card-shadow">
+          <div className="bg-white rounded-2xl border border-neutral-200/80 p-4 space-y-4 court-card-shadow">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-[#111814] block">赛制规格 (影响统治力加成)</label>
+              <label className="text-xs font-bold text-neutral-900 block">赛制规格 (影响统治力加成)</label>
               <div className="grid grid-cols-3 gap-2">
                 {(['BO1', 'BO3', 'BO5'] as const).map((fmt) => (
                   <button
@@ -344,8 +344,8 @@ export function AddMatchModal({
                     onClick={() => setBoFormat(fmt)}
                     className={`py-2.5 px-3 text-xs font-bold rounded-xl border transition-colors ${
                       boFormat === fmt
-                        ? 'bg-[#0c261e] text-white border-[#0c261e]'
-                        : 'bg-[#f8faf7] text-[#5b665f] border-[#dde2dc] hover:text-[#111814]'
+                        ? 'bg-red-600 text-white border-red-600'
+                        : 'bg-neutral-50 text-neutral-500 border-neutral-200 hover:text-neutral-900'
                     }`}
                   >
                     {fmt === 'BO1' ? 'BO1 一局定胜负' : fmt === 'BO3' ? 'BO3 三局两胜' : 'BO5 五局三胜'}
@@ -356,8 +356,8 @@ export function AddMatchModal({
 
             {categories.length > 0 && (
               <div className="space-y-2">
-                <label className="text-xs font-bold text-[#111814] flex items-center gap-1.5">
-                  <Tag size={13} className="text-[#0b6e4f]" /> 比赛类别与 K 值倍率
+                <label className="text-xs font-bold text-neutral-900 flex items-center gap-1.5">
+                  <Tag size={13} className="text-red-600" /> 比赛类别与 K 值倍率
                 </label>
                 <div className="flex gap-2 overflow-x-auto no-scrollbar pb-0.5">
                   {categories.map((cat) => {
@@ -369,14 +369,14 @@ export function AddMatchModal({
                         onClick={() => setSelectedCategoryId(cat.id)}
                         className={`shrink-0 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 border ${
                           active
-                            ? 'bg-[#0b6e4f] text-white border-[#0b6e4f]'
-                            : 'bg-[#f8faf7] text-[#5b665f] border-[#dde2dc] hover:text-[#111814]'
+                            ? 'bg-red-600 text-white border-red-600'
+                            : 'bg-neutral-50 text-neutral-500 border-neutral-200 hover:text-neutral-900'
                         }`}
                       >
                         <span>{cat.name}</span>
                         <span
                           className={`text-[10px] font-mono px-1.5 py-0.2 rounded-md ${
-                            active ? 'bg-white/20 text-white' : 'bg-white text-[#5b665f]'
+                            active ? 'bg-white/20 text-white' : 'bg-white text-neutral-500'
                           }`}
                         >
                           x{cat.k_multiplier}
@@ -394,7 +394,7 @@ export function AddMatchModal({
             <div
               className={`p-3.5 rounded-2xl border text-xs font-bold flex items-center gap-2.5 ${
                 eloGap >= ELO_GAP_MIN
-                  ? 'bg-emerald-50 border-emerald-200 text-[#0b6e4f]'
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
                   : 'bg-amber-50 border-amber-200 text-amber-800'
               }`}
             >
@@ -417,32 +417,32 @@ export function AddMatchModal({
           )}
 
           {/* Venue & Date */}
-          <div className="bg-white rounded-2xl border border-[#dde2dc] p-4 space-y-3 court-card-shadow">
+          <div className="bg-white rounded-2xl border border-neutral-200/80 p-4 space-y-3 court-card-shadow">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#111814] block">赛事或场馆备注</label>
-              <div className="flex items-center gap-2.5 bg-[#f8faf7] rounded-xl border border-[#dde2dc] px-3.5 focus-within:border-[#0b6e4f] focus-within:bg-white transition-colors">
-                <Trophy size={16} className="text-[#5b665f] shrink-0" />
+              <label className="text-xs font-bold text-neutral-900 block">赛事或场馆备注</label>
+              <div className="flex items-center gap-2.5 bg-neutral-50 rounded-xl border border-neutral-200 px-3.5 focus-within:border-red-600 focus-within:bg-white transition-colors">
+                <Trophy size={16} className="text-neutral-400 shrink-0" />
                 <input
                   type="text"
                   placeholder="例如：周末固定局 / 3号场地"
                   value={tournament}
                   onChange={(e) => setTournament(e.target.value)}
-                  className="flex-1 py-3 outline-none text-sm font-bold text-[#111814] placeholder:text-[#5b665f]/50 bg-transparent"
+                  className="flex-1 py-3 outline-none text-sm font-bold text-neutral-900 placeholder:text-neutral-400 bg-transparent"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#111814] block">比赛日期</label>
-              <div className="flex items-center gap-2.5 bg-[#f8faf7] rounded-xl border border-[#dde2dc] px-3.5">
-                <Calendar size={16} className="text-[#5b665f] shrink-0" />
+              <label className="text-xs font-bold text-neutral-900 block">比赛日期</label>
+              <div className="flex items-center gap-2.5 bg-neutral-50 rounded-xl border border-neutral-200 px-3.5">
+                <Calendar size={16} className="text-neutral-400 shrink-0" />
                 <input
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="flex-1 py-3 outline-none text-sm font-bold text-[#111814] min-w-0 bg-transparent"
+                  className="flex-1 py-3 outline-none text-sm font-bold text-neutral-900 min-w-0 bg-transparent"
                 />
-                <div className="flex items-center gap-1 text-[11px] font-mono font-semibold text-[#5b665f] bg-white px-2.5 py-1 rounded-lg border border-[#dde2dc] shrink-0">
+                <div className="flex items-center gap-1 text-[11px] font-mono font-semibold text-neutral-500 bg-white px-2.5 py-1 rounded-lg border border-neutral-200 shrink-0">
                   <Clock size={12} />
                   <span>{timeLabel}</span>
                 </div>
@@ -452,9 +452,9 @@ export function AddMatchModal({
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-4 bg-white border-t border-[#dde2dc] shrink-0 space-y-2.5">
+        <div className="px-5 py-4 bg-white border-t border-neutral-200/80 shrink-0 space-y-2.5">
           {submitError && (
-            <div className="flex items-center gap-2 p-3 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold">
+            <div className="flex items-center gap-2 p-3 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs font-bold">
               <AlertCircle size={15} className="shrink-0" />
               <span>{submitError}</span>
             </div>
@@ -463,7 +463,7 @@ export function AddMatchModal({
             type="button"
             onClick={handleSubmit}
             disabled={team1.length === 0 || team2.length === 0 || isDuplicate}
-            className="w-full py-4 bg-[#0b6e4f] hover:bg-[#095a40] text-white rounded-xl font-bold text-sm shadow-sm transition-[transform,background-color] active:scale-[0.98] disabled:opacity-45"
+            className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm shadow-sm transition-[transform,background-color] active:scale-[0.98] disabled:opacity-45"
           >
             {isDuplicate
               ? '同一球友不可兼任双方队员'
@@ -475,9 +475,9 @@ export function AddMatchModal({
 
         {/* Player Selection Sub-Overlay */}
         {isChoosingPlayers && (
-          <div className="absolute inset-0 bg-[#f5f6f3] z-[180] flex flex-col">
+          <div className="absolute inset-0 bg-[#f5f5f5] z-[180] flex flex-col">
             <div
-              className="bg-[#0c261e] pt-6 pb-4 px-6 text-white flex items-center justify-between shrink-0"
+              className="bg-[#2d2d2e] pt-6 pb-4 px-6 text-white flex items-center justify-between shrink-0"
               style={{ paddingTop: 'max(env(safe-area-inset-top), 24px)' }}
             >
               <button
@@ -488,12 +488,12 @@ export function AddMatchModal({
                 <X size={18} />
               </button>
               <span className="font-bold text-sm">
-                选择 {isChoosingPlayers === 'team1' ? 'A 队' : 'B 队'} 参赛球友 (最多2人)
+                选择 {isChoosingPlayers === 'team1' ? '队伍 1' : '队伍 2'} 参赛球友 (最多2人)
               </span>
               <button
                 type="button"
                 onClick={() => setIsChoosingPlayers(null)}
-                className="px-3 py-1.5 rounded-xl bg-emerald-500 text-white font-bold text-xs"
+                className="px-3 py-1.5 rounded-xl bg-red-600 text-white font-bold text-xs"
               >
                 完成
               </button>
@@ -520,26 +520,26 @@ export function AddMatchModal({
                     }}
                     className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-colors ${
                       isSelected
-                        ? 'bg-emerald-50 border-[#0b6e4f]'
+                        ? 'bg-red-50 border-red-500'
                         : isInOtherTeam
                           ? 'bg-neutral-100 border-transparent opacity-45 cursor-not-allowed'
-                          : 'bg-white border-[#dde2dc] hover:border-[#0b6e4f]/40'
+                          : 'bg-white border-neutral-200/80 hover:border-red-300'
                     }`}
                   >
                     <div className="flex items-center gap-3.5">
-                      <div className="w-11 h-11 rounded-full bg-[#f5f6f3] flex items-center justify-center font-display font-bold text-sm text-[#0b6e4f] border border-[#dde2dc] overflow-hidden">
+                      <div className="w-11 h-11 rounded-full bg-neutral-100 flex items-center justify-center font-display font-bold text-sm text-neutral-600 border border-neutral-200 overflow-hidden">
                         {p.avatar ? <img src={p.avatar} alt={p.name} className="w-full h-full object-cover" /> : p.initials}
                       </div>
                       <div className="text-left">
-                        <p className="font-bold text-sm text-[#111814]">{p.name}</p>
-                        <p className="text-[11px] font-mono text-[#5b665f]">
+                        <p className="font-bold text-sm text-neutral-900">{p.name}</p>
+                        <p className="text-[11px] font-mono text-neutral-500">
                           ELO {p.elo_rating || 1500}
                           {isInOtherTeam ? ' · 已在对方阵容' : ''}
                         </p>
                       </div>
                     </div>
                     {isSelected && (
-                      <div className="w-6 h-6 bg-[#0b6e4f] rounded-full flex items-center justify-center text-white">
+                      <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center text-white">
                         <Check size={14} />
                       </div>
                     )}

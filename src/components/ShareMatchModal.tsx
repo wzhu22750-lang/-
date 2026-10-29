@@ -36,7 +36,7 @@ export function ShareMatchModal({
           const dataUrl = await toPng(cardRef.current, {
             cacheBust: true,
             pixelRatio: 2,
-            backgroundColor: '#0c261e',
+            backgroundColor: '#c41230',
           });
           setFinalImage(dataUrl);
           setStatus('ready');
@@ -53,8 +53,8 @@ export function ShareMatchModal({
     <div
       className={`rounded-2xl p-4 ${
         won
-          ? 'bg-emerald-500/20 border border-emerald-400/40'
-          : 'bg-white/5 border border-white/10'
+          ? 'bg-white/20 border border-white/40'
+          : 'bg-white/[0.08] border border-white/15'
       }`}
     >
       <div className="flex items-center gap-3">
@@ -65,13 +65,13 @@ export function ShareMatchModal({
               <div
                 key={id}
                 className={`w-12 h-12 rounded-full border-2 overflow-hidden ${
-                  won ? 'border-emerald-300 shadow-md' : 'border-white/20'
+                  won ? 'border-yellow-400 shadow-md' : 'border-white/25'
                 }`}
               >
                 {p?.avatar ? (
                   <img src={p.avatar} className="w-full h-full object-cover" alt="" />
                 ) : (
-                  <div className="w-full h-full bg-white/10 flex items-center justify-center text-white/80 font-display font-black text-sm">
+                  <div className="w-full h-full bg-white/15 flex items-center justify-center text-white/80 font-display font-black text-sm">
                     {p?.initials ?? '?'}
                   </div>
                 )}
@@ -81,11 +81,11 @@ export function ShareMatchModal({
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className={`text-sm font-extrabold truncate ${won ? 'text-white' : 'text-white/60'}`}>
+          <p className={`text-sm font-extrabold truncate ${won ? 'text-white' : 'text-white/65'}`}>
             {ids.map((id) => getPlayer(id)?.name ?? '?').join(' / ')}
           </p>
           {won && (
-            <div className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-md bg-emerald-400/20 text-emerald-300">
+            <div className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-md bg-yellow-400/20 text-yellow-300">
               <Trophy size={10} />
               <span className="text-[9px] font-bold uppercase tracking-wider">MATCH WINNER</span>
             </div>
@@ -94,7 +94,7 @@ export function ShareMatchModal({
 
         <div
           className={`font-display text-3xl font-black tabular-nums ${
-            won ? 'text-emerald-300' : 'text-white/30'
+            won ? 'text-yellow-300' : 'text-white/30'
           }`}
         >
           {wins}
@@ -123,7 +123,7 @@ export function ShareMatchModal({
       <AnimatePresence>
         {status === 'rendering' && (
           <motion.div exit={{ opacity: 0 }} className="flex flex-col items-center gap-3 py-20">
-            <Loader2 className="text-emerald-400 animate-spin" size={36} />
+            <Loader2 className="text-red-500 animate-spin" size={36} />
             <p className="text-white/75 font-bold text-sm">正在生成赛事战报海报...</p>
           </motion.div>
         )}
@@ -133,10 +133,10 @@ export function ShareMatchModal({
       <div className="fixed pointer-events-none" style={{ left: -9999, top: 0 }}>
         <div
           ref={cardRef}
-          className="w-[360px] bg-[#0c261e] p-6 flex flex-col gap-5 relative overflow-hidden"
+          className="w-[360px] bg-gradient-to-b from-[#d91a38] via-[#c41230] to-[#8a0c22] p-6 flex flex-col gap-5 relative overflow-hidden"
         >
           <svg
-            className="absolute inset-0 w-full h-full text-emerald-400/[0.06] pointer-events-none"
+            className="absolute inset-0 w-full h-full text-white/[0.06] pointer-events-none"
             viewBox="0 0 360 520"
             fill="none"
           >
@@ -147,13 +147,13 @@ export function ShareMatchModal({
 
           <div className="relative z-10 flex flex-col gap-5">
             <div className="text-center">
-              <span className="inline-block px-3.5 py-1 bg-emerald-400/15 border border-emerald-400/30 rounded-full text-[10px] font-mono font-bold text-emerald-300 tracking-[0.18em] mb-3">
+              <span className="inline-block px-3.5 py-1 bg-white/15 border border-white/20 rounded-full text-[10px] font-mono font-bold text-white/90 tracking-[0.18em] mb-3">
                 OFFICIAL MATCH REPORT
               </span>
               <h2 className="text-xl font-extrabold text-white leading-tight px-2">
                 {match.tournament || '日常训练赛'}
               </h2>
-              <p className="text-[11px] text-white/55 font-medium mt-1">
+              <p className="text-[11px] text-white/60 font-medium mt-1">
                 {new Date(match.date).toLocaleDateString('zh-CN', {
                   year: 'numeric',
                   month: 'long',
@@ -165,25 +165,25 @@ export function ShareMatchModal({
             <div className="flex flex-col gap-2.5">
               <TeamCard ids={match.team1} won={t1Won} wins={t1Wins} />
               <div className="flex items-center justify-center">
-                <span className="text-[10px] font-mono font-bold text-white/30 tracking-[0.25em]">
+                <span className="text-[10px] font-mono font-bold text-white/40 tracking-[0.25em]">
                   VS
                 </span>
               </div>
               <TeamCard ids={match.team2} won={!t1Won} wins={t2Wins} />
             </div>
 
-            <div className="bg-black/25 rounded-2xl p-4 border border-white/10">
+            <div className="bg-black/20 rounded-2xl p-4 border border-white/15">
               <div
                 className="grid gap-3"
                 style={{ gridTemplateColumns: `repeat(${Math.max(1, match.scores.length)}, 1fr)` }}
               >
                 {match.scores.map((s, i) => (
                   <div key={i} className="text-center">
-                    <p className="text-[10px] font-mono font-bold text-white/45 mb-1">SET {i + 1}</p>
+                    <p className="text-[10px] font-mono font-bold text-white/50 mb-1">SET {i + 1}</p>
                     <p className="font-display text-xl font-black text-white tabular-nums">
-                      <span className={s.team1 > s.team2 ? 'text-emerald-300' : ''}>{s.team1}</span>
-                      <span className="text-white/25 mx-0.5">:</span>
-                      <span className={s.team2 > s.team1 ? 'text-emerald-300' : ''}>{s.team2}</span>
+                      <span className={s.team1 > s.team2 ? 'text-yellow-300' : ''}>{s.team1}</span>
+                      <span className="text-white/30 mx-0.5">:</span>
+                      <span className={s.team2 > s.team1 ? 'text-yellow-300' : ''}>{s.team2}</span>
                     </p>
                   </div>
                 ))}
@@ -202,7 +202,7 @@ export function ShareMatchModal({
                   <p className="text-[9px] font-mono font-bold text-white/40 uppercase mb-0.5">
                     PASS CODE
                   </p>
-                  <p className="font-mono font-bold text-xs text-emerald-300 tracking-wider">
+                  <p className="font-mono font-bold text-xs text-white/85 tracking-wider">
                     {inviteCode}
                   </p>
                 </div>
@@ -228,12 +228,12 @@ export function ShareMatchModal({
             <a
               href={finalImage}
               download={`h2h-report-${match.id}.png`}
-              className="inline-flex items-center gap-2 text-white font-bold bg-[#0b6e4f] hover:bg-[#095a40] px-5 py-2.5 rounded-xl text-xs transition-colors"
+              className="inline-flex items-center gap-2 text-white font-bold bg-red-600 hover:bg-red-700 px-5 py-2.5 rounded-xl text-xs transition-colors"
             >
               <Download size={15} />
               <span>下载高清战报图片</span>
             </a>
-            <div className="flex items-center gap-1.5 text-emerald-300 font-semibold text-xs">
+            <div className="flex items-center gap-1.5 text-yellow-400 font-semibold text-xs">
               <Info size={14} />
               <span>手机端也可长按上方海报直接保存到相册</span>
             </div>

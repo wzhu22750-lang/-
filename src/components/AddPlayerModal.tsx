@@ -57,11 +57,11 @@ export function AddPlayerModal({ onClose, onAdd, initialData }: AddPlayerModalPr
         initial={{ scale: 0.94, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.94, opacity: 0 }}
-        className="bg-white w-full max-w-md rounded-[28px] overflow-hidden court-elevated-shadow border border-[#dde2dc]"
+        className="bg-white w-full max-w-md rounded-[28px] overflow-hidden court-elevated-shadow border border-neutral-200/80"
       >
-        <div className="bg-[#0c261e] court-grid-pattern px-6 py-5 text-white flex items-center justify-between border-b border-emerald-500/20">
+        <div className="bg-[#2d2d2e] px-6 py-5 text-white flex items-center justify-between border-b border-white/10">
           <div>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-300 block">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-red-400 block">
               PLAYER PROFILE
             </span>
             <h2 className="text-lg font-extrabold">{initialData ? '编辑球友资料' : '注册新球友'}</h2>
@@ -79,12 +79,12 @@ export function AddPlayerModal({ onClose, onAdd, initialData }: AddPlayerModalPr
           <div className="flex flex-col items-center gap-3">
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="relative w-28 h-28 rounded-full bg-[#f5f6f3] flex items-center justify-center overflow-hidden border-2 border-[#dde2dc] cursor-pointer group"
+              className="relative w-28 h-28 rounded-full bg-neutral-100 flex items-center justify-center overflow-hidden border-2 border-neutral-200 cursor-pointer group"
             >
               {avatar ? (
                 <img src={avatar} alt="Preview" className="w-full h-full object-cover" />
               ) : (
-                <User size={40} className="text-[#5b665f]" />
+                <User size={40} className="text-neutral-400" />
               )}
               <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <Camera size={22} className="text-white" />
@@ -93,7 +93,7 @@ export function AddPlayerModal({ onClose, onAdd, initialData }: AddPlayerModalPr
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="text-xs font-bold text-[#0b6e4f] bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 flex items-center gap-1.5 active:scale-95 transition-transform"
+              className="text-xs font-bold text-red-600 bg-red-50 px-3 py-1.5 rounded-lg border border-red-200 flex items-center gap-1.5 active:scale-95 transition-transform"
             >
               <Upload size={14} /> {avatar ? '更换头像照片' : '上传头像照片'}
             </button>
@@ -107,21 +107,21 @@ export function AddPlayerModal({ onClose, onAdd, initialData }: AddPlayerModalPr
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#111814] block">球友姓名或昵称</label>
+            <label className="text-xs font-bold text-neutral-900 block">球友姓名或昵称</label>
             <input
               autoFocus
               type="text"
               placeholder="输入球友称呼..."
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3.5 bg-[#f8faf7] border border-[#dde2dc] focus:border-[#0b6e4f] focus:bg-white rounded-xl outline-none transition-colors font-bold text-base text-[#111814] placeholder:text-[#5b665f]/50"
+              className="w-full px-4 py-3.5 bg-neutral-50 border border-neutral-200 focus:border-red-600 focus:bg-white rounded-xl outline-none transition-colors font-bold text-base text-neutral-900 placeholder:text-neutral-400"
             />
           </div>
 
           <button
             type="submit"
             disabled={!name.trim()}
-            className="w-full py-4 bg-[#0b6e4f] hover:bg-[#095a40] text-white rounded-xl font-bold text-sm shadow-sm disabled:bg-[#dde2dc] disabled:text-[#5b665f] transition-[transform,background-color] active:scale-[0.98]"
+            className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm shadow-sm disabled:bg-neutral-200 disabled:text-neutral-400 transition-[transform,background-color] active:scale-[0.98]"
           >
             {initialData ? '保存资料修改' : '确认加入球馆'}
           </button>

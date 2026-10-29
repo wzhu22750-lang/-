@@ -46,12 +46,12 @@ export function RankingList({ players, matches, onViewProfile }: RankingListProp
 
   if (players.length === 0) {
     return (
-      <div className="bg-white rounded-[24px] border border-[#dde2dc] p-12 text-center court-card-shadow">
-        <div className="w-14 h-14 rounded-2xl bg-[#f5f6f3] border border-[#dde2dc] flex items-center justify-center mx-auto mb-3 text-[#0b6e4f]">
+      <div className="bg-white rounded-[24px] border border-neutral-200/80 p-12 text-center court-card-shadow">
+        <div className="w-14 h-14 rounded-2xl bg-neutral-100 border border-neutral-200/80 flex items-center justify-center mx-auto mb-3 text-red-600">
           <Trophy size={26} />
         </div>
-        <p className="font-bold text-base text-[#111814]">天梯榜单虚位以待</p>
-        <p className="text-xs text-[#5b665f] mt-1">添加球友并记录比赛后，系统将自动计算 ELO 战力排名</p>
+        <p className="font-bold text-base text-neutral-900">天梯榜单虚位以待</p>
+        <p className="text-xs text-neutral-500 mt-1">添加球友并记录比赛后，系统将自动计算 ELO 战力排名</p>
       </div>
     );
   }
@@ -60,39 +60,39 @@ export function RankingList({ players, matches, onViewProfile }: RankingListProp
     <div className="space-y-4 pb-10">
       {/* Weekly Overview Bento Row */}
       <div className="grid grid-cols-3 gap-2.5">
-        <div className="bg-white rounded-2xl p-3.5 border border-[#dde2dc] court-card-shadow">
-          <div className="flex items-center justify-between text-[#5b665f] mb-1.5">
+        <div className="bg-white rounded-2xl p-3.5 border border-neutral-200/80 court-card-shadow">
+          <div className="flex items-center justify-between text-neutral-500 mb-1.5">
             <span className="text-[11px] font-bold">本周对局</span>
-            <Activity size={13} className="text-[#0b6e4f]" />
+            <Activity size={13} className="text-red-500" />
           </div>
-          <p className="font-display text-2xl font-black text-[#111814] tabular-nums leading-none">
+          <p className="font-display text-2xl font-black text-neutral-900 tabular-nums leading-none">
             {weeklyMatches.length}
           </p>
-          <p className="text-[10px] font-medium text-[#5b665f] mt-1">场有效记录</p>
+          <p className="text-[10px] font-medium text-neutral-500 mt-1">场有效记录</p>
         </div>
 
-        <div className="bg-white rounded-2xl p-3.5 border border-[#dde2dc] court-card-shadow">
-          <div className="flex items-center justify-between text-[#5b665f] mb-1.5">
+        <div className="bg-white rounded-2xl p-3.5 border border-neutral-200/80 court-card-shadow">
+          <div className="flex items-center justify-between text-neutral-500 mb-1.5">
             <span className="text-[11px] font-bold">本周劳模</span>
             <Flame size={13} className="text-amber-500" />
           </div>
-          <p className="font-bold text-base text-[#111814] truncate leading-tight">
+          <p className="font-bold text-base text-neutral-900 truncate leading-tight">
             {mostActivePlayer ? mostActivePlayer.name : '暂无'}
           </p>
-          <p className="text-[10px] font-medium text-[#5b665f] mt-1 tabular-nums">
+          <p className="text-[10px] font-medium text-neutral-500 mt-1 tabular-nums">
             {mostActiveEntry ? `出战 ${mostActiveEntry[1]} 场` : '尚无本周记录'}
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl p-3.5 border border-[#dde2dc] court-card-shadow">
-          <div className="flex items-center justify-between text-[#5b665f] mb-1.5">
+        <div className="bg-white rounded-2xl p-3.5 border border-neutral-200/80 court-card-shadow">
+          <div className="flex items-center justify-between text-neutral-500 mb-1.5">
             <span className="text-[11px] font-bold">注册球员</span>
-            <Users size={13} className="text-sky-600" />
+            <Users size={13} className="text-blue-500" />
           </div>
-          <p className="font-display text-2xl font-black text-[#111814] tabular-nums leading-none">
+          <p className="font-display text-2xl font-black text-neutral-900 tabular-nums leading-none">
             {players.length}
           </p>
-          <p className="text-[10px] font-medium text-[#5b665f] mt-1">位在册球友</p>
+          <p className="text-[10px] font-medium text-neutral-500 mt-1">位在册球友</p>
         </div>
       </div>
 
@@ -118,7 +118,7 @@ export function RankingList({ players, matches, onViewProfile }: RankingListProp
                 opacity: { duration: 0.2 },
               }}
               onClick={() => onViewProfile(player)}
-              className="bg-white p-4 rounded-[22px] court-card-shadow flex items-center justify-between cursor-pointer active:scale-[0.99] transition-[transform,border-color] duration-150 border border-[#dde2dc] hover:border-[#0b6e4f]/50 group relative overflow-hidden"
+              className="bg-white p-4 rounded-[22px] court-card-shadow flex items-center justify-between cursor-pointer active:scale-[0.99] transition-[transform,border-color] duration-150 border border-neutral-200/80 hover:border-red-300 group relative overflow-hidden"
             >
               {/* Top 3 Accent Edge */}
               {index < 3 && (
@@ -127,7 +127,7 @@ export function RankingList({ players, matches, onViewProfile }: RankingListProp
                     index === 0
                       ? 'bg-amber-400'
                       : index === 1
-                        ? 'bg-slate-400'
+                        ? 'bg-neutral-400'
                         : 'bg-amber-700'
                   }`}
                 />
@@ -141,15 +141,15 @@ export function RankingList({ players, matches, onViewProfile }: RankingListProp
                       <Trophy className="text-amber-500" size={16} />
                     </div>
                   ) : index === 1 ? (
-                    <div className="w-7 h-7 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center">
-                      <Medal className="text-slate-500" size={16} />
+                    <div className="w-7 h-7 rounded-lg bg-neutral-100 border border-neutral-200 flex items-center justify-center">
+                      <Medal className="text-neutral-400" size={16} />
                     </div>
                   ) : index === 2 ? (
                     <div className="w-7 h-7 rounded-lg bg-amber-50/70 border border-amber-300/60 flex items-center justify-center">
                       <Medal className="text-amber-700" size={16} />
                     </div>
                   ) : (
-                    <span className="font-mono text-xs font-bold text-[#5b665f]">
+                    <span className="font-mono text-xs font-bold text-neutral-400">
                       {String(index + 1).padStart(2, '0')}
                     </span>
                   )}
@@ -157,14 +157,14 @@ export function RankingList({ players, matches, onViewProfile }: RankingListProp
 
                 {/* Player Avatar */}
                 <div
-                  className={`w-12 h-12 rounded-full bg-[#f5f6f3] overflow-hidden border-2 border-white shadow-xs shrink-0 group-hover:border-emerald-200 transition-colors ${
+                  className={`w-12 h-12 rounded-full bg-neutral-100 overflow-hidden border-2 border-white shadow-xs shrink-0 group-hover:border-red-100 transition-colors ${
                     isInactive ? 'opacity-45' : ''
                   }`}
                 >
                   {player.avatar ? (
                     <img src={player.avatar} alt={player.name} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-xs font-display font-extrabold text-[#0b6e4f]">
+                    <div className="w-full h-full flex items-center justify-center text-xs font-display font-extrabold text-neutral-500">
                       {player.initials}
                     </div>
                   )}
@@ -173,7 +173,7 @@ export function RankingList({ players, matches, onViewProfile }: RankingListProp
                 {/* Name, Tier & Record */}
                 <div className="flex flex-col min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-[#111814] text-base leading-tight truncate">
+                    <span className="font-bold text-neutral-900 text-base leading-tight truncate">
                       {player.name}
                     </span>
                     {isInactive && (
@@ -192,7 +192,7 @@ export function RankingList({ players, matches, onViewProfile }: RankingListProp
                     </span>
 
                     {record.total > 0 && (
-                      <span className="text-[11px] font-medium text-[#5b665f] tabular-nums">
+                      <span className="text-[11px] font-medium text-neutral-500 tabular-nums">
                         {record.wins}胜 {record.total - record.wins}负 ({record.winRate}%)
                       </span>
                     )}
@@ -210,17 +210,17 @@ export function RankingList({ players, matches, onViewProfile }: RankingListProp
               {/* ELO Score */}
               <div className="flex items-center gap-2 shrink-0 pl-2">
                 <div className="text-right">
-                  <div className="font-display font-black text-xl text-[#0b6e4f] tabular-nums leading-none">
+                  <div className="font-display font-black text-xl text-red-600 tabular-nums leading-none">
                     {player.elo_rating || 1500}
                   </div>
-                  <p className="text-[10px] font-mono font-semibold text-[#5b665f] uppercase tracking-wider mt-1">
+                  <p className="text-[10px] font-mono font-semibold text-neutral-400 uppercase tracking-wider mt-1">
                     ELO 积分
                   </p>
                 </div>
 
                 <ChevronRight
                   size={16}
-                  className="text-[#5b665f]/50 group-hover:text-[#0b6e4f] transition-colors shrink-0"
+                  className="text-neutral-300 group-hover:text-red-500 transition-colors shrink-0"
                 />
               </div>
             </motion.div>

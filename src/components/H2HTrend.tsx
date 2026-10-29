@@ -59,62 +59,62 @@ export function H2HTrend({ matches, team1Ids }: H2HTrendProps) {
   const displayResults = results.slice(-10);
 
   return (
-    <div className="bg-white rounded-[24px] p-5 border border-[#dde2dc] court-card-shadow">
+    <div className="bg-white rounded-[24px] p-5 border border-neutral-200/80 court-card-shadow">
       <div className="flex items-center justify-between mb-3.5">
         <div>
-          <h3 className="text-sm font-extrabold text-[#111814]">A 队交手胜率走势</h3>
-          <p className="text-[11px] text-[#5b665f]">按历史交锋时间序列累计胜率</p>
+          <h3 className="text-sm font-extrabold text-neutral-900">队伍 1 交手胜率走势</h3>
+          <p className="text-[11px] text-neutral-500">按历史交锋时间序列累计胜率</p>
         </div>
 
-        <div className="flex items-center gap-1.5 bg-[#f5f6f3] px-3 py-1.5 rounded-xl border border-[#dde2dc]">
-          <span className="text-[11px] font-semibold text-[#5b665f]">近 {recent5.length} 场</span>
+        <div className="flex items-center gap-1.5 bg-neutral-50 px-3 py-1.5 rounded-xl border border-neutral-200/80">
+          <span className="text-[11px] font-semibold text-neutral-500">近 {recent5.length} 场</span>
           <span
             className={`text-xs font-extrabold tabular-nums ${
-              recentWins >= 3 ? 'text-[#0b6e4f]' : recentWins >= 2 ? 'text-amber-600' : 'text-rose-600'
+              recentWins >= 3 ? 'text-red-600' : recentWins >= 2 ? 'text-amber-600' : 'text-blue-600'
             }`}
           >
             {recentWins}胜 {recent5.length - recentWins}负
           </span>
           {trendDir === 'up' ? (
-            <TrendingUp size={14} className="text-[#0b6e4f]" />
+            <TrendingUp size={14} className="text-red-500" />
           ) : trendDir === 'down' ? (
-            <TrendingDown size={14} className="text-rose-500" />
+            <TrendingDown size={14} className="text-blue-500" />
           ) : (
-            <Minus size={14} className="text-[#5b665f]" />
+            <Minus size={14} className="text-neutral-400" />
           )}
         </div>
       </div>
 
       {/* SVG Line Chart */}
       {cumRates.length >= 2 && (
-        <div className="mb-4 bg-[#f8faf7] rounded-2xl p-2 border border-[#edf0eb] overflow-hidden">
+        <div className="mb-4 bg-neutral-50 rounded-2xl p-2 border border-neutral-100 overflow-hidden">
           <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-auto">
             <line
               x1={padX}
               y1={padY + plotH * 0.5}
               x2={w - padX}
               y2={padY + plotH * 0.5}
-              stroke="#cbd5ce"
+              stroke="#e5e5e5"
               strokeWidth="1"
               strokeDasharray="3 3"
             />
             <polygon
               points={`${padX},${padY + plotH} ${points} ${w - padX},${padY + plotH}`}
-              fill="url(#courtTrendGrad)"
+              fill="url(#trendGrad)"
               opacity="0.28"
             />
             <polyline
               points={points}
               fill="none"
-              stroke="#0b6e4f"
+              stroke="#ef4444"
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
             <defs>
-              <linearGradient id="courtTrendGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#0b6e4f" />
-                <stop offset="100%" stopColor="#0b6e4f" stopOpacity="0" />
+              <linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#ef4444" />
+                <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
               </linearGradient>
             </defs>
           </svg>
@@ -123,15 +123,15 @@ export function H2HTrend({ matches, team1Ids }: H2HTrendProps) {
 
       {/* Recent Sequence Pills */}
       <div className="flex items-center justify-between gap-2 pt-1">
-        <span className="text-[11px] font-semibold text-[#5b665f]">近期赛果序列</span>
+        <span className="text-[11px] font-semibold text-neutral-500">近期赛果序列</span>
         <div className="flex items-center gap-1.5 flex-wrap justify-end">
           {displayResults.map((won, i) => (
             <span
               key={i}
               className={`w-6 h-6 rounded-lg text-[11px] font-extrabold flex items-center justify-center ${
                 won
-                  ? 'bg-emerald-50 text-[#0b6e4f] border border-emerald-200'
-                  : 'bg-rose-50 text-rose-600 border border-rose-200'
+                  ? 'bg-red-50 text-red-600 border border-red-200'
+                  : 'bg-blue-50 text-blue-600 border border-blue-200'
               }`}
               title={`第 ${results.length - displayResults.length + i + 1} 场: ${won ? '胜' : '负'}`}
             >

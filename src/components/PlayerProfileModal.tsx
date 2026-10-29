@@ -85,11 +85,11 @@ export function PlayerProfileModal({
         exit={{ opacity: 0, scale: 0.94, y: 20 }}
         transition={{ type: 'spring', damping: 30, stiffness: 320 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-[440px] max-h-[calc(100vh-2.5rem)] bg-[#f5f6f3] rounded-[28px] overflow-hidden court-elevated-shadow flex flex-col relative border border-[#dde2dc]"
+        className="w-full max-w-[440px] max-h-[calc(100vh-2.5rem)] bg-[#f5f5f5] rounded-[28px] overflow-hidden court-elevated-shadow flex flex-col relative border border-neutral-200/80"
       >
         {/* Header */}
         <div
-          className="bg-[#0c261e] court-grid-pattern px-6 pb-6 relative shrink-0 border-b border-emerald-500/20"
+          className="bg-[#2d2d2e] px-6 pb-6 relative shrink-0 border-b border-white/10"
           style={{ paddingTop: headerPaddingTop }}
         >
           <button
@@ -102,18 +102,18 @@ export function PlayerProfileModal({
           </button>
 
           <div className="flex items-center gap-4 pr-10">
-            <div className="w-[72px] h-[72px] rounded-full border-3 border-emerald-400/40 overflow-hidden bg-[#153c30] shadow-lg shrink-0">
+            <div className="w-[72px] h-[72px] rounded-full border-3 border-white/20 overflow-hidden bg-neutral-700 shadow-lg shrink-0">
               {player.avatar ? (
                 <img src={player.avatar} alt={player.name} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center font-display text-2xl font-extrabold text-emerald-300">
+                <div className="w-full h-full flex items-center justify-center font-display text-2xl font-extrabold text-white/60">
                   {player.initials}
                 </div>
               )}
             </div>
 
             <div className="min-w-0 flex-1">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-300/80 block mb-1">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-red-400 block mb-1">
                 ATHLETE DOSSIER
               </span>
               <h2 className="text-2xl font-extrabold text-white tracking-tight leading-tight truncate">
@@ -132,18 +132,18 @@ export function PlayerProfileModal({
         </div>
 
         {/* Key Rank & Rating Strip */}
-        <div className="bg-white px-6 py-4 grid grid-cols-2 border-b border-[#dde2dc] shrink-0">
-          <div className="text-center border-r border-[#edf0eb]">
-            <p className="font-display text-3xl font-black text-amber-600 tabular-nums leading-none">
+        <div className="bg-white px-6 py-4 grid grid-cols-2 border-b border-neutral-200/80 shrink-0">
+          <div className="text-center border-r border-neutral-100">
+            <p className="font-display text-3xl font-black text-amber-500 tabular-nums leading-none">
               #{clubRank || 1}
             </p>
-            <p className="text-[11px] font-bold text-[#5b665f] mt-1">馆内天梯排名</p>
+            <p className="text-[11px] font-bold text-neutral-500 mt-1">馆内天梯排名</p>
           </div>
           <div className="text-center">
-            <p className="font-display text-3xl font-black text-[#0b6e4f] tabular-nums leading-none">
+            <p className="font-display text-3xl font-black text-red-600 tabular-nums leading-none">
               {player.elo_rating || 1500}
             </p>
-            <p className="text-[11px] font-bold text-[#5b665f] mt-1">当前 ELO 战力</p>
+            <p className="text-[11px] font-bold text-neutral-500 mt-1">当前 ELO 战力</p>
           </div>
         </div>
 
@@ -163,44 +163,44 @@ export function PlayerProfileModal({
             <StatCard
               label="综合胜率"
               value={`${winRate}%`}
-              icon={<Percent size={16} className="text-[#0b6e4f]" />}
-              accent="bg-emerald-50 border-emerald-200"
+              icon={<Percent size={16} className="text-red-500" />}
+              accent="bg-red-50 border-red-100"
             />
             <StatCard
               label="本周胜场"
               value={weekStats.sW + weekStats.dW}
-              icon={<Activity size={16} className="text-sky-600" />}
-              accent="bg-sky-50 border-sky-200"
+              icon={<Activity size={16} className="text-emerald-500" />}
+              accent="bg-emerald-50 border-emerald-100"
             />
             <StatCard
               label="生涯总胜场"
               value={totalWins}
-              icon={<Award size={16} className="text-amber-600" />}
-              accent="bg-amber-50 border-amber-200"
+              icon={<Award size={16} className="text-blue-500" />}
+              accent="bg-blue-50 border-blue-100"
             />
             <StatCard
               label="累计出战场次"
               value={playerMatches.length}
-              icon={<Trophy size={16} className="text-rose-600" />}
-              accent="bg-rose-50 border-rose-200"
+              icon={<Trophy size={16} className="text-amber-500" />}
+              accent="bg-amber-50 border-amber-100"
             />
           </div>
 
           {/* Singles / Doubles Breakdown */}
-          <div className="bg-white rounded-2xl overflow-hidden border border-[#dde2dc] court-card-shadow">
+          <div className="bg-white rounded-2xl overflow-hidden border border-neutral-200/80 court-card-shadow">
             <RecordRow type="1v1" title="单打生涯战绩" win={allStats.sW} loss={allStats.sL} />
             <RecordRow type="2v2" title="双打生涯战绩" win={allStats.dW} loss={allStats.dL} />
           </div>
 
           {/* Frequent Opponents H2H */}
-          <div className="bg-white rounded-2xl p-4 border border-[#dde2dc] court-card-shadow space-y-3">
+          <div className="bg-white rounded-2xl p-4 border border-neutral-200/80 court-card-shadow space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-extrabold text-[#111814]">高频交锋对手</h3>
-              <span className="text-[11px] font-medium text-[#0b6e4f]">点击头像查看 H2H</span>
+              <h3 className="text-xs font-extrabold text-neutral-900">高频交锋对手</h3>
+              <span className="text-[11px] font-medium text-red-600">点击头像查看 H2H</span>
             </div>
 
             {topOpponents.length === 0 ? (
-              <p className="text-xs text-[#5b665f] py-2">暂无交手记录</p>
+              <p className="text-xs text-neutral-500 py-2">暂无交手记录</p>
             ) : (
               <div className="flex gap-3.5 overflow-x-auto no-scrollbar py-1">
                 {topOpponents.map(([oid, count]) => {
@@ -213,21 +213,21 @@ export function PlayerProfileModal({
                       onClick={() => onCompareH2H && onCompareH2H(player.id, opp.id)}
                       className="flex flex-col items-center shrink-0 group"
                     >
-                      <div className="w-13 h-13 rounded-full p-0.5 bg-[#f5f6f3] border border-[#dde2dc] group-hover:border-[#0b6e4f] transition-colors">
+                      <div className="w-13 h-13 rounded-full p-0.5 bg-neutral-100 border border-neutral-200 group-hover:border-red-500 transition-colors">
                         <div className="w-full h-full rounded-full overflow-hidden bg-white">
                           {opp.avatar ? (
                             <img src={opp.avatar} alt={opp.name} className="w-full h-full object-cover" />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-xs font-display font-bold text-[#0b6e4f]">
+                            <div className="w-full h-full flex items-center justify-center text-xs font-display font-bold text-neutral-600">
                               {opp.initials}
                             </div>
                           )}
                         </div>
                       </div>
-                      <p className="text-xs font-bold text-[#111814] mt-1.5 truncate w-14 text-center">
+                      <p className="text-xs font-bold text-neutral-900 mt-1.5 truncate w-14 text-center">
                         {opp.name}
                       </p>
-                      <p className="text-[10px] font-mono font-semibold text-[#5b665f] tabular-nums">
+                      <p className="text-[10px] font-mono font-semibold text-neutral-500 tabular-nums">
                         {count} 场
                       </p>
                     </motion.button>
@@ -239,10 +239,10 @@ export function PlayerProfileModal({
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-white border-t border-[#dde2dc] shrink-0">
+        <div className="p-4 bg-white border-t border-neutral-200/80 shrink-0">
           <button
             onClick={onClose}
-            className="w-full py-3.5 bg-[#0c261e] hover:bg-[#143a2e] text-white rounded-xl font-bold text-sm active:scale-[0.98] transition-[transform,background-color]"
+            className="w-full py-3.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl font-bold text-sm active:scale-[0.98] transition-[transform,background-color]"
           >
             关闭球友档案
           </button>
@@ -261,10 +261,10 @@ interface StatCardProps {
 
 function StatCard({ label, value, icon, accent }: StatCardProps) {
   return (
-    <div className="bg-white p-3.5 rounded-2xl border border-[#dde2dc] court-card-shadow flex items-center justify-between">
+    <div className="bg-white p-3.5 rounded-2xl border border-neutral-200/80 court-card-shadow flex items-center justify-between">
       <div>
-        <p className="text-[11px] font-bold text-[#5b665f]">{label}</p>
-        <p className="font-display text-xl font-black text-[#111814] tabular-nums mt-1 leading-none">
+        <p className="text-[11px] font-bold text-neutral-500">{label}</p>
+        <p className="font-display text-xl font-black text-neutral-900 tabular-nums mt-1 leading-none">
           {value}
         </p>
       </div>
@@ -285,30 +285,30 @@ interface RecordRowProps {
 function RecordRow({ type, title, win, loss }: RecordRowProps) {
   const rate = win + loss > 0 ? Math.round((win / (win + loss)) * 100) : 0;
   return (
-    <div className="px-4 py-3.5 flex items-center justify-between border-b border-[#edf0eb] last:border-0">
+    <div className="px-4 py-3.5 flex items-center justify-between border-b border-neutral-100 last:border-0">
       <div className="flex items-center gap-3">
         <div
           className={`w-10 h-7 flex items-center justify-center rounded-lg font-mono text-xs font-extrabold text-white ${
-            type === '1v1' ? 'bg-[#0b6e4f]' : 'bg-[#0c261e]'
+            type === '1v1' ? 'bg-red-500' : 'bg-blue-500'
           }`}
         >
           {type}
         </div>
         <div>
-          <p className="text-xs font-bold text-[#111814]">{title}</p>
-          <p className="text-xs font-semibold text-[#5b665f] tabular-nums mt-0.5">
+          <p className="text-xs font-bold text-neutral-900">{title}</p>
+          <p className="text-xs font-semibold text-neutral-500 tabular-nums mt-0.5">
             {win} 胜 · {loss} 负
           </p>
         </div>
       </div>
       <div className="text-right flex items-center gap-2">
         <div>
-          <p className="font-display text-base font-black text-[#0b6e4f] tabular-nums leading-none">
+          <p className="font-display text-base font-black text-red-600 tabular-nums leading-none">
             {rate}%
           </p>
-          <p className="text-[10px] font-semibold text-[#5b665f] mt-0.5">胜率</p>
+          <p className="text-[10px] font-semibold text-neutral-500 mt-0.5">胜率</p>
         </div>
-        <ChevronRight size={14} className="text-[#5b665f]/40" />
+        <ChevronRight size={14} className="text-neutral-300" />
       </div>
     </div>
   );

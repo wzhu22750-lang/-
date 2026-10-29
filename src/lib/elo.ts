@@ -162,40 +162,40 @@ export function getPlayerTier(elo: number = 1500) {
   if (elo < 1300) {
     return {
       label: '羽球萌新',
-      color: 'text-stone-600',
-      bg: 'bg-stone-100 border border-stone-200/80',
-      rank: 'BRONZE',
+      color: 'text-neutral-500',
+      bg: 'bg-neutral-100 border border-neutral-200/80',
+      rank: 'Bronze',
     };
   }
   if (elo < 1500) {
     return {
       label: '活跃球友',
-      color: 'text-sky-700',
-      bg: 'bg-sky-50 border border-sky-200/80',
-      rank: 'SILVER',
+      color: 'text-blue-600',
+      bg: 'bg-blue-50 border border-blue-200/80',
+      rank: 'Silver',
     };
   }
   if (elo < 1800) {
     return {
       label: '竞技高手',
-      color: 'text-emerald-800',
-      bg: 'bg-emerald-50 border border-emerald-200/80',
-      rank: 'GOLD',
+      color: 'text-amber-600',
+      bg: 'bg-amber-50 border border-amber-200/80',
+      rank: 'Gold',
     };
   }
   if (elo < 2100) {
     return {
       label: '俱乐部大腿',
-      color: 'text-amber-800',
-      bg: 'bg-amber-50 border border-amber-200/80',
-      rank: 'PLATINUM',
+      color: 'text-purple-600',
+      bg: 'bg-purple-50 border border-purple-200/80',
+      rank: 'Platinum',
     };
   }
   return {
     label: '一代宗师',
-    color: 'text-rose-700',
-    bg: 'bg-rose-50 border border-rose-200/80',
-    rank: 'MASTER',
+    color: 'text-red-600',
+    bg: 'bg-red-50 border border-red-200/80',
+    rank: 'Diamond',
   };
 }
 
