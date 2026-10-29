@@ -10,7 +10,6 @@ interface AddPlayerModalProps {
 }
 
 export function AddPlayerModal({ onClose, onAdd, initialData }: AddPlayerModalProps) {
-  // 核心修复：状态初始化需完整映射 initialData
   const [name, setName] = useState(initialData?.name || '');
   const [avatar, setAvatar] = useState<string | undefined>(initialData?.avatar);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -19,7 +18,7 @@ export function AddPlayerModal({ onClose, onAdd, initialData }: AddPlayerModalPr
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
-        alert('图片太大了，请选择 2MB 以下的图片');
+        alert('图片大小请控制在 2MB 以内');
         return;
       }
       const reader = new FileReader();
@@ -34,14 +33,13 @@ export function AddPlayerModal({ onClose, onAdd, initialData }: AddPlayerModalPr
     e.preventDefault();
     if (!name.trim()) return;
 
-    // 核心修复：编辑模式下必须保留原有的 id 和 club_id
     const newPlayer: Player = {
       id: initialData?.id || Math.random().toString(36).substring(2, 9),
       name: name.trim(),
       avatar: avatar,
       initials: name.trim().slice(0, 2).toUpperCase(),
-      club_id: initialData?.club_id || "", // 确保 club_id 不会在编辑时丢失
-      elo_rating: initialData?.elo_rating // 保留现有积分，不触发重算时使用
+      club_id: initialData?.club_id || '',
+      elo_rating: initialData?.elo_rating,
     };
 
     onAdd(newPlayer);
@@ -53,71 +51,79 @@ export function AddPlayerModal({ onClose, onAdd, initialData }: AddPlayerModalPr
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[80] flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[80] flex items-center justify-center p-4"
     >
       <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
+        initial={{ scale: 0.94, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl"
+        exit={{ scale: 0.94, opacity: 0 }}
+        className="bg-white w-full max-w-md rounded-[28px] overflow-hidden court-elevated-shadow border border-[#dde2dc]"
       >
-        <div className="bg-red-600 p-6 text-white flex items-center justify-between">
-          <h2 className="text-xl font-bold">{initialData ? '编辑球员信息' : '新增俱乐部球员'}</h2>
-          <button onClick={onClose} className="p-1 hover:bg-white/20 rounded-full transition-colors">
-            <X size={24} />
+        <div className="bg-[#0c261e] court-grid-pattern px-6 py-5 text-white flex items-center justify-between border-b border-emerald-500/20">
+          <div>
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-300 block">
+              PLAYER PROFILE
+            </span>
+            <h2 className="text-lg font-extrabold">{initialData ? '编辑球友资料' : '注册新球友'}</h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+            aria-label="关闭"
+          >
+            <X size={20} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-8">
-          {/* 头像上传预览区 */}
-          <div className="flex flex-col items-center gap-4">
-            <div 
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <div className="flex flex-col items-center gap-3">
+            <div
               onClick={() => fileInputRef.current?.click()}
-              className="relative w-32 h-32 rounded-full bg-neutral-100 flex items-center justify-center overflow-hidden border-4 border-neutral-50 cursor-pointer group shadow-inner"
+              className="relative w-28 h-28 rounded-full bg-[#f5f6f3] flex items-center justify-center overflow-hidden border-2 border-[#dde2dc] cursor-pointer group"
             >
               {avatar ? (
                 <img src={avatar} alt="Preview" className="w-full h-full object-cover" />
               ) : (
-                <User size={48} className="text-neutral-300" />
+                <User size={40} className="text-[#5b665f]" />
               )}
-              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <Camera size={24} className="text-white" />
+              <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <Camera size={22} className="text-white" />
               </div>
             </div>
-            <button 
+            <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="text-sm font-bold text-red-600 flex items-center gap-2 active:opacity-60 transition-opacity"
+              className="text-xs font-bold text-[#0b6e4f] bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 flex items-center gap-1.5 active:scale-95 transition-transform"
             >
-              <Upload size={16} /> {avatar ? '更换头像' : '上传头像'}
+              <Upload size={14} /> {avatar ? '更换头像照片' : '上传头像照片'}
             </button>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
-              accept="image/*" 
-              onChange={handleFileChange} 
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={handleFileChange}
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-black text-neutral-400 uppercase tracking-widest pl-1">球员姓名</label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-[#111814] block">球友姓名或昵称</label>
             <input
               autoFocus
               type="text"
-              placeholder="输入球员姓名..."
+              placeholder="输入球友称呼..."
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-4 bg-neutral-50 border border-neutral-100 rounded-2xl outline-none focus:ring-2 focus:ring-red-500 transition-all font-bold text-lg"
+              className="w-full px-4 py-3.5 bg-[#f8faf7] border border-[#dde2dc] focus:border-[#0b6e4f] focus:bg-white rounded-xl outline-none transition-colors font-bold text-base text-[#111814] placeholder:text-[#5b665f]/50"
             />
           </div>
 
           <button
             type="submit"
             disabled={!name.trim()}
-            className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold shadow-xl shadow-red-100 disabled:bg-neutral-200 disabled:shadow-none transition-all active:scale-[0.98]"
+            className="w-full py-4 bg-[#0b6e4f] hover:bg-[#095a40] text-white rounded-xl font-bold text-sm shadow-sm disabled:bg-[#dde2dc] disabled:text-[#5b665f] transition-[transform,background-color] active:scale-[0.98]"
           >
-            {initialData ? '保存修改' : '确认加入'}
+            {initialData ? '保存资料修改' : '确认加入球馆'}
           </button>
         </form>
       </motion.div>

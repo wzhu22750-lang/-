@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toPng } from 'html-to-image';
-import { X, Loader2, Info, Trophy } from 'lucide-react';
+import { X, Loader2, Info, Trophy, Download } from 'lucide-react';
 import { Match, Player } from '../types';
 
 interface ShareMatchModalProps {
@@ -12,25 +12,31 @@ interface ShareMatchModalProps {
   onClose: () => void;
 }
 
-export function ShareMatchModal({ match, players, clubName, inviteCode, onClose }: ShareMatchModalProps) {
+export function ShareMatchModal({
+  match,
+  players,
+  clubName,
+  inviteCode,
+  onClose,
+}: ShareMatchModalProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [finalImage, setFinalImage] = useState<string | null>(null);
   const [status, setStatus] = useState<'rendering' | 'ready'>('rendering');
 
-  const getPlayer = (id: string) => players.find(p => p.id === id);
-  const t1Wins = match.scores.filter(s => s.team1 > s.team2).length;
-  const t2Wins = match.scores.filter(s => s.team2 > s.team1).length;
+  const getPlayer = (id: string) => players.find((p) => p.id === id);
+  const t1Wins = match.scores.filter((s) => s.team1 > s.team2).length;
+  const t2Wins = match.scores.filter((s) => s.team2 > s.team1).length;
   const t1Won = t1Wins > t2Wins;
 
   useEffect(() => {
     const generate = async () => {
       if (cardRef.current) {
         try {
-          await new Promise(resolve => setTimeout(resolve, 600));
+          await new Promise((resolve) => setTimeout(resolve, 500));
           const dataUrl = await toPng(cardRef.current, {
             cacheBust: true,
             pixelRatio: 2,
-            backgroundColor: '#c41230',
+            backgroundColor: '#0c261e',
           });
           setFinalImage(dataUrl);
           setStatus('ready');
@@ -44,122 +50,161 @@ export function ShareMatchModal({ match, players, clubName, inviteCode, onClose 
   }, [match]);
 
   const TeamCard = ({ ids, won, wins }: { ids: string[]; won: boolean; wins: number }) => (
-    <div className={`rounded-2xl p-4 ${won ? 'bg-white/15 backdrop-blur-sm border border-white/20' : 'bg-black/10 border border-white/5'}`}>
+    <div
+      className={`rounded-2xl p-4 ${
+        won
+          ? 'bg-emerald-500/20 border border-emerald-400/40'
+          : 'bg-white/5 border border-white/10'
+      }`}
+    >
       <div className="flex items-center gap-3">
-        {/* Avatars */}
         <div className="flex -space-x-2 shrink-0">
-          {ids.map(id => {
+          {ids.map((id) => {
             const p = getPlayer(id);
             return (
-              <div key={id} className={`w-12 h-12 rounded-full border-2 overflow-hidden ${won ? 'border-yellow-400 shadow-lg shadow-yellow-400/30' : 'border-white/20'}`}>
-                {p?.avatar
-                  ? <img src={p.avatar} className="w-full h-full object-cover" alt="" />
-                  : <div className="w-full h-full bg-white/10 flex items-center justify-center text-white/60 font-black text-sm">{p?.initials ?? '?'}</div>}
+              <div
+                key={id}
+                className={`w-12 h-12 rounded-full border-2 overflow-hidden ${
+                  won ? 'border-emerald-300 shadow-md' : 'border-white/20'
+                }`}
+              >
+                {p?.avatar ? (
+                  <img src={p.avatar} className="w-full h-full object-cover" alt="" />
+                ) : (
+                  <div className="w-full h-full bg-white/10 flex items-center justify-center text-white/80 font-display font-black text-sm">
+                    {p?.initials ?? '?'}
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
 
-        {/* Names */}
         <div className="flex-1 min-w-0">
-          <p className={`text-sm font-black truncate ${won ? 'text-white' : 'text-white/40'}`}>
-            {ids.map(id => getPlayer(id)?.name ?? '?').join(' / ')}
+          <p className={`text-sm font-extrabold truncate ${won ? 'text-white' : 'text-white/60'}`}>
+            {ids.map((id) => getPlayer(id)?.name ?? '?').join(' / ')}
           </p>
+          {won && (
+            <div className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-md bg-emerald-400/20 text-emerald-300">
+              <Trophy size={10} />
+              <span className="text-[9px] font-bold uppercase tracking-wider">MATCH WINNER</span>
+            </div>
+          )}
         </div>
 
-        {/* Set wins */}
-        <div className={`text-3xl font-black italic ${won ? 'text-yellow-400' : 'text-white/20'}`}>
+        <div
+          className={`font-display text-3xl font-black tabular-nums ${
+            won ? 'text-emerald-300' : 'text-white/30'
+          }`}
+        >
           {wins}
         </div>
       </div>
-
-      {won && (
-        <div className="flex items-center gap-1 mt-2 pt-2 border-t border-white/10">
-          <Trophy size={12} className="text-yellow-400" />
-          <span className="text-[9px] font-black text-yellow-400 uppercase tracking-[0.2em]">胜者</span>
-        </div>
-      )}
     </div>
   );
 
   return (
     <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/95 z-[150] flex flex-col items-center overflow-y-auto pt-12 pb-12 px-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/90 z-[150] flex flex-col items-center overflow-y-auto pt-12 pb-12 px-6"
     >
-      {/* Close */}
       <div className="fixed top-6 right-6 z-[160]">
-        <button onClick={onClose} className="bg-white/20 backdrop-blur-md p-3 rounded-full text-white shadow-lg active:scale-90">
-          <X size={24} />
+        <button
+          onClick={onClose}
+          className="bg-white/15 hover:bg-white/25 p-3 rounded-xl text-white shadow-lg active:scale-95 transition-colors"
+          aria-label="关闭"
+        >
+          <X size={22} />
         </button>
       </div>
 
-      {/* Loading */}
       <AnimatePresence>
         {status === 'rendering' && (
           <motion.div exit={{ opacity: 0 }} className="flex flex-col items-center gap-3 py-20">
-            <Loader2 className="text-red-400 animate-spin" size={40} />
-            <p className="text-white/60 font-bold text-sm">正在生成战报...</p>
+            <Loader2 className="text-emerald-400 animate-spin" size={36} />
+            <p className="text-white/75 font-bold text-sm">正在生成赛事战报海报...</p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Hidden render card — positioned off-screen for full rendering */}
+      {/* Off-screen Poster Source */}
       <div className="fixed pointer-events-none" style={{ left: -9999, top: 0 }}>
-        <div ref={cardRef} className="w-[360px] bg-[#c41230] p-6 flex flex-col gap-5">
-          {/* Subtle ring decoration */}
-          <div className="absolute -right-16 -top-16 w-48 h-48 rounded-full border-[20px] border-white/5 pointer-events-none" />
-          <div className="absolute -left-12 -bottom-12 w-32 h-32 rounded-full border-[14px] border-white/5 pointer-events-none" />
+        <div
+          ref={cardRef}
+          className="w-[360px] bg-[#0c261e] p-6 flex flex-col gap-5 relative overflow-hidden"
+        >
+          <svg
+            className="absolute inset-0 w-full h-full text-emerald-400/[0.06] pointer-events-none"
+            viewBox="0 0 360 520"
+            fill="none"
+          >
+            <rect x="20" y="20" width="320" height="480" stroke="currentColor" strokeWidth="2" />
+            <line x1="20" y1="260" x2="340" y2="260" stroke="currentColor" strokeWidth="2" strokeDasharray="6 6" />
+            <line x1="180" y1="20" x2="180" y2="500" stroke="currentColor" strokeWidth="1.5" />
+          </svg>
 
           <div className="relative z-10 flex flex-col gap-5">
-            {/* Header */}
             <div className="text-center">
-              <span className="inline-block px-4 py-1 bg-white/10 rounded-full text-[10px] font-black text-white/80 tracking-[0.2em] mb-3">
-                战报 · BATTLE REPORT
+              <span className="inline-block px-3.5 py-1 bg-emerald-400/15 border border-emerald-400/30 rounded-full text-[10px] font-mono font-bold text-emerald-300 tracking-[0.18em] mb-3">
+                OFFICIAL MATCH REPORT
               </span>
-              <h2 className="text-xl font-black text-white leading-tight px-2">
-                {match.tournament || '练习赛'}
+              <h2 className="text-xl font-extrabold text-white leading-tight px-2">
+                {match.tournament || '日常训练赛'}
               </h2>
-              <p className="text-[11px] text-white/50 font-bold mt-1">
-                {new Date(match.date).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}
+              <p className="text-[11px] text-white/55 font-medium mt-1">
+                {new Date(match.date).toLocaleDateString('zh-CN', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
               </p>
             </div>
 
-            {/* Teams */}
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2.5">
               <TeamCard ids={match.team1} won={t1Won} wins={t1Wins} />
               <div className="flex items-center justify-center">
-                <span className="text-[10px] font-black text-white/15 tracking-[0.3em]">VS</span>
+                <span className="text-[10px] font-mono font-bold text-white/30 tracking-[0.25em]">
+                  VS
+                </span>
               </div>
               <TeamCard ids={match.team2} won={!t1Won} wins={t2Wins} />
             </div>
 
-            {/* Scores grid */}
-            <div className="bg-white/10 rounded-2xl p-4">
-              <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${match.scores.length}, 1fr)` }}>
+            <div className="bg-black/25 rounded-2xl p-4 border border-white/10">
+              <div
+                className="grid gap-3"
+                style={{ gridTemplateColumns: `repeat(${Math.max(1, match.scores.length)}, 1fr)` }}
+              >
                 {match.scores.map((s, i) => (
                   <div key={i} className="text-center">
-                    <p className="text-[10px] font-black text-white/40 mb-1">第{i + 1}局</p>
-                    <p className="text-xl font-black text-white tabular-nums">
-                      <span className={s.team1 > s.team2 ? 'text-yellow-400' : ''}>{s.team1}</span>
-                      <span className="text-white/20 mx-0.5">:</span>
-                      <span className={s.team2 > s.team1 ? 'text-yellow-400' : ''}>{s.team2}</span>
+                    <p className="text-[10px] font-mono font-bold text-white/45 mb-1">SET {i + 1}</p>
+                    <p className="font-display text-xl font-black text-white tabular-nums">
+                      <span className={s.team1 > s.team2 ? 'text-emerald-300' : ''}>{s.team1}</span>
+                      <span className="text-white/25 mx-0.5">:</span>
+                      <span className={s.team2 > s.team1 ? 'text-emerald-300' : ''}>{s.team2}</span>
                     </p>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Footer */}
-            <div className="flex items-end justify-between pt-3 border-t border-white/10">
+            <div className="flex items-end justify-between pt-3 border-t border-white/15">
               <div>
-                <p className="text-[9px] font-bold text-white/30 uppercase mb-0.5">俱乐部</p>
-                <p className="font-bold text-xs text-white/70">{clubName}</p>
+                <p className="text-[9px] font-mono font-bold text-white/40 uppercase mb-0.5">
+                  CLUB ARENA
+                </p>
+                <p className="font-bold text-xs text-white/85">{clubName}</p>
               </div>
               {inviteCode ? (
                 <div className="text-right">
-                  <p className="text-[9px] font-bold text-white/30 uppercase mb-0.5">邀请码</p>
-                  <p className="font-mono font-bold text-xs text-white/50 tracking-wider">{inviteCode}</p>
+                  <p className="text-[9px] font-mono font-bold text-white/40 uppercase mb-0.5">
+                    PASS CODE
+                  </p>
+                  <p className="font-mono font-bold text-xs text-emerald-300 tracking-wider">
+                    {inviteCode}
+                  </p>
                 </div>
               ) : null}
             </div>
@@ -167,16 +212,31 @@ export function ShareMatchModal({ match, players, clubName, inviteCode, onClose 
         </div>
       </div>
 
-      {/* Final image */}
+      {/* Rendered Poster */}
       {finalImage && (
-        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center">
-          <img src={finalImage} className="w-full max-w-[360px] rounded-3xl shadow-2xl ring-1 ring-white/10" alt="战报" />
-          <div className="mt-8 flex flex-col items-center gap-3">
-            <div className="flex items-center gap-2 text-yellow-400 font-bold bg-yellow-400/10 px-4 py-2 rounded-full">
-              <Info size={16} />
-              <span>长按上方图片保存到相册</span>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.94 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center"
+        >
+          <img
+            src={finalImage}
+            className="w-full max-w-[360px] rounded-[24px] shadow-2xl border border-white/15"
+            alt="比赛战报海报"
+          />
+          <div className="mt-6 flex flex-col items-center gap-3">
+            <a
+              href={finalImage}
+              download={`h2h-report-${match.id}.png`}
+              className="inline-flex items-center gap-2 text-white font-bold bg-[#0b6e4f] hover:bg-[#095a40] px-5 py-2.5 rounded-xl text-xs transition-colors"
+            >
+              <Download size={15} />
+              <span>下载高清战报图片</span>
+            </a>
+            <div className="flex items-center gap-1.5 text-emerald-300 font-semibold text-xs">
+              <Info size={14} />
+              <span>手机端也可长按上方海报直接保存到相册</span>
             </div>
-            <p className="text-white/40 text-xs">保存后即可分享到微信群</p>
           </div>
         </motion.div>
       )}

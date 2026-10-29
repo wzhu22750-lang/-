@@ -1,24 +1,91 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", "Plus Jakarta Sans", "PingFang SC", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Court Editorial Design System Tokens */
+  --color-court-canvas: #f5f6f3;
+  --color-court-surface: #ffffff;
+  --color-court-subtle: #edf0eb;
+  --color-court-border: #dde2dc;
+  --color-court-ink: #111814;
+  --color-court-muted: #5b665f;
+
+  /* BWF Turf Emerald & Competitive Accents */
+  --color-court-deep: #0c261e;
+  --color-court-forest: #0f382b;
+  --color-court-primary: #0b6e4f;
+  --color-court-emerald: #109868;
+  --color-court-lime: #d9f99d;
+
+  /* Team Polarity & Tournament Accents */
   --color-app-primary: #e11d48;
   --color-app-primary-dark: #be123c;
-  --color-app-header: #2d2d2e;
-  --color-app-surface: #f5f5f5;
+  --color-app-header: #0c261e;
+  --color-app-surface: #f5f6f3;
   --color-app-tournament: #d97706;
 }
 
 @layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    background-color: #f5f6f3;
+    color: #111814;
+  }
+
   body {
     -webkit-tap-highlight-color: transparent;
     font-feature-settings: "cv11", "ss01";
     padding-top: env(safe-area-inset-top);
+    background-color: #f5f6f3;
+    color: #111814;
+  }
+
+  img {
+    outline: 1px solid rgba(17, 24, 20, 0.08);
+    outline-offset: -1px;
   }
 
   /* Hide scrollbars for a cleaner mobile feel */
   ::-webkit-scrollbar {
     display: none;
   }
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.court-grid-pattern {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.court-light-grid {
+  background-image:
+    linear-gradient(to right, rgba(15, 56, 43, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 56, 43, 0.035) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.court-card-shadow {
+  box-shadow:
+    0 1px 2px rgba(12, 38, 30, 0.04),
+    0 8px 24px -6px rgba(12, 38, 30, 0.06);
+}
+
+.court-elevated-shadow {
+  box-shadow:
+    0 2px 4px rgba(12, 38, 30, 0.04),
+    0 16px 36px -8px rgba(12, 38, 30, 0.12);
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { X, Trophy, Calendar, Plus, Minus, Clock, Tag, AlertCircle, Zap } from 'lucide-react';
+import { X, Trophy, Calendar, Plus, Minus, Clock, Tag, AlertCircle, Zap, Check } from 'lucide-react';
 import { Player, Match, GameScore, MatchCategory } from '../types';
 
 interface AddMatchModalProps {
@@ -16,27 +16,44 @@ function tsToDateStr(ts: number): string {
   return new Date(ts).toISOString().split('T')[0];
 }
 
-export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams, categories }: AddMatchModalProps) {
+export function AddMatchModal({
+  onClose,
+  players,
+  onAdd,
+  editMatch,
+  prefillTeams,
+  categories,
+}: AddMatchModalProps) {
   const isEditing = !!editMatch;
   const initTeam1 = editMatch?.team1 || prefillTeams?.team1 || [];
   const initTeam2 = editMatch?.team2 || prefillTeams?.team2 || [];
 
   const [team1, setTeam1] = useState<string[]>(initTeam1);
   const [team2, setTeam2] = useState<string[]>(initTeam2);
-  const [scores, setScores] = useState<GameScore[]>(editMatch?.scores?.length ? editMatch.scores : [{ team1: 0, team2: 0 }]);
+  const [scores, setScores] = useState<GameScore[]>(
+    editMatch?.scores?.length ? editMatch.scores : [{ team1: 21, team2: 18 }]
+  );
   const [tournament, setTournament] = useState(editMatch?.tournament || '');
-  const [date, setDate] = useState(() => editMatch?.date ? tsToDateStr(editMatch.date) : new Date().toISOString().split('T')[0]);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>(editMatch?.category_id || categories[0]?.id);
+  const [date, setDate] = useState(() =>
+    editMatch?.date ? tsToDateStr(editMatch.date) : new Date().toISOString().split('T')[0]
+  );
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>(
+    editMatch?.category_id || categories[0]?.id
+  );
   const [boFormat, setBoFormat] = useState<'BO1' | 'BO3' | 'BO5'>(editMatch?.bo_format || 'BO1');
   const [isChoosingPlayers, setIsChoosingPlayers] = useState<'team1' | 'team2' | null>(null);
   const [submitError, setSubmitError] = useState('');
 
-  const selectedCategory = useMemo(() => categories.find(c => c.id === selectedCategoryId), [categories, selectedCategoryId]);
+  const isDuplicate = useMemo(() => team1.some((id) => team2.includes(id)), [team1, team2]);
+  const selectedCategory = useMemo(
+    () => categories.find((c) => c.id === selectedCategoryId),
+    [categories, selectedCategoryId]
+  );
   const requireEloGap = selectedCategory?.require_elo_gap === true;
 
   const teamElo = useMemo(() => {
     const avg = (ids: string[]) => {
-      const rated = ids.map(id => players.find(p => p.id === id)?.elo_rating ?? 1500);
+      const rated = ids.map((id) => players.find((p) => p.id === id)?.elo_rating ?? 1500);
       return rated.length ? Math.round(rated.reduce((s, r) => s + r, 0) / rated.length) : 1500;
     };
     return { team1: avg(team1), team2: avg(team2) };
@@ -50,6 +67,7 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
     const timer = setInterval(() => setNow(new Date()), 30000);
     return () => clearInterval(timer);
   }, []);
+
   const timeLabel = useMemo(() => {
     const h = now.getHours();
     const m = now.getMinutes().toString().padStart(2, '0');
@@ -59,27 +77,41 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
   }, [now]);
 
   const handleSubmit = () => {
-    if (team1.length === 0 || team2.length === 0) return;
-
+    if (team1.length === 0 || team2.length === 0) {
+      setSubmitError('请先选择 A 队与 B 队参赛球友');
+      return;
+    }
+    if (isDuplicate) {
+      setSubmitError('同一位球友不能同时出现在 A 队和 B 队');
+      return;
+    }
     if (requireEloGap && eloGap < ELO_GAP_MIN) {
-      setSubmitError(`「${selectedCategory?.name}」需要双方存在实力差距（至少 ${ELO_GAP_MIN} 分），当前差距仅 ${eloGap} 分`);
+      setSubmitError(
+        `「${selectedCategory?.name}」要求双方 ELO 差距至少 ${ELO_GAP_MIN} 分，当前仅差 ${eloGap} 分`
+      );
       return;
     }
 
-    const now = new Date();
+    const validScores = scores.filter((s) => s.team1 > 0 || s.team2 > 0);
+    if (validScores.length === 0) {
+      setSubmitError('请至少填写一局有效比分');
+      return;
+    }
+
+    const currentNow = new Date();
     const selectedDate = new Date(date);
-    selectedDate.setHours(now.getHours());
-    selectedDate.setMinutes(now.getMinutes());
-    selectedDate.setSeconds(now.getSeconds());
+    selectedDate.setHours(currentNow.getHours());
+    selectedDate.setMinutes(currentNow.getMinutes());
+    selectedDate.setSeconds(currentNow.getSeconds());
 
     const newMatch: Match = {
       id: editMatch?.id || Math.random().toString(36).substr(2, 9),
       date: selectedDate.getTime(),
-      type: team1.length > 1 ? 'Doubles' : 'Singles',
+      type: team1.length > 1 || team2.length > 1 ? 'Doubles' : 'Singles',
       team1,
       team2,
-      scores: scores.filter(s => s.team1 > 0 || s.team2 > 0),
-      tournament: tournament || '练习赛',
+      scores: validScores,
+      tournament: tournament.trim() || '日常训练赛',
       club_id: editMatch?.club_id || '',
       category_id: selectedCategoryId,
       bo_format: boFormat,
@@ -87,273 +119,428 @@ export function AddMatchModal({ onClose, players, onAdd, editMatch, prefillTeams
     onAdd(newMatch);
   };
 
-  const getPlayerName = (id: string) => players.find(p => p.id === id)?.name || id;
+  const getPlayerName = (id: string) => players.find((p) => p.id === id)?.name || id;
 
-  useEffect(() => { setSubmitError(''); }, [team1, team2, selectedCategoryId]);
+  useEffect(() => {
+    setSubmitError('');
+  }, [team1, team2, selectedCategoryId, scores]);
 
   const updateScore = (idx: number, side: 'team1' | 'team2', value: number) => {
     const newScores = [...scores];
-    newScores[idx][side] = Math.max(0, value);
+    newScores[idx] = { ...newScores[idx], [side]: Math.max(0, value) };
     setScores(newScores);
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/60 backdrop-blur-md z-[170] flex items-end sm:items-center justify-center"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[170] flex items-end sm:items-center justify-center"
     >
       <motion.div
-        initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-        className="bg-[#f5f5f5] w-full max-w-lg rounded-t-[32px] sm:rounded-2xl overflow-hidden flex flex-col max-h-[95vh] text-neutral-900 shadow-2xl"
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 32, stiffness: 340 }}
+        className="bg-[#f5f6f3] w-full max-w-lg rounded-t-[28px] sm:rounded-[28px] overflow-hidden flex flex-col max-h-[94vh] text-[#111814] court-elevated-shadow border border-[#dde2dc]"
       >
         {/* Header */}
         <div
-          className="bg-[#2d2d2e] pt-6 pb-4 px-6 text-white text-center relative shrink-0 border-b border-white/10"
-          style={{ paddingTop: 'max(env(safe-area-inset-top), 28px)' }}
+          className="bg-[#0c261e] court-grid-pattern pt-6 pb-4 px-6 text-white flex items-center justify-between relative shrink-0 border-b border-emerald-500/20"
+          style={{ paddingTop: 'max(env(safe-area-inset-top), 24px)' }}
         >
-          <h2 className="text-lg font-black uppercase tracking-[0.15em]">
-            {isEditing ? 'Edit Battle' : 'Record Battle'}
-          </h2>
+          <div>
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-300 block">
+              MATCH SCORECARD
+            </span>
+            <h2 className="text-lg font-extrabold tracking-tight">
+              {isEditing ? '编辑比赛记录' : '录入比赛战绩'}
+            </h2>
+          </div>
           <button
             onClick={onClose}
-            className="absolute right-6 p-2 text-white/60 hover:text-white transition-colors"
-            style={{ top: 'max(env(safe-area-inset-top), 20px)' }}
+            className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/80 hover:text-white transition-colors"
+            aria-label="关闭"
           >
-            <X size={22} />
+            <X size={20} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-5 overflow-y-auto space-y-5 flex-1 no-scrollbar">
-
-          {/* ---- 队伍选择 ---- */}
-          <div className="grid grid-cols-[1fr,36px,1fr] gap-3 items-center">
+        <div className="p-5 overflow-y-auto space-y-5 flex-1">
+          {/* Team Selection */}
+          <div className="grid grid-cols-[1fr_36px_1fr] gap-2.5 items-center">
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-[0.08em] pl-1">Team A</label>
+              <label className="text-xs font-bold text-[#0b6e4f] pl-1 block">A 队阵容</label>
               <button
+                type="button"
                 onClick={() => setIsChoosingPlayers('team1')}
-                className="w-full min-h-[64px] bg-white rounded-2xl border border-neutral-200 flex flex-col items-center justify-center p-3 text-sm font-black shadow-sm active:scale-[0.97] transition-all border-l-[3px] border-l-red-500"
+                className="w-full min-h-[68px] bg-white rounded-2xl border border-[#dde2dc] hover:border-[#0b6e4f] flex flex-col items-center justify-center p-3 text-sm font-bold court-card-shadow active:scale-[0.98] transition-[transform,border-color] border-t-4 border-t-[#0b6e4f]"
               >
-                {team1.length > 0 ? team1.map(getPlayerName).join(' / ') : <Plus size={20} className="text-neutral-300" />}
+                {team1.length > 0 ? (
+                  <span className="text-[#111814] text-center leading-snug">
+                    {team1.map(getPlayerName).join(' / ')}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-xs text-[#5b665f]">
+                    <Plus size={16} /> 选择球友
+                  </span>
+                )}
               </button>
             </div>
+
             <div className="flex justify-center pt-5">
-              <div className="w-9 h-9 rounded-full bg-neutral-200 text-neutral-500 flex items-center justify-center text-[11px] font-black">VS</div>
+              <div className="w-9 h-9 rounded-xl bg-[#e3e8e2] text-[#111814] flex items-center justify-center font-display text-xs font-black">
+                VS
+              </div>
             </div>
+
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-[0.08em] pl-1">Team B</label>
+              <label className="text-xs font-bold text-rose-600 pl-1 block text-right pr-1">B 队阵容</label>
               <button
+                type="button"
                 onClick={() => setIsChoosingPlayers('team2')}
-                className="w-full min-h-[64px] bg-white rounded-2xl border border-neutral-200 flex flex-col items-center justify-center p-3 text-sm font-black shadow-sm active:scale-[0.97] transition-all border-l-[3px] border-l-blue-500"
+                className="w-full min-h-[68px] bg-white rounded-2xl border border-[#dde2dc] hover:border-rose-500 flex flex-col items-center justify-center p-3 text-sm font-bold court-card-shadow active:scale-[0.98] transition-[transform,border-color] border-t-4 border-t-rose-500"
               >
-                {team2.length > 0 ? team2.map(getPlayerName).join(' / ') : <Plus size={20} className="text-neutral-300" />}
+                {team2.length > 0 ? (
+                  <span className="text-[#111814] text-center leading-snug">
+                    {team2.map(getPlayerName).join(' / ')}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-xs text-[#5b665f]">
+                    <Plus size={16} /> 选择球友
+                  </span>
+                )}
               </button>
             </div>
           </div>
 
-          {/* ---- 比分 ---- */}
-          <div className="space-y-3">
-            <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-[0.08em] pl-1">Match Scores</label>
+          {/* Scores Input */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between px-1">
+              <label className="text-xs font-bold text-[#111814]">各局小分</label>
+              <span className="text-[11px] text-[#5b665f]">点击 21 可快速填入标准局分</span>
+            </div>
+
             <div className="space-y-2.5">
               {scores.map((score, idx) => (
-                <div key={idx} className="flex items-center gap-3 bg-white p-3.5 rounded-2xl border border-neutral-200 shadow-sm relative group">
-                  <div className="text-[11px] font-bold text-neutral-400 w-5 shrink-0 text-center">#{idx + 1}</div>
-                  <div className="flex items-center gap-2 flex-1 justify-center">
-                    <input
-                      type="number"
-                      value={score.team1 === 0 ? '' : score.team1}
-                      placeholder="0"
-                      onChange={(e) => updateScore(idx, 'team1', parseInt(e.target.value) || 0)}
-                      className="w-12 text-center text-xl font-black outline-none bg-neutral-50 rounded-xl py-1"
-                    />
-                    <div className="flex flex-col gap-0.5 shrink-0">
-                      <button onClick={() => updateScore(idx, 'team1', score.team1 + 1)} className="w-[44px] h-[44px] flex items-center justify-center text-neutral-500 hover:text-red-500 hover:bg-red-50 active:scale-90 rounded-xl transition-all"><Plus size={20} /></button>
-                      <button onClick={() => updateScore(idx, 'team1', score.team1 - 1)} className="w-[44px] h-[44px] flex items-center justify-center text-neutral-500 hover:text-red-500 hover:bg-red-50 active:scale-90 rounded-xl transition-all"><Minus size={20} /></button>
+                <div
+                  key={idx}
+                  className="bg-white p-3.5 rounded-2xl border border-[#dde2dc] court-card-shadow relative"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-mono font-bold text-[#5b665f] bg-[#f5f6f3] px-2 py-0.5 rounded-md">
+                      第 {idx + 1} 局
+                    </span>
+                    {scores.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setScores(scores.filter((_, sIdx) => sIdx !== idx))}
+                        className="text-[11px] font-bold text-rose-600 hover:bg-rose-50 px-2 py-0.5 rounded-md transition-colors"
+                      >
+                        移除此局
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
+                    {/* Team 1 Score Control */}
+                    <div className="flex items-center justify-between bg-[#f8faf7] p-1.5 rounded-xl border border-[#e3e8e2]">
+                      <button
+                        type="button"
+                        onClick={() => updateScore(idx, 'team1', score.team1 - 1)}
+                        className="w-9 h-9 flex items-center justify-center text-[#5b665f] hover:text-[#111814] bg-white rounded-lg border border-[#dde2dc] active:scale-95 transition-transform"
+                        aria-label="A队减1分"
+                      >
+                        <Minus size={15} />
+                      </button>
+                      <div className="flex flex-col items-center">
+                        <input
+                          type="number"
+                          value={score.team1 === 0 ? '' : score.team1}
+                          placeholder="0"
+                          onChange={(e) => updateScore(idx, 'team1', parseInt(e.target.value) || 0)}
+                          className="w-12 text-center font-display text-xl font-black text-[#111814] outline-none bg-transparent tabular-nums"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => updateScore(idx, 'team1', 21)}
+                          className="text-[10px] font-mono font-bold text-[#0b6e4f] hover:underline"
+                        >
+                          设为21
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => updateScore(idx, 'team1', score.team1 + 1)}
+                        className="w-9 h-9 flex items-center justify-center text-[#0b6e4f] bg-white rounded-lg border border-[#dde2dc] active:scale-95 transition-transform"
+                        aria-label="A队加1分"
+                      >
+                        <Plus size={15} />
+                      </button>
+                    </div>
+
+                    <span className="font-display font-black text-[#5b665f]">:</span>
+
+                    {/* Team 2 Score Control */}
+                    <div className="flex items-center justify-between bg-[#f8faf7] p-1.5 rounded-xl border border-[#e3e8e2]">
+                      <button
+                        type="button"
+                        onClick={() => updateScore(idx, 'team2', score.team2 - 1)}
+                        className="w-9 h-9 flex items-center justify-center text-[#5b665f] hover:text-[#111814] bg-white rounded-lg border border-[#dde2dc] active:scale-95 transition-transform"
+                        aria-label="B队减1分"
+                      >
+                        <Minus size={15} />
+                      </button>
+                      <div className="flex flex-col items-center">
+                        <input
+                          type="number"
+                          value={score.team2 === 0 ? '' : score.team2}
+                          placeholder="0"
+                          onChange={(e) => updateScore(idx, 'team2', parseInt(e.target.value) || 0)}
+                          className="w-12 text-center font-display text-xl font-black text-[#111814] outline-none bg-transparent tabular-nums"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => updateScore(idx, 'team2', 21)}
+                          className="text-[10px] font-mono font-bold text-rose-600 hover:underline"
+                        >
+                          设为21
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => updateScore(idx, 'team2', score.team2 + 1)}
+                        className="w-9 h-9 flex items-center justify-center text-rose-600 bg-white rounded-lg border border-[#dde2dc] active:scale-95 transition-transform"
+                        aria-label="B队加1分"
+                      >
+                        <Plus size={15} />
+                      </button>
                     </div>
                   </div>
-                  <div className="h-10 w-px bg-neutral-200 shrink-0" />
-                  <div className="flex items-center gap-2 flex-1 justify-center">
-                    <input
-                      type="number"
-                      value={score.team2 === 0 ? '' : score.team2}
-                      placeholder="0"
-                      onChange={(e) => updateScore(idx, 'team2', parseInt(e.target.value) || 0)}
-                      className="w-12 text-center text-xl font-black outline-none bg-neutral-50 rounded-xl py-1"
-                    />
-                    <div className="flex flex-col gap-0.5 shrink-0">
-                      <button onClick={() => updateScore(idx, 'team2', score.team2 + 1)} className="w-[44px] h-[44px] flex items-center justify-center text-neutral-500 hover:text-red-500 hover:bg-red-50 active:scale-90 rounded-xl transition-all"><Plus size={20} /></button>
-                      <button onClick={() => updateScore(idx, 'team2', score.team2 - 1)} className="w-[44px] h-[44px] flex items-center justify-center text-neutral-500 hover:text-red-500 hover:bg-red-50 active:scale-90 rounded-xl transition-all"><Minus size={20} /></button>
-                    </div>
-                  </div>
-                  {scores.length > 1 && (
-                    <button
-                      onClick={() => setScores(scores.filter((_, sIdx) => sIdx !== idx))}
-                      className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 bg-red-100 text-red-500 rounded-full flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity"
-                    >
-                      <X size={12} />
-                    </button>
-                  )}
                 </div>
               ))}
+
               <button
-                onClick={() => setScores([...scores, { team1: 0, team2: 0 }])}
-                className="w-full py-3.5 border-2 border-neutral-200 rounded-2xl text-neutral-400 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-neutral-100 hover:border-neutral-400 transition-colors"
+                type="button"
+                onClick={() => setScores([...scores, { team1: 21, team2: 18 }])}
+                className="w-full py-3 bg-white border border-dashed border-[#bfc8c0] rounded-2xl text-[#5b665f] hover:text-[#0b6e4f] hover:border-[#0b6e4f] text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
               >
-                <Plus size={16} /> Add Next Set
+                <Plus size={15} /> 添加下一局比分
               </button>
             </div>
           </div>
 
-          {/* ---- 赛制 + 类别（合并卡片）---- */}
-          <div className="bg-white rounded-2xl border border-neutral-200 p-4 space-y-4 shadow-sm">
-            <div className="space-y-2.5">
-              <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-[0.08em] pl-1">BO Format</label>
-              <div className="flex gap-0">
-                {(['BO1', 'BO3', 'BO5'] as const).map((fmt, i) => (
+          {/* BO Format + Category Card */}
+          <div className="bg-white rounded-2xl border border-[#dde2dc] p-4 space-y-4 court-card-shadow">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-[#111814] block">赛制规格 (影响统治力加成)</label>
+              <div className="grid grid-cols-3 gap-2">
+                {(['BO1', 'BO3', 'BO5'] as const).map((fmt) => (
                   <button
+                    type="button"
                     key={fmt}
                     onClick={() => setBoFormat(fmt)}
-                    className={`flex-1 py-3 text-xs font-black transition-all border ${
-                      i > 0 ? 'border-l-0' : ''
-                    } ${
+                    className={`py-2.5 px-3 text-xs font-bold rounded-xl border transition-colors ${
                       boFormat === fmt
-                        ? 'bg-[#e11d48] text-white border-[#e11d48] shadow-md'
-                        : 'bg-white text-neutral-500 border-neutral-200 hover:bg-neutral-50'
-                    } ${i === 0 ? 'rounded-l-xl' : ''} ${i === 2 ? 'rounded-r-xl' : ''}`}
+                        ? 'bg-[#0c261e] text-white border-[#0c261e]'
+                        : 'bg-[#f8faf7] text-[#5b665f] border-[#dde2dc] hover:text-[#111814]'
+                    }`}
                   >
-                    {fmt === 'BO1' ? '一局胜负' : fmt === 'BO3' ? '三局两胜' : '五局三胜'}
+                    {fmt === 'BO1' ? 'BO1 一局定胜负' : fmt === 'BO3' ? 'BO3 三局两胜' : 'BO5 五局三胜'}
                   </button>
                 ))}
               </div>
             </div>
 
             {categories.length > 0 && (
-              <div className="space-y-2.5">
-                <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-[0.08em] pl-1 flex items-center gap-1.5">
-                  <Tag size={13} /> 比赛类别
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-[#111814] flex items-center gap-1.5">
+                  <Tag size={13} className="text-[#0b6e4f]" /> 比赛类别与 K 值倍率
                 </label>
-                <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                  {categories.map(cat => (
-                    <button
-                      key={cat.id}
-                      onClick={() => setSelectedCategoryId(cat.id)}
-                      className={`shrink-0 px-3.5 py-3 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
-                        selectedCategoryId === cat.id
-                          ? 'bg-[#e11d48] text-white shadow-md shadow-red-200'
-                          : 'bg-neutral-100 text-neutral-500 hover:bg-neutral-200'
-                      }`}
-                    >
-                      {cat.name}
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                        selectedCategoryId === cat.id ? 'bg-white/20 text-white' : 'bg-white text-neutral-400'
-                      }`}>
-                        ×{cat.k_multiplier}
-                      </span>
-                    </button>
-                  ))}
+                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-0.5">
+                  {categories.map((cat) => {
+                    const active = selectedCategoryId === cat.id;
+                    return (
+                      <button
+                        type="button"
+                        key={cat.id}
+                        onClick={() => setSelectedCategoryId(cat.id)}
+                        className={`shrink-0 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 border ${
+                          active
+                            ? 'bg-[#0b6e4f] text-white border-[#0b6e4f]'
+                            : 'bg-[#f8faf7] text-[#5b665f] border-[#dde2dc] hover:text-[#111814]'
+                        }`}
+                      >
+                        <span>{cat.name}</span>
+                        <span
+                          className={`text-[10px] font-mono px-1.5 py-0.2 rounded-md ${
+                            active ? 'bg-white/20 text-white' : 'bg-white text-[#5b665f]'
+                          }`}
+                        >
+                          x{cat.k_multiplier}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
           </div>
 
-          {/* ---- ELO 差距提示 ---- */}
+          {/* ELO Gap Verification Notice */}
           {requireEloGap && team1.length > 0 && team2.length > 0 && (
-            <div className={`p-3.5 rounded-xl border text-xs font-bold flex items-center gap-3 ${
-              eloGap >= ELO_GAP_MIN ? 'bg-green-100 border-green-200 text-green-700' : 'bg-amber-100 border-amber-200 text-amber-700'
-            }`}>
-              <Zap size={14} className="shrink-0" />
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="bg-white/60 px-2 py-0.5 rounded-lg font-black">{teamElo.team1}</span>
-                <span className="text-[10px] opacity-60">vs</span>
-                <span className="bg-white/60 px-2 py-0.5 rounded-lg font-black">{teamElo.team2}</span>
+            <div
+              className={`p-3.5 rounded-2xl border text-xs font-bold flex items-center gap-2.5 ${
+                eloGap >= ELO_GAP_MIN
+                  ? 'bg-emerald-50 border-emerald-200 text-[#0b6e4f]'
+                  : 'bg-amber-50 border-amber-200 text-amber-800'
+              }`}
+            >
+              <Zap size={15} className="shrink-0" />
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="font-mono bg-white px-2 py-0.5 rounded-md border border-black/5">
+                  {teamElo.team1}
+                </span>
+                <span className="text-[10px] opacity-60">VS</span>
+                <span className="font-mono bg-white px-2 py-0.5 rounded-md border border-black/5">
+                  {teamElo.team2}
+                </span>
                 <span className="ml-1">
-                  {eloGap >= ELO_GAP_MIN ? `差距 ${eloGap} 分 ✓` : `仅差 ${eloGap} 分，需 ≥ ${ELO_GAP_MIN}`}
+                  {eloGap >= ELO_GAP_MIN
+                    ? `分差 ${eloGap} 分，满足挑战赛条件`
+                    : `当前分差 ${eloGap} 分，挑战赛要求至少相差 ${ELO_GAP_MIN} 分`}
                 </span>
               </div>
             </div>
           )}
 
-          {/* ---- 赛事/场地 + 日期 ---- */}
-          <div className="space-y-3">
-            <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-[0.08em] pl-1">When & Where</label>
-            <div className="flex items-center gap-3 bg-white rounded-2xl border border-neutral-200 px-4 shadow-sm">
-              <Trophy size={18} className="text-neutral-400 shrink-0" />
-              <input
-                type="text"
-                placeholder="赛事/场地"
-                value={tournament}
-                onChange={(e) => setTournament(e.target.value)}
-                className="flex-1 py-4 outline-none text-sm font-black placeholder:text-neutral-300"
-              />
+          {/* Venue & Date */}
+          <div className="bg-white rounded-2xl border border-[#dde2dc] p-4 space-y-3 court-card-shadow">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#111814] block">赛事或场馆备注</label>
+              <div className="flex items-center gap-2.5 bg-[#f8faf7] rounded-xl border border-[#dde2dc] px-3.5 focus-within:border-[#0b6e4f] focus-within:bg-white transition-colors">
+                <Trophy size={16} className="text-[#5b665f] shrink-0" />
+                <input
+                  type="text"
+                  placeholder="例如：周末固定局 / 3号场地"
+                  value={tournament}
+                  onChange={(e) => setTournament(e.target.value)}
+                  className="flex-1 py-3 outline-none text-sm font-bold text-[#111814] placeholder:text-[#5b665f]/50 bg-transparent"
+                />
+              </div>
             </div>
-            <div className="flex items-center gap-3 bg-white rounded-2xl border border-neutral-200 px-4 shadow-sm">
-              <Calendar size={18} className="text-neutral-400 shrink-0" />
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="flex-1 py-4 outline-none text-sm font-black min-w-0"
-              />
-              <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-400 bg-neutral-100 px-2.5 py-1.5 rounded-xl shrink-0">
-                <Clock size={12} />
-                <span>{timeLabel}</span>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#111814] block">比赛日期</label>
+              <div className="flex items-center gap-2.5 bg-[#f8faf7] rounded-xl border border-[#dde2dc] px-3.5">
+                <Calendar size={16} className="text-[#5b665f] shrink-0" />
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="flex-1 py-3 outline-none text-sm font-bold text-[#111814] min-w-0 bg-transparent"
+                />
+                <div className="flex items-center gap-1 text-[11px] font-mono font-semibold text-[#5b665f] bg-white px-2.5 py-1 rounded-lg border border-[#dde2dc] shrink-0">
+                  <Clock size={12} />
+                  <span>{timeLabel}</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-4 bg-white border-t border-neutral-100 shrink-0 space-y-3">
+        <div className="px-5 py-4 bg-white border-t border-[#dde2dc] shrink-0 space-y-2.5">
           {submitError && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 text-red-600 rounded-xl text-xs font-bold">
-              <AlertCircle size={14} className="shrink-0" />
-              {submitError}
+            <div className="flex items-center gap-2 p-3 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold">
+              <AlertCircle size={15} className="shrink-0" />
+              <span>{submitError}</span>
             </div>
           )}
           <button
+            type="button"
             onClick={handleSubmit}
-            disabled={team1.length === 0 || team2.length === 0}
-            className="w-full py-4 bg-gradient-to-r from-[#e11d48] to-[#be123c] text-white rounded-2xl font-black uppercase tracking-[0.1em] shadow-xl shadow-red-100 transition-all active:scale-[0.98] disabled:opacity-50"
+            disabled={team1.length === 0 || team2.length === 0 || isDuplicate}
+            className="w-full py-4 bg-[#0b6e4f] hover:bg-[#095a40] text-white rounded-xl font-bold text-sm shadow-sm transition-[transform,background-color] active:scale-[0.98] disabled:opacity-45"
           >
-            {isEditing ? 'Update Match' : 'Publish Match'}
+            {isDuplicate
+              ? '同一球友不可兼任双方队员'
+              : isEditing
+                ? '保存修改并重算 ELO'
+                : '确认发布战绩'}
           </button>
         </div>
 
-        {/* Player Selection Overlay */}
+        {/* Player Selection Sub-Overlay */}
         {isChoosingPlayers && (
-          <div className="absolute inset-0 bg-white z-[180] flex flex-col">
+          <div className="absolute inset-0 bg-[#f5f6f3] z-[180] flex flex-col">
             <div
-              className="bg-[#2d2d2e] pt-6 pb-4 px-6 text-white flex items-center justify-between shadow-lg"
-              style={{ paddingTop: 'max(env(safe-area-inset-top), 28px)' }}
+              className="bg-[#0c261e] pt-6 pb-4 px-6 text-white flex items-center justify-between shrink-0"
+              style={{ paddingTop: 'max(env(safe-area-inset-top), 24px)' }}
             >
-              <button onClick={() => setIsChoosingPlayers(null)}><X size={22} /></button>
-              <span className="font-black uppercase tracking-[0.15em]">Select Players</span>
-              <button onClick={() => setIsChoosingPlayers(null)} className="font-black text-red-500 uppercase">Done</button>
+              <button
+                type="button"
+                onClick={() => setIsChoosingPlayers(null)}
+                className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center"
+              >
+                <X size={18} />
+              </button>
+              <span className="font-bold text-sm">
+                选择 {isChoosingPlayers === 'team1' ? 'A 队' : 'B 队'} 参赛球友 (最多2人)
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsChoosingPlayers(null)}
+                className="px-3 py-1.5 rounded-xl bg-emerald-500 text-white font-bold text-xs"
+              >
+                完成
+              </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-2 no-scrollbar">
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-2">
               {players.map((p) => {
-                const isSelected = (isChoosingPlayers === 'team1' ? team1 : team2).includes(p.id);
+                const currentSideList = isChoosingPlayers === 'team1' ? team1 : team2;
+                const otherSideList = isChoosingPlayers === 'team1' ? team2 : team1;
+                const isSelected = currentSideList.includes(p.id);
+                const isInOtherTeam = otherSideList.includes(p.id);
+
                 return (
                   <button
+                    type="button"
                     key={p.id}
+                    disabled={isInOtherTeam}
                     onClick={() => {
-                      const current = isChoosingPlayers === 'team1' ? team1 : team2;
-                      const next = isSelected ? current.filter(id => id !== p.id) : [...current, p.id].slice(0, 2);
-                      if (isChoosingPlayers === 'team1') setTeam1(next); else setTeam2(next);
+                      const next = isSelected
+                        ? currentSideList.filter((id) => id !== p.id)
+                        : [...currentSideList, p.id].slice(0, 2);
+                      if (isChoosingPlayers === 'team1') setTeam1(next);
+                      else setTeam2(next);
                     }}
-                    className={`w-full flex items-center justify-between p-5 rounded-2xl border transition-all ${
-                      isSelected ? 'bg-red-50 border-red-200' : 'bg-neutral-50 border-transparent'
+                    className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-colors ${
+                      isSelected
+                        ? 'bg-emerald-50 border-[#0b6e4f]'
+                        : isInOtherTeam
+                          ? 'bg-neutral-100 border-transparent opacity-45 cursor-not-allowed'
+                          : 'bg-white border-[#dde2dc] hover:border-[#0b6e4f]/40'
                     }`}
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center font-black text-red-600 italic border border-neutral-100 overflow-hidden">
-                        {p.avatar ? <img src={p.avatar} className="w-full h-full object-cover" /> : p.initials}
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-11 h-11 rounded-full bg-[#f5f6f3] flex items-center justify-center font-display font-bold text-sm text-[#0b6e4f] border border-[#dde2dc] overflow-hidden">
+                        {p.avatar ? <img src={p.avatar} alt={p.name} className="w-full h-full object-cover" /> : p.initials}
                       </div>
-                      <span className="font-black text-neutral-800">{p.name}</span>
+                      <div className="text-left">
+                        <p className="font-bold text-sm text-[#111814]">{p.name}</p>
+                        <p className="text-[11px] font-mono text-[#5b665f]">
+                          ELO {p.elo_rating || 1500}
+                          {isInOtherTeam ? ' · 已在对方阵容' : ''}
+                        </p>
+                      </div>
                     </div>
                     {isSelected && (
-                      <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center text-white">
-                        <X size={14} className="rotate-45" />
+                      <div className="w-6 h-6 bg-[#0b6e4f] rounded-full flex items-center justify-center text-white">
+                        <Check size={14} />
                       </div>
                     )}
                   </button>

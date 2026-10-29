@@ -18,15 +18,6 @@ interface RatingChangeModalProps {
   onClose: () => void;
 }
 
-// 随机生成粒子位置
-const particles = Array.from({ length: 10 }, (_, i) => ({
-  id: i,
-  x: Math.random() * 100,
-  delay: Math.random() * 0.5,
-  duration: 0.8 + Math.random() * 0.6,
-  emoji: ['🏸', '🎉', '✨', '🔥', '💪'][i % 5],
-}));
-
 function CountUp({ from, to }: { from: number; to: number }) {
   const [count, setCount] = useState(from);
   useEffect(() => {
@@ -38,10 +29,10 @@ function CountUp({ from, to }: { from: number; to: number }) {
       step++;
       setCount(Math.round(from + (diff * step) / steps));
       if (step >= steps) clearInterval(timer);
-    }, 40);
+    }, 35);
     return () => clearInterval(timer);
   }, [from, to]);
-  return <span>{count}</span>;
+  return <span className="tabular-nums">{count}</span>;
 }
 
 export function RatingChangeModal({ changes, winner, onClose }: RatingChangeModalProps) {
@@ -49,81 +40,69 @@ export function RatingChangeModal({ changes, winner, onClose }: RatingChangeModa
   const team2Changes = changes.filter((_, i) => i >= changes.length / 2);
   const isTie = winner === 'tie';
   const team1Won = winner === 'team1';
-  const t1Won = isTie ? false : (team1Changes.some(c => c.change > 0) || team1Won);
 
   return (
     <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/60 backdrop-blur-md z-[200] flex items-center justify-center p-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[200] flex items-center justify-center p-5"
     >
       <motion.div
-        initial={{ scale: 0.5, y: 100 }} animate={{ scale: 1, y: 0 }}
-        className="bg-white rounded-[32px] w-full max-w-sm overflow-hidden shadow-2xl text-center relative"
+        initial={{ scale: 0.9, y: 24 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.9, y: 24 }}
+        className="bg-white rounded-[28px] w-full max-w-sm overflow-hidden court-elevated-shadow text-center relative border border-[#dde2dc]"
       >
-        {/* Confetti particles */}
-        {t1Won && particles.map(p => (
-          <motion.div
-            key={p.id}
-            initial={{ opacity: 0, y: 0, x: 0 }}
-            animate={{ opacity: [0, 1, 0], y: -120 - Math.random() * 80, x: (Math.random() - 0.5) * 80 }}
-            transition={{ delay: p.delay, duration: p.duration, ease: 'easeOut' }}
-            className="absolute top-1/2 left-1/2 text-lg pointer-events-none z-10"
-            style={{ left: `${p.x}%` }}
-          >
-            {p.emoji}
-          </motion.div>
-        ))}
-
         {/* Header */}
-        <div className={`pt-8 pb-6 ${isTie ? 'bg-neutral-600' : t1Won ? 'bg-emerald-600' : 'bg-red-600'} text-white relative overflow-hidden`}>
-          <button onClick={onClose} className="absolute top-4 right-4 text-white/50 hover:text-white z-20"><X size={20} /></button>
-
-          <motion.div
-            animate={t1Won ? { rotate: [0, -8, 8, 0] } : {}}
-            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 backdrop-blur-md"
+        <div
+          className={`pt-7 pb-5 px-6 ${
+            isTie ? 'bg-stone-700' : 'bg-[#0c261e]'
+          } court-grid-pattern text-white relative overflow-hidden border-b border-emerald-500/20`}
+        >
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/80 z-20"
+            aria-label="关闭"
           >
-            <Trophy size={32} className="text-yellow-300" />
-          </motion.div>
+            <X size={18} />
+          </button>
 
-          <h2 className="text-xl font-black italic tracking-widest">
-            {isTie ? 'DRAW' : t1Won ? 'VICTORY' : 'DEFEAT'}
+          <div className="bg-emerald-500/20 border border-emerald-400/30 w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <Trophy size={28} className="text-emerald-300" />
+          </div>
+
+          <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-emerald-300 block">
+            ELO RATING SETTLEMENT
+          </span>
+          <h2 className="text-xl font-extrabold tracking-tight mt-0.5">
+            {isTie ? '双方握手言和' : team1Won ? 'A 队赢得胜利' : 'B 队赢得胜利'}
           </h2>
-          {!t1Won && !isTie && (
-            <p className="text-[10px] text-white/60 mt-1 font-bold">再接再厉，下次必胜</p>
-          )}
-          {isTie && (
-            <p className="text-[10px] text-white/60 mt-1 font-bold">平局，积分不变</p>
-          )}
         </div>
 
-        {/* Team sections */}
-        <div className="p-6 space-y-4">
-          {/* Team 1 */}
+        {/* Team Rating Changes */}
+        <div className="p-5 space-y-4 bg-[#f5f6f3]">
           <div className="space-y-2">
-            <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest text-left pl-1">
-              {isTie ? '平局' : team1Won ? '胜方' : '负方'} · A 队
+            <p className="text-[11px] font-bold text-[#5b665f] text-left pl-1">
+              {isTie ? '平局 · A 队' : team1Won ? '胜方 · A 队' : '负方 · A 队'}
             </p>
-            {team1Changes.map(pc => (
+            {team1Changes.map((pc) => (
               <PlayerRatingRow key={pc.playerId} data={pc} />
             ))}
           </div>
 
-          <div className="h-px bg-neutral-100" />
-
-          {/* Team 2 */}
           <div className="space-y-2">
-            <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest text-left pl-1">
-              {isTie ? '平局' : !team1Won ? '胜方' : '负方'} · B 队
+            <p className="text-[11px] font-bold text-[#5b665f] text-left pl-1">
+              {isTie ? '平局 · B 队' : !team1Won ? '胜方 · B 队' : '负方 · B 队'}
             </p>
-            {team2Changes.map(pc => (
+            {team2Changes.map((pc) => (
               <PlayerRatingRow key={pc.playerId} data={pc} />
             ))}
           </div>
 
           <button
             onClick={onClose}
-            className="w-full py-4 bg-neutral-900 text-white rounded-2xl font-black shadow-lg active:scale-95 transition-all mt-2"
+            className="w-full py-3.5 bg-[#0b6e4f] hover:bg-[#095a40] text-white rounded-xl font-bold text-sm shadow-sm active:scale-[0.98] transition-[transform,background-color] mt-1"
           >
             收下战果
           </button>
@@ -136,35 +115,39 @@ export function RatingChangeModal({ changes, winner, onClose }: RatingChangeModa
 function PlayerRatingRow({ data }: { data: PlayerChange; key?: string }) {
   const isPositive = data.change > 0;
   return (
-    <div className="flex items-center gap-3 bg-neutral-50 rounded-2xl p-3">
-      {/* Avatar */}
-      <div className="w-10 h-10 rounded-full overflow-hidden bg-white border border-neutral-100 shrink-0">
+    <div className="flex items-center gap-3 bg-white rounded-2xl p-3 border border-[#dde2dc] court-card-shadow">
+      <div className="w-10 h-10 rounded-full overflow-hidden bg-[#f5f6f3] border border-[#dde2dc] shrink-0">
         {data.avatar ? (
           <img src={data.avatar} alt={data.name} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-xs font-black text-neutral-300">{data.initials}</div>
+          <div className="w-full h-full flex items-center justify-center text-xs font-display font-extrabold text-[#0b6e4f]">
+            {data.initials}
+          </div>
         )}
       </div>
 
-      {/* Name + rating change */}
       <div className="text-left flex-1 min-w-0">
-        <p className="text-sm font-black text-neutral-800 truncate">{data.name}</p>
-        <p className="text-[9px] font-bold text-neutral-400">
+        <p className="text-sm font-bold text-[#111814] truncate">{data.name}</p>
+        <p className="text-[11px] font-mono font-semibold text-[#5b665f] tabular-nums">
           {data.oldRating} → <CountUp from={data.oldRating} to={data.newRating} />
         </p>
       </div>
 
-      {/* Change badge */}
       <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 20, delay: 0.3 }}
-        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl font-black text-sm ${
-          isPositive ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+        initial={{ scale: 0.7, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 360, damping: 22, delay: 0.15 }}
+        className={`flex items-center gap-1 px-2.5 py-1 rounded-xl font-mono font-extrabold text-xs tabular-nums ${
+          isPositive
+            ? 'bg-emerald-50 text-[#0b6e4f] border border-emerald-200'
+            : data.change < 0
+              ? 'bg-rose-50 text-rose-600 border border-rose-200'
+              : 'bg-[#f5f6f3] text-[#5b665f] border border-[#dde2dc]'
         }`}
       >
-        {isPositive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-        {isPositive ? '+' : ''}{data.change}
+        {isPositive ? <TrendingUp size={13} /> : data.change < 0 ? <TrendingDown size={13} /> : null}
+        {isPositive ? '+' : ''}
+        {data.change}
       </motion.div>
     </div>
   );
